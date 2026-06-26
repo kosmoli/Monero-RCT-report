@@ -62,18 +62,18 @@ git merge upstream/main
 
 ## 翻译进度
 
-- [ ] 第 1 章 引言 (Introduction)
-- [ ] 第 2 章 基本概念 (Basic Concepts)
-- [ ] 第 3 章 高级 Schnorr 签名 (Advanced Schnorr)
-- [ ] 第 4 章 地址 (Addresses)
-- [ ] 第 5 章 承诺方案 (Commitments)
-- [ ] 第 6 章 交易 (Transactions)
-- [ ] 第 7 章 区块链 (Blockchain)
-- [ ] 第 8 章 交易知识证明 (Transaction Knowledge Proofs)
-- [ ] 第 9 章 多重签名 (Multisig)
-- [ ] 第 10 章 托管市场 (Escrowed Market)
-- [ ] 第 11 章 TxTangle
-- [ ] 附录 (Appendix)
+- [x] 第 1 章 引言 (Introduction)
+- [x] 第 2 章 基本概念 (Basic Concepts)
+- [x] 第 3 章 高级 Schnorr 签名 (Advanced Schnorr)
+- [x] 第 4 章 地址 (Addresses)
+- [x] 第 5 章 承诺方案 (Commitments)
+- [x] 第 6 章 交易 (Transactions)
+- [x] 第 7 章 区块链 (Blockchain)
+- [x] 第 8 章 交易知识证明 (Transaction Knowledge Proofs)
+- [x] 第 9 章 多重签名 (Multisig)
+- [x] 第 10 章 托管市场 (Escrowed Market)
+- [x] 第 11 章 TxTangle
+- [x] 附录 (Appendix)
 
 ---
 *翻译始于 2026-06-26，Kosmo & Kleo*
