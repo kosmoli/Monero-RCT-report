@@ -1,0 +1,256 @@
+\documentclass[usletter,11pt,oneside,onecolumn,final,openany]{report}
+
+%Primary packages
+\usepackage{fancyvrb}
+
+% XeLaTeX CJK support (replaces inputenc + babel)
+\usepackage{xltxtra}
+\usepackage{xeCJK}
+\setCJKmainfont{Noto Serif CJK SC}
+\setCJKsansfont{Noto Sans CJK SC}
+\setCJKmonofont{Noto Sans Mono CJK SC}
+
+\usepackage{graphicx}
+
+% Chinese section names
+\renewcommand{\chaptername}{第~\thechapter~章}
+\renewcommand{\contentsname}{目录}
+\renewcommand{\bibname}{参考文献}
+\renewcommand{\appendixname}{附录}
+\renewcommand{\appendixpagename}{附录}
+\renewcommand{\appendixtocname}{附录}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\partname}{部分}
+
+% Useful packages:
+
+% Advanced mathematical formulas and symbols
+% -------------------------------------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{bm}
+
+% Footnotes
+% -------------------------------------
+\usepackage[stable,splitrule]{footmisc}
+
+% Color management package
+% -------------------------------------
+\usepackage[usenames,dvipsnames]{xcolor}
+
+% Control line spacing
+% -------------------------------------
+% putting this between footmisc and hyperref seemed to fix broken footnote links
+\usepackage{setspace}
+\AtBeginDocument{\let~=\\nobreakspace}
+\spacing{1.1}
+
+% Advanced crossreferencing commands
+% -------------------------------------
+\usepackage[colorlinks=true, linkcolor=BlueViolet, citecolor=BlueViolet, urlcolor=BlueViolet,linktocpage=true]{hyperref}
+
+%% more footnote stuff
+\usepackage{footnotebackref}
+
+\let\oldFootnote\footnote
+\newcommand\nextToken\relax
+
+\renewcommand\footnote[1]{%
+    \oldFootnote{#1}\futurelet\nextToken\isFootnote}
+
+\newcommand\isFootnote{%
+    \ifx\footnote\nextToken\textsuperscript{,}\fi}
+
+
+% Flexible interface to page dimensions
+% -------------------------------------
+\usepackage{marginnote}
+\usepackage[outer=2.62cm,inner=2.62cm,top=3cm,bottom=2.75cm, marginparwidth=2.1cm, marginparsep=.35cm]{geometry}
+
+
+%Tree drawing
+\usepackage{tikz}
+\usetikzlibrary{trees, arrows}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.15}
+
+\usepackage[edges,linguistics]{forest}
+
+
+% Tabular package extensions
+% -------------------------------------
+% \usepackage{array}
+% \usepackage{multirow}
+
+% Modify chapter level headings
+% -------------------------------------
+\usepackage[Sonny]{fncychap}
+\usepackage{fancyhdr}
+\fancyhead{}
+\fancyfoot{}
+\rhead[\small \leftmark]{\small \thepage}
+\lhead[\small \thepage]{\small \leftmark}
+\setlength{\headheight}{13.2pt}
+
+\ChRuleWidth{1pt}
+\ChNameAsIs
+\ChNameUpperCase
+\ChNameVar{\Large\bf}
+\ChNumVar{\Huge}
+\ChTitleVar{\LARGE}
+
+% Modify appendix and add subappendices environments
+% -------------------------------------
+\usepackage{appendix}
+
+% Paragraph indentation and skip
+% -------------------------------------
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1.7ex plus 0.5ex minus 0.8ex}
+
+\usepackage{xspace}
+\newcommand\nd{\textsuperscript{nd}\xspace}
+\newcommand\rd{\textsuperscript{rd}\xspace}
+\newcommand\rds{\textsuperscript{rds}\xspace}
+\newcommand\nth{\textsuperscript{th}\xspace}
+\newcommand\nths{\textsuperscript{ths}\xspace}
+
+% List spacing
+\usepackage{enumitem}
+\setlist[itemize]{topsep=0pt}
+\newcommand{\listspace}{-.4em}
+
+% Separate document into parts
+\usepackage{titlesec}
+
+% ___________________________________________________________________________________________________________
+%
+%                 		PDF INFO
+% ___________________________________________________________________________________________________________
+
+
+
+\hypersetup{
+    pdftitle = {从零到 Monero：第二版},
+    pdfauthor = {koe Kurt and Sarang}
+}
+
+
+
+\begin{document}
+%\maketitle
+% ------ Title page ------------------------
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+\setlength{\abovedisplayshortskip}{0pt}
+\setlength{\belowdisplayshortskip}{0pt}
+
+
+\pagenumbering{roman}
+\pagestyle{plain}
+\thispagestyle{empty}
+
+\mbox{}
+\vspace{1cm}
+
+\begin{center}
+  \includegraphics[width=3cm]{front/figures/monero-symbol-1280.png}
+\end{center}
+
+
+\vfill{}
+{\par\centering \textsc{\huge 从零到 Monero：第二版}\par}
+\bigskip \bigskip
+{\par\centering \textsc{\LARGE 一本关于隐私数字货币的技术指南；面向初学者、爱好者和专家}\par}
+\bigskip
+{\par\centering \textsc{\LARGE 原版 Published April 4, 2020 (v2.0.0)}\par}
+\bigskip
+{\par\centering \textsc{\large 原著：koe, Kurt M. Alonso, Sarang Noether}\par}
+{\par\centering \textsc{\large 中文翻译：Kosmo \& Kleo}\par}
+\vfill{}
+
+\begin{center}
+  \begin{minipage}[t]{6.43in}
+
+\textbf{许可证}：Zero to Monero: Second Edition 发布于公共领域。
+
+  \end{minipage}
+\end{center}
+\vspace{0cm}
+% ------ Abstract ------------------------
+
+\newpage
+\pagestyle{empty}
+\begin{center}
+\vspace*{\fill}%\vspace*{3.5cm}
+{\LARGE \bfseries  摘要}
+\end{center}
+\vspace{0.5cm}
+\begin{center}
+\begin{minipage}{5.5in}
+\begin{center} \vrule width 4.5in height 0.4pt \end{center}
+\parindent=0pt
+\include{front/abstract}
+\begin{center} \vrule width 4.5in height 0.4pt \end{center}
+\end{minipage}
+\vspace*{\fill}
+\end{center}
+
+% ------ Table of contents and figures ---------
+\newpage
+\pagestyle{plain}
+\tableofcontents
+
+% ___________________________________________________________________________________________________________
+%
+%             CONTENT
+% ___________________________________________________________________________________________________________
+
+\newpage
+\pagenumbering{arabic}
+\pagestyle{fancy}
+
+% -------- Chapters ----------------------------
+
+\include{content/introduction}
+
+\part{基础}
+\include{content/basicConcepts}
+\include{content/advancedSchnorr}
+\include{content/addresses}
+\include{content/commitments}
+\include{content/transactions}
+\include{content/blockchain}
+
+\part{扩展}
+\include{content/txKnowledgeProofs}
+\include{content/multisig}
+\include{content/escrowedMarket}
+\include{content/txTangle}
+
+% ___________________________________________________________________________________________________________
+%
+%				BACKMATTER
+% ___________________________________________________________________________________________________________
+
+% -------- Bibliography -----------------------
+
+\addcontentsline{toc}{chapter}{参考文献}
+{\footnotesize
+\bibliographystyle{plain}
+\bibliography{back/references.bib}
+}
+
+% -------- Appendix ---------------------------
+
+\addappheadtotoc
+\appendixpage
+\include{content/appendix}
+
+% -------- Last page -------------------------
+
+
+
+\end{document}
