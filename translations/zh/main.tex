@@ -102,7 +102,10 @@
 % Patch fncychap to show "第 1 章" instead of "第 1"
 \makeatletter
 \renewcommand{\DOCH}{%
-  \CNV\FmN{\@chapapp}\,\CNoV\thechapter~章}
+    \raggedleft
+    \CNV\FmN{\@chapapp}\,\CNoV\thechapter~章
+    \par\nobreak
+    \vskip 40\p@}
 \makeatother
 
 % Custom chapter mark for header: "第 X 章. Title"
