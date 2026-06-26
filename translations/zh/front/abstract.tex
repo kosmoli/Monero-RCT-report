@@ -3,12 +3,12 @@
 
 % ---------------------------------------------------------------------------
 
-Cryptography. It may seem like only mathematicians and computer scientists have access to this obscure, esoteric, powerful, elegant topic. In fact, many kinds of cryptography are simple enough that anyone can learn their fundamental concepts.
-\\ \newline
-It is common knowledge that cryptography is used to secure communications, whether they be coded letters or private digital interactions. Another application is in so-called cryptocurrencies. These digital moneys use cryptography to assign and transfer ownership of funds. To ensure that no piece of money can be duplicated or created at will, cryptocurrencies usually rely on `blockchains', which are public, distributed ledgers containing records of currency transactions that can be verified by third parties \cite{Nakamoto_bitcoin}.
-\\ \newline
-It might seem at first glance that transactions need to be sent and stored in plain text format to make them publicly verifiable. In fact, it is possible to conceal a transaction's participants, as well as the amounts involved, using cryptographic tools that nevertheless allow transactions to be verified and agreed upon by observers \cite{cryptoNoteWhitePaper}. This is exemplified in the cryptocurrency Monero.
-\\ \newline
-We endeavor here to teach anyone who knows basic algebra and simple computer science concepts like the `bit representation' of a number not only how Monero works at a deep and comprehensive level, but also how useful and beautiful cryptography can be.
-\\ \newline
-For our experienced readers: Monero is a standard one-dimensional distributed acyclic graph (DAG) cryptocurrency blockchain \cite{Nakamoto_bitcoin} where transactions are based on elliptic curve cryptography using curve Ed25519 \cite{Bernstein2008}, transaction inputs are signed with Schnorr-style multilayered linkable spontaneous anonymous group signatures (MLSAG) \cite{MRL-0005-ringct}, and output amounts (communicated to recipients via ECDH \cite{Diffie-Hellman}) are concealed with Pedersen commitments \cite{maxwell-ct} and proven in a legitimate range with Bulletproofs \cite{Bulletproofs_paper}. Much of the first part of this report is spent explaining these ideas.
+密码学。看起来似乎只有数学家和计算机科学家才能触及这门晦涩、深奥、强大而优雅的学科。事实上，许多密码学的基础概念足够简单，任何人都可以学习。
+\\ \\newline
+众所周知，密码学被用于保护通信安全，无论是加密信件还是私密的数字交互。密码学的另一个应用是所谓的加密货币。这些数字货币使用密码学来分配和转移资金所有权。为了确保任何一笔钱都无法被复制或随意创造，加密货币通常依赖于"区块链"——一种公共的、分布式的账本，记录着可以被第三方验证的货币交易 \cite{Nakamoto_bitcoin}。
+\\ \\newline
+乍看之下，交易似乎需要以明文形式发送和存储才能被公开验证。事实上，使用密码学工具可以隐藏交易的参与者以及涉及的金额，同时仍然允许观察者验证和确认交易 \cite{cryptoNoteWhitePaper}。加密货币 Monero 就是这一能力的典范。
+\\ \\newline
+我们在此努力教授任何懂得基本代数和简单计算机科学概念（如数字的"二进制表示"）的人，不仅要深入全面地理解 Monero 的工作原理，还要领略密码学的实用与优美。
+\\ \\newline
+对于有经验的读者：Monero 是一种标准的一维有向无环图（DAG）加密货币区块链 \cite{Nakamoto_bitcoin}，其交易基于椭圆曲线密码学，使用 Ed25519 曲线 \cite{Bernstein2008}，交易输入采用 Schnorr 风格的多层可链接自发匿名群签名（MLSAG）\cite{MRL-0005-ringct} 签名，输出金额（通过 ECDH \cite{Diffie-Hellman} 传达给接收方）使用 Pedersen 承诺 \cite{maxwell-ct} 隐藏，并通过 Bulletproofs \cite{Bulletproofs_paper} 证明其在合法范围内。本报告的前半部分大部分篇幅用于解释这些概念。

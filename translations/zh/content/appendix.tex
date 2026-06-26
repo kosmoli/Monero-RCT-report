@@ -4,30 +4,27 @@
 	\textcolor{red}{\small
 		\arabic{FancyVerbLine}}}
 
-\chapter{{\tt RCTTypeBulletproof2} Transaction Structure}
+\chapter{{\tt RCTTypeBulletproof2} 交易结构}
 \label{appendix:RCTTypeBulletproof2}
 
-We present in this appendix a dump from a real Monero transaction of type {\tt RCTTypeBulletproof2}, 
-together with explanatory notes for relevant fields.
+我们在本附录中展示一笔真实 Monero 交易（类型 {\tt RCTTypeBulletproof2}）的转储，
+并附有相关字段的解释说明。
 
-The dump was obtained from the block explorer \url{https://xmrchain.net}. It can also be acquired by executing command {\tt print\_tx <TransactionID> +hex +json} in the {\tt monerod} daemon run in non-detached mode. {\tt <TransactionID>} is a hash of the transaction (Section \ref{subsec:transaction-id}). The first line printed shows the actual command to run.% see chapter 7 blockchain on TransactionID
+该转储来自区块浏览器 \url{https://xmrchain.net}。也可以通过在非分离模式下运行的 {\tt monerod} 守护进程中执行命令 {\tt print\_tx <TransactionID> +hex +json} 来获取。{\tt <TransactionID>} 是交易的 hash（第 \ref{subsec:transaction-id} 节）。打印的第一行显示了要执行的实际命令。
 
-To replicate our results, readers can do the following:%\footnote{Blockchain data can also be found with a web block explorer, such as \url{https://moneroblocks.info/} or \url{https://xmrchain.net}.}
+要复现我们的结果，读者可以执行以下操作：
 \begin{enumerate}
-    \item We need the Monero command line tool (CLI), which can be found at \url{https://web.getmonero.org/downloads/} (among other places). Get the `Command Line Tools Only' for your operating system, move the file to a useful location, and unzip it.
-    \item Open the terminal/command line and navigate into the folder created by unzipping.
-    \item Run {\tt monerod} with {\tt ./monerod}. Now the Monero blockchain will download. Unfortunately, there is currently no easy way to print transactions on your own system (e.g. without using a block explorer) without downloading the blockchain.
-    \item After the syncing process is done, commands like {\tt print\_tx} will work. Use {\tt help} to learn other commands.
+    \item 我们需要 Monero 命令行工具（CLI），可在 \url{https://web.getmonero.org/downloads/}（以及其他地方）获取。获取适合你操作系统的"Command Line Tools Only"，将文件移到合适的位置，然后解压。
+    \item 打开终端/命令行，导航到解压后创建的文件夹。
+    \item 使用 {\tt ./monerod} 运行 {\tt monerod}。Monero blockchain 将开始下载。遗憾的是，目前没有办法在不下载 blockchain 的情况下在自己的系统上打印交易（即不使用区块浏览器）。
+    \item 同步完成后，{\tt print\_tx} 等命令就可以使用了。使用 {\tt help} 了解其他命令。
 \end{enumerate}
 
-%For editorial reasons we have shortened long hexadecimal chains, presenting only the beginning and end as in {\tt 0200010c7f[...]409}.
+组件 {\tt rctsig\_prunable}，顾名思义，是可以从 blockchain 中 {\sl 修剪} 的。也就是说，一旦区块达成共识且当前链长度排除了所有双花攻击的可能性，就可以修剪整个字段并用其 hash 替换 Merkle 树。
 
-Component {\tt rctsig\_prunable}, as indicated by its name, is {\sl prunable} from the blockchain. That is, once a block has been consensuated and the current chain length rules out all possibilities of double-spending attacks, this whole field can be pruned and replaced with its hash for the Merkle tree.
+key image 单独存储在交易的不可修剪区域中。这些对于检测双花攻击至关重要，不能被修剪。\\
 
-Key images are stored separately, in the non-prunable area of transactions. These are essential for detecting double-spend attacks and can’t be pruned away.
-\\
-
-Our sample transaction has 2 inputs and 2 outputs, and was added to the blockchain at timestamp 2020-03-02 19:01:10 UTC (as reported by its block's miner).
+我们的示例交易有 2 个 input 和 2 个 output，于 2020-03-02 19:01:10 UTC 的时间戳被添加到 blockchain（由其区块的矿工报告）。
 
 \begin{Verbatim}[commandchars=\\\{\}, numbers=left]
 print_tx 84799c2fc4c18188102041a74cef79486181df96478b717e8703512c7f7f3349
@@ -167,45 +164,45 @@ Found in blockchain at height 2045821
 
 
 
-\section*{Transaction components}
+\section*{交易组件}
 	
 \begin{itemize}
-    \item (line 2) - The command {\tt print\_tx} would report the block where it found the transaction, which we replicate here for demonstration purposes.
-	\item {\tt version} (line 4) - Transaction format/era version; `2' corresponds to RingCT.
-	\item {\tt unlock\_time} (line 5) - Prevents a transaction's outputs from being spent until the time has past. It is either a block height, or a UNIX timestamp if the number is larger than the beginning of UNIX time. It defaults to zero when no limit is specified.	
-	\item {\tt vin} (line 6-23) - List of inputs (there are two here)
-	\item {\tt amount} (line 8) - Deprecated (legacy) amount field for type 1 transactions
-	\item {\tt key\_offset} (line 9) - This allows verifiers to find ring member keys and commitments in the blockchain, and makes it obvious those members are legitimate. The first offset is absolute within the blockchain history, and each subsequent offset is relative to the previous. For example, with real offsets \{7,11,15,20\}, the blockchain records \{7,4,4,5\}. Verifiers compute the last offset like (7+4+4+5 = 20) (Section \ref{subsec:space-and-ver-rcttypefull}).
-	\item {\tt k\_image} (line 12) - Key image \(\tilde{K_j}\) from Section \ref{sec:MLSAG}, where $j = 1$ since this is the first input.
-	\item {\tt vout} (lines 24-35) - List of outputs (there are two here)
-	\item {\tt amount} (line 25) - Deprecated amount field for type 1 transactions
-	\item {\tt key} (line 27) - One-time destination key for output $t = 0$ as described in Section \ref{sec:one-time-addresses}
-	\item {\tt extra} (lines 36-39) - Miscellaneous\marginnote{src/crypto- note\_basic/ tx\_extra.h} data, including the {\em transaction public key}, i.e. the share secret $r G$ of Section  \ref{sec:one-time-addresses}, and encrypted payment ID from Section \ref{sec:integrated-addresses}. It typically works like this: each number is one byte (it can be 0-255), and each kind of thing that can be in the field has a `tag' and `length'. The tag indicates which information comes next, and length indicates how many bytes that info occupies. The first number is always a tag. Here, `1' indicates a `transaction public key'. Tx public keys are always 32 bytes, so we don't need to include the length. Thirty-two numbers later we find a new tag `2' which means `extra nonce', its length is `9', and the next byte is `1' which means an 8-byte encrypted payment ID (the extra nonce can have fields inside it, for some reason). Eight bytes go by, and that's the end of this extra field. See \cite{extra-field-stackexchange} for more details. (note: in the original Cryptonote specification the first byte indicated the size of the field. Monero doesn't use that.) \cite{tx-extra-field}
-	\item {\tt rct\_signatures} (lines 40-50) - First part of signature data
-	\item {\tt type} (line 41) - Signature type; {\tt RCTTypeBulletproof2} is type 4. Deprecated RingCT types {\tt RCTTypeFull} and {\tt RCTTypeSimple} were 1 and 2 respectively. Miner transactions use {\tt RCTTypeNull}, type 0.
-	\item {\tt txnFee} (line 42) - Transaction fee in clear text, in this case 0.00003246 XMR
-	\item {\tt ecdhInfo} (lines 43-47) - ‘elliptic curve diffie-hellman info’: Obscured amount for each of the outputs $t \in \{0, ..., p-1\}$; here $p = 2$
-    \item {\tt amount} (line 44) - Field {\sl amount} at $t = 0$ as described in Section \ref{sec:pedersen_monero}
-    \item {\tt outPk} (lines 48-49) - Commitments for each output, Section \ref{sec:ringct-introduction}
+    \item （第 2 行）- {\tt print\_tx} 命令会报告找到交易的区块，此处复制以供演示。
+	\item {\tt version}（第 4 行）- 交易格式/时代版本；`2' 对应 RingCT。
+	\item {\tt unlock\_time}（第 5 行）- 阻止交易的 output 在指定时间到达前被花费。它要么是区块高度，要么（如果数字大于 UNIX 时间起始点）是 UNIX 时间戳。默认为零，表示没有限制。
+	\item {\tt vin}（第 6-23 行）- input 列表（此处有两个）
+	\item {\tt amount}（第 8 行）- 已弃用的（旧版）金额字段，用于类型 1 的交易
+	\item {\tt key\_offset}（第 9 行）- 这允许验证者在 blockchain 中查找环成员的 key 和承诺，并证明这些成员是合法的。第一个偏移量是 blockchain 历史中的绝对位置，随后的每个偏移量相对于前一个。例如，真实偏移量为 \{7,11,15,20\} 时，blockchain 记录为 \{7,4,4,5\}。验证者通过 (7+4+4+5 = 20) 计算最后一个偏移量（第 \ref{subsec:space-and-ver-rcttypefull} 节）。
+	\item {\tt k\_image}（第 12 行）- 来自第 \ref{sec:MLSAG} 节的 key image \(\tilde{K_j}\)，其中 $j = 1$，因为这是第一个 input。
+	\item {\tt vout}（第 24-35 行）- output 列表（此处有两个）
+	\item {\tt amount}（第 25 行）- 已弃用的金额字段，用于类型 1 的交易
+	\item {\tt key}（第 27 行）- 第 \ref{sec:one-time-addresses} 节所述的 output $t = 0$ 的一次性目标 key
+	\item {\tt extra}（第 36-39 行）- 其他\marginnote{src/crypto- note\_basic/ tx\_extra.h} 数据，包括 {\em 交易公钥}（即第 \ref{sec:one-time-addresses} 节的共享秘密 $r G$）以及第 \ref{sec:integrated-addresses} 节中的加密付款 ID。通常的编码方式如下：每个数字是一个字节（取值范围 0-255），该字段中每种类型的数据都有一个"标签"和"长度"。标签指示接下来是什么信息，长度指示该信息占用多少字节。第一个数字总是标签。这里 `1' 表示"交易公钥"。交易公钥始终为 32 字节，所以不需要包含长度。32 个数字之后我们找到新标签 `2'，表示"extra nonce"，其长度为 `9'，下一个字节 `1' 表示一个 8 字节的加密付款 ID（出于某种原因，extra nonce 内部可以有子字段）。再过 8 个字节，就到了这个 extra 字段的末尾。更多详情请参见 \cite{extra-field-stackexchange}。（注意：在原始 Cryptonote 规范中，第一个字节表示字段的大小。Monero 不使用这种方式。）\cite{tx-extra-field}
+	\item {\tt rct\_signatures}（第 40-50 行）- 签名数据的第一部分
+	\item {\tt type}（第 41 行）- 签名类型；{\tt RCTTypeBulletproof2} 是类型 4。已弃用的 RingCT 类型 {\tt RCTTypeFull} 和 {\tt RCTTypeSimple} 分别是 1 和 2。矿工交易使用 {\tt RCTTypeNull}，类型 0。
+	\item {\tt txnFee}（第 42 行）- 以明文显示的交易费用，此例中为 0.00003246 XMR
+	\item {\tt ecdhInfo}（第 43-47 行）- "椭圆曲线 Diffie-Hellman 信息"：每个 output $t \in \{0, ..., p-1\}$ 的混淆金额；此处 $p = 2$
+    \item {\tt amount}（第 44 行）- 第 \ref{sec:pedersen_monero} 节所述的 $t = 0$ 处的 {\sl amount} 字段
+    \item {\tt outPk}（第 48-49 行）- 每个 output 的承诺，见第 \ref{sec:ringct-introduction} 节
 
-    \item {\tt rctsig\_prunable} (lines 51-132) - Second part of signature data
-    \item {\tt nbp} (line 52) - Number of Bulletproof range proofs in this transaction
-    \item {\tt bp} (lines 53-80) - Bulletproof proof elements (Bulletproofs were not explored in this document, so we will not itemize further)\vspace{.175cm}
+    \item {\tt rctsig\_prunable}（第 51-132 行）- 签名数据的第二部分
+    \item {\tt nbp}（第 52 行）- 此交易中 Bulletproof 范围证明的数量
+    \item {\tt bp}（第 53-80 行）- Bulletproof 证明元素（本文未探讨 Bulletproofs，因此不作进一步枚举）\vspace{.175cm}
     \[\Pi_{BP} = (A, S, T_1, T_2, \tau_x, \mu, \mathbb{L}, \mathbb{R}, a, b, t)\]
-    \item {\tt MGs} (lines 81-129) - MLSAG signatures
-    \item {\tt ss} (lines 82-103) - Components \(r_{i,1}\) and \(r_{i,2}\) from the first input's MLSAG signature\vspace{.175cm}
+    \item {\tt MGs}（第 81-129 行）- MLSAG 签名
+    \item {\tt ss}（第 82-103 行）- 第一个 input 的 MLSAG 签名中的分量 \(r_{i,1}\) 和 \(r_{i,2}\)\vspace{.175cm}
     \[\sigma_j(\mathfrak{m}) = (c_1, r_{1, 1}, r_{1, 2}, ..., r_{v+1, 1}, r_{v+1, 2})\]
-    \item {\tt cc} (line 104) - Component \(c_1\) from aforementioned MLSAG signature
-    \item {\tt pseudoOuts} (lines 130-131) - Pseudo output commitments $C'^a_j$, as described in Section  \ref{sec:pedersen_monero}. Please recall that the sum of these commitments will equal the sum of the two output commitments of this transaction (plus the transaction fee commitment $f H$).
+    \item {\tt cc}（第 104 行）- 上述 MLSAG 签名中的分量 \(c_1\)
+    \item {\tt pseudoOuts}（第 130-131 行）- 伪 output 承诺 $C'^a_j$，如第 \ref{sec:pedersen_monero} 节所述。请记住，这些承诺之和将等于本笔交易的两个 output 承诺之和（加上交易费用承诺 $f H$）。
 \end{itemize}
 
 
 
 
-\chapter{Block Content}
+\chapter{区块内容}
 \label{appendix:block-content}
 
-In this appendix we show the structure of a sample block, namely the 1582196\nth block after the genesis block. The block has 5 transactions, and was added to the blockchain at timestamp 2018-05-27 21:56:01 UTC (as reported by the block's miner).
+在本附录中，我们展示一个示例区块的结构，即创世区块之后的第 1582196 个区块。该区块有 5 笔交易，于 2018-05-27 21:56:01 UTC 的时间戳被添加到 blockchain（由其区块的矿工报告）。
 
 \begin{Verbatim}[commandchars=\\\{\}, numbers=left]
 print_block 1582196
@@ -259,42 +256,42 @@ reward: 4634817937431
 
 
 
-\section*{Block components}
+\section*{区块组件}
 
 \begin{itemize}
-	\item (lines 2-10) - Block information collected by software, not actually part of the block properly speaking.
-    \item {\tt is orphan} (line 5) - Signifies if this block was orphaned. Nodes usually store all branches during a fork situation, and discard unnecessary branches when a cumulative difficulty winner emerges, thereby orphaning the blocks.
-    \item {\tt depth} (line 7) - In a blockchain copy, the depth of any given block is how far back in the chain it is relative to the most recent block.
-    \item {\tt hash} (line 8) - This block's block ID.
-    \item {\tt difficulty} (line 9) - Difficulty isn't stored in a block, since users can compute {\em all} block difficulties from block timestamps and the rules in Section \ref{sec:difficulty}.
-    \item {\tt major\_version} (line 12) - Corresponds to the protocol version used to verify this block.
-    \item {\tt minor\_version} (line 13) - Originally intended as a voting mechanism among miners, it now merely reiterates the {\tt major\_version}. Since the field does not occupy much space, the developers probably thought deprecating it would not be worth the effort.
-    \item {\tt timestamp} (line 14) - An integer representation of this block's UTC timestamp, as reported by the block's miner.
-    \item {\tt prev\_id} (line 15) - The previous block's block ID. Herein lies the essence of Monero's blockchain.
-    \item {\tt nonce} (line 16) - The nonce used by this block's miner to pass its difficulty target. Anyone can recompute the proof of work and verify the nonce is valid.
-    \item {\tt miner\_tx} (lines 17-40) - This block's miner transaction.
-    \item {\tt version} (line 18) - Transaction format/era version; `2' corresponds to RingCT.
-    \item {\tt unlock\_time} (line 19) - The miner transaction's output can't be spent until the 1582256\nth block, after 59 more blocks have been mined (it is a 60 block lock time since it can't be spent until 60 block time intervals have passed, e.g. $2*60 = 120$ minutes).
-    \item {\tt vin} (lines 20-25) - Inputs to the miner tx. There are none, since the miner tx is used to generate block rewards and collect transaction fees.
-    \item {\tt gen} (line 21) - Short for `generate'.
-    \item {\tt height} (line 22) - The block height for which this miner tx's block reward was generated. Each block height can only generate a block reward once.
-    \item {\tt vout} (lines 26-32) - Outputs of the miner tx.
-    \item {\tt amount} (line 27) - Amount dispersed by the miner tx, containing block reward and fees from this block's transactions. Recorded in atomic units.
-    \item {\tt key} (line 29) - One-time address assigning ownership of the miner tx's amount.
-    \item {\tt extra} (lines 33-36) - Extra information for the miner tx, including the transaction public key.
-    \item {\tt type} (line 38) - Type of transaction, in this case `0' for {\tt RCTTypeNull}, indicating a miner tx.
-    \item {\tt tx\_hashes} (lines 41-46) - All transaction IDs included in this block (but not the miner tx ID, which is {\tt 06fb3e1cf889bb972774a8535208d98db164394ef2b14ecfe74814170557e6e9}).
+	\item （第 2-10 行）- 由软件收集的区块信息，严格来说并不是区块本身的组成部分。
+    \item {\tt is orphan}（第 5 行）- 表示该区块是否为孤块。节点在分叉情况下通常会存储所有分支，当累计难度赢家出现时丢弃不必要的分支，从而使这些区块成为孤块。
+    \item {\tt depth}（第 7 行）- 在 blockchain 副本中，任何给定区块的 depth 是其相对于最新区块的链上深度。
+    \item {\tt hash}（第 8 行）- 该区块的区块 ID。
+    \item {\tt difficulty}（第 9 行）- 难度不存储在区块中，因为用户可以从区块时间戳和第 \ref{sec:difficulty} 节中的规则计算出 {\em 所有} 区块的难度。
+    \item {\tt major\_version}（第 12 行）- 对应于验证此区块所使用的协议版本。
+    \item {\tt minor\_version}（第 13 行）- 最初旨在作为矿工之间的投票机制，现在只是重复 {\tt major\_version}。由于该字段占用空间不大，开发者可能认为弃用它不值得花精力。
+    \item {\tt timestamp}（第 14 行）- 该区块 UTC 时间戳的整数表示，由区块的矿工报告。
+    \item {\tt prev\_id}（第 15 行）- 前一个区块的区块 ID。Monero blockchain 的精髓就在于此。
+    \item {\tt nonce}（第 16 行）- 该区块矿工用来通过难度目标的 nonce。任何人都可以重新计算工作量证明并验证 nonce 是否有效。
+    \item {\tt miner\_tx}（第 17-40 行）- 该区块的矿工交易。
+    \item {\tt version}（第 18 行）- 交易格式/时代版本；`2' 对应 RingCT。
+    \item {\tt unlock\_time}（第 19 行）- 矿工交易的 output 直到第 1582256 个区块才能被花费，即再开采 59 个区块之后（这是 60 个区块的锁定时间，因为只有在 60 个区块时间间隔过去后才能花费，例如 $2*60 = 120$ 分钟）。
+    \item {\tt vin}（第 20-25 行）- 矿工交易的 input。没有 input，因为矿工交易用于生成区块奖励并收集交易费用。
+    \item {\tt gen}（第 21 行）- "generate"的缩写。
+    \item {\tt height}（第 22 行）- 生成该矿工交易区块奖励的区块高度。每个区块高度只能生成一次区块奖励。
+    \item {\tt vout}（第 26-32 行）- 矿工交易的 output。
+    \item {\tt amount}（第 27 行）- 矿工交易分配的金额，包含区块奖励和本区块交易的费用。以原子单位记录。
+    \item {\tt key}（第 29 行）- 分配矿工交易金额所有权的一次性地址。
+    \item {\tt extra}（第 33-36 行）- 矿工交易的额外信息，包括交易公钥。
+    \item {\tt type}（第 38 行）- 交易类型，此处 `0' 表示 {\tt RCTTypeNull}，即矿工交易。
+    \item {\tt tx\_hashes}（第 41-46 行）- 本区块包含的所有交易 ID（不包括矿工交易 ID，其为 {\tt 06fb3e1cf889bb972774a8535208d98db164394ef2b14ecfe74814170557e6e9}）。
 \end{itemize}
 
 
 
 
-\chapter{Genesis Block}
+\chapter{创世区块 (Genesis Block)}
 \label{appendix:genesis-block}
 
-In this appendix we show the structure of the Monero genesis block. The block has 0 transactions (it just sends the first block reward to thankful\_for\_today \cite{bitmonero-launched}). Monero's founder did not add a timestamp, perhaps as a relic of Bytecoin, the coin Monero's code was forked from, whose creators apparently tried to hide a large pre-mine \cite{monero-history}, and may operate a shady network of cryptocurrency-related software and services \cite{bytecoin-network}.
+在本附录中，我们展示 Monero 创世区块的结构。该区块有 0 笔交易（它只是将第一个区块奖励发送给 thankful\_for\_today \cite{bitmonero-launched}）。Monero 的创始人没有添加时间戳，这可能是 Bytecoin（Monero 代码由此分叉而来）的遗留痕迹，其创建者显然试图隐藏大量的预挖 \cite{monero-history}，并且可能运营着一个与加密货币相关的软件和服务的可疑网络 \cite{bytecoin-network}。
 
-Block 1 was added to the blockchain at timestamp 2014-04-18 10:49:53 UTC (as reported by the block's miner), so we can assume the genesis block was created the same day. This corresponds with the launch date announced by thankful\_for\_today \cite{bitmonero-launched}.
+第 1 个区块于 2014-04-18 10:49:53 UTC 的时间戳被添加到 blockchain（由其区块的矿工报告），因此我们可以假设创世区块是在同一天创建的。这与 thankful\_for\_today 宣布的发布日期一致 \cite{bitmonero-launched}。
 
 \begin{Verbatim}[commandchars=\\\{\}, numbers=left]
 print_block 0
@@ -341,19 +338,19 @@ reward: 17592186044415
 
 
 
-\section*{Genesis block components}
+\section*{创世区块组件}
 
-Since we used the same software to print the genesis block and the block from Appendix \ref{appendix:block-content}, the structure appears basically the same. We point out some unique differences.
+由于我们使用相同的软件打印创世区块和附录 \ref{appendix:block-content} 中的区块，结构看起来基本相同。我们指出一些独特的差异。
 
 \begin{itemize}
-	\item {\tt difficulty} (line 9) - The genesis block's difficulty is reported as 1, which means any nonce could work.
-	\item {\tt timestamp} (line 14) - The genesis block doesn't have a meaningful timestamp.
-	\item {\tt prev\_id} (line 15) - We use an empty 32 bytes for the previous ID, by convention.
-	\item {\tt nonce} (line 16) - $n = 10000$ by convention.
-	\item {\tt amount} (line 27) - This exactly corresponds to our calculation for the first block reward (17.592186044415 XMR) in Section \ref{subsec:block-reward}.
-	\item {\tt key} (line 29) - The very first Moneroj were dispersed to Monero's founder thankful\_for\_today.
-	\item {\tt extra} (lines 33-36) - Using the encoding discussed in Appendix \ref{appendix:RCTTypeBulletproof2}, the genesis block's miner tx {\tt extra} field just contains one transaction public key.
-	\item {\tt signatures} (line 37) - There are no signatures in the genesis block. This is here as an artifact of the {\tt print\_block} function. The same is true for {\tt tx\_hashes} in line 39.
+	\item {\tt difficulty}（第 9 行）- 创世区块的难度报告为 1，这意味着任何 nonce 都可以。
+	\item {\tt timestamp}（第 14 行）- 创世区块没有有意义的时间戳。
+	\item {\tt prev\_id}（第 15 行）- 按惯例，我们使用空的 32 字节作为前一个区块 ID。
+	\item {\tt nonce}（第 16 行）- 按惯例 $n = 10000$。
+	\item {\tt amount}（第 27 行）- 这与我们在第 \ref{subsec:block-reward} 节中计算的第一个区块奖励（17.592186044415 XMR）完全一致。
+	\item {\tt key}（第 29 行）- 最早的 Moneroj 被分配给 Monero 的创始人 thankful\_for\_today。
+	\item {\tt extra}（第 33-36 行）- 使用附录 \ref{appendix:RCTTypeBulletproof2} 中讨论的编码方式，创世区块的矿工交易 {\tt extra} 字段只包含一个交易公钥。
+	\item {\tt signatures}（第 37 行）- 创世区块中没有签名。这里是 {\tt print\_block} 函数的产物。第 39 行的 {\tt tx\_hashes} 也是如此。
 \end{itemize}
 
 

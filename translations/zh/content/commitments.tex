@@ -1,119 +1,116 @@
-\chapter{Monero Amount Hiding}
+\chapter{门罗币金额隐藏 (Monero Amount Hiding)}
 \label{chapter:pedersen-commitments}
 
-In most cryptocurrencies like Bitcoin, transaction output notes, which give spending rights to `amounts' of money, communicate those amounts in clear text. This allows observers to easily verify the amount spent equals the amount sent.
+在大多数像比特币这样的加密货币中，交易 output 票据——赋予花费一定"金额"资金的权利——以明文传达这些金额。这使得观察者可以轻松验证花费的金额等于发送的金额。
 
-In Monero we use {\em commitments} to hide output amounts from everyone except senders and receivers, while still giving observers confidence that a transaction sends no more or less than what is spent. As we will see, amount commitments must also have corresponding `range proofs' which prove the hidden amount is within a legitimate range.
+在门罗币中，我们使用{承诺 (commitment)}来对除发送者和接收者以外的所有人隐藏 output 金额，同时仍然让观察者确信交易发送的金额不多也不少。正如我们将看到的，金额承诺还必须有相应的"范围证明 (range proof)"来证明隐藏的金额在合法范围内。
 
 
 
-\section{Commitments}
+\section{承诺 (Commitments)}
 \label{sec:commitments}
 
-Generally speaking, a cryptographic {\em commitment scheme} is a way of committing to a value without revealing the value itself. After committing to something, you are stuck with it.
+一般来说，密码学中的{承诺方案 (commitment scheme)}是一种在不揭示值本身的情况下对一个值做出承诺的方式。一旦对某事做出承诺，你就必须坚守它。
 
-For example, in a coin-flipping game Alice could privately commit to one outcome (i.e. ‘call it’) by hashing her committed value with secret data and publishing the hash. After Bob flips the coin, Alice declares which value she committed to and proves it by revealing the secret data. Bob could then verify her claim.
+例如，在一个抛硬币游戏中，Alice 可以通过将她承诺的值与秘密数据进行 hash 并发布 hash 值来私下承诺一个结果（即"猜正反"）。在 Bob 抛过硬币之后，Alice 宣布她承诺了哪个值，并通过揭示秘密数据来证明。然后 Bob 可以验证她的声明。
 
-In other words, assume that Alice has a secret string $blah$ and the value she wants to commit to is $heads$. She hashes $h = \mathcal{H}(blah, heads)$ and gives $h$ to Bob. Bob flips a coin, then Alice tells Bob the secret string $blah$ and that she committed to $heads$. Bob calculates $h’ = \mathcal{H}(blah, heads)$. If $h' = h$, then he knows Alice called $heads$ before the coin flip.
+换句话说，假设 Alice 有一个秘密字符串 $blah$，她想要承诺的值是 $heads$。她计算 $h = \mathcal{H}(blah, heads)$ 并将 $h$ 给 Bob。Bob 抛硬币，然后 Alice 告诉 Bob 秘密字符串 $blah$ 并且她承诺了 $heads$。Bob 计算 $h' = \mathcal{H}(blah, heads)$。如果 $h' = h$，那么他就知道 Alice 在抛硬币之前就猜了 $heads$。
 
-Alice uses the so-called `salt', $blah$, so Bob can't just guess $\mathcal{H}(heads)$ and $\mathcal{H}(tails)$ before his coin flip, and figure out she committed to $heads$.\footnote{If the committed value is very difficult to guess and check, e.g. if it's an apparently random elliptic curve point, then salting the commitment isn't necessary.}
+Alice 使用所谓的"盐 (salt)" $blah$，这样 Bob 就不能在抛硬币之前直接猜 $\mathcal{H}(heads)$ 和 $\mathcal{H}(tails)$，然后推断出她承诺了 $heads$。\footnote{如果承诺的值很难猜测和验证，例如如果它是一个看似随机的椭圆曲线点，那么给承诺加盐就不是必要的。}
 
 
-
-\section{Pedersen commitments}
+\section{Pedersen commitment}
 \label{pedersen_section}
 
-A {\em Pedersen commitment} \cite{Pedersen1992} is a commitment that has the property of being {\em additively homomorphic}. If \(C(a)\) and \(C(b)\) denote the commitments for values \(a\) and \(b\) respectively, then \(C(a + b) = C(a) + C(b)\).\footnote{Additively homomorphic in this context means addition is preserved when you transform scalars into EC points by applying, for scalar $x$, $x \rightarrow x G$.} This property will be useful when committing transaction amounts, as one can prove, for instance, that inputs equal outputs, without revealing the amounts at hand.
-\\
+{Pedersen commitment} \cite{Pedersen1992} 是一种具有{加法同态 (additively homomorphic)}性质的承诺。如果 \(C(a)\) 和 \(C(b)\) 分别表示值 \(a\) 和 \(b\) 的承诺，那么 \(C(a + b) = C(a) + C(b)\)。\footnote{在这个上下文中，加法同态意味着当你将标量通过标量 $x$ 的映射 $x \rightarrow x G$ 变换为 EC 点时，加法得以保持。}这个性质在承诺交易金额时非常有用，因为人们可以证明，例如，input 等于 output，而无需揭示手头的金额。\\
 
-Fortunately, Pedersen commitments are easy to implement with elliptic curve cryptography, as the following holds trivially \[a G + b G = (a + b) G\]
+幸运的是，Pedersen commitment 很容易用椭圆曲线密码学实现，因为以下等式显然成立：\[a G + b G = (a + b) G\]
 
-Clearly, by defining a commitment as simply \(C(a) = a G\), we could easily create cheat tables of commitments to help us recognize common values of $a$.
+显然，如果将承诺简单地定义为 \(C(a) = a G\)，我们可以很容易地创建承诺的作弊表来帮助我们识别 $a$ 的常见值。
 
-To attain information-theoretic privacy, one needs to add a secret {\em blinding factor} and another generator \(H\), such that it is unknown for which value of \(\gamma\) the following holds: \(H = \gamma G\). The hardness of the discrete logarithm problem ensures calculating $\gamma$ from $H$ is infeasible.\footnote{In the case of Monero\marginnote{src/ringct/ rctTypes.h}, $H = 8*to\_point(\mathcal{H}_n(G))$. This differs from the $\mathcal{H}_p$ hash function in that it directly interprets the output of $\mathcal{H}_n(G)$ as a compressed point coordinate instead of deriving a curve point mathematically (see \cite{hashtopoint-writeup}). The historical reasons for this discrepancy\marginnote{tests/unit\_ tests/ ringct.cpp {\tt TEST(ringct, HPow2)}} are unknown to us, and indeed this is the only place where $\mathcal{H}_p$ is not used (Bulletproofs also use $\mathcal{H}_p$). Note how there is a $*8$ operation, to ensure the resultant point is in our $l$ subgroup ($\mathcal{H}_p$ also does that).}
+要获得信息论隐私，需要添加一个秘密{盲因子 (blinding factor)}和另一个生成元 \(H\)，使得对于哪个 \(\gamma\) 值以下等式成立是未知的：\(H = \gamma G\)。离散对数问题的困难性确保了从 $H$ 计算 $\gamma$ 是不可行的。\footnote{在门罗币的情况下\marginnote{src/ringct/ rctTypes.h}，$H = 8*to\_point(\mathcal{H}_n(G))$。这与 $\mathcal{H}_p$ hash 函数的不同之处在于，它直接将 $\mathcal{H}_n(G)$ 的输出解释为压缩点坐标，而不是通过数学方法派生曲线点（参见 \cite{hashtopoint-writeup}）。这种差异的历史原因\marginnote{tests/unit\_ tests/ ringct.cpp {\tt TEST(ringct, HPow2)}}我们不得而知，实际上这是唯一不使用 $\mathcal{H}_p$ 的地方（Bulletproofs 也使用 $\mathcal{H}_p$）。注意有一个 $*8$ 操作，以确保结果点在我们的 $l$ 子群中（$\mathcal{H}_p$ 也这样做）。}
 
-%In the case of Monero\marginnote{src/ringct/ rctTypes.h}, $H = \mathcal{H}_p(G)$.\footnote{\label{hashtopoint_note}Monero's unique hash to point function\marginnote{src/ringct/ rctOps.cpp {\tt hash\_to\_p3()}} (see \cite{hashtopoint-writeup}) is used in practice to turn the normal hash of one curve point directly into another curve point. For commitments, $H = hash\_to\_point(\mathit{Keccak}(G))$. }%see rctTypes.h
+%在门罗币的情况下\marginnote{src/ringct/ rctTypes.h}，$H = \mathcal{H}_p(G)$。\footnote{\label{hashtopoint_note}门罗币独有的 hash to point 函数\marginnote{src/ringct/ rctOps.cpp {\tt hash\_to\_p3()}}（参见 \cite{hashtopoint-writeup}）在实践中用于将一个曲线点的普通 hash 直接转换为另一个曲线点。对于承诺，$H = hash\_to\_point(\mathit{Keccak}(G))$。}%see rctTypes.h
 
-We can then define the commitment to a value \(a\) as \(C(x, a) = x G + a H\), where \(x\) is the blinding factor (a.k.a. `mask') that prevents observers from guessing $a$.
+然后我们可以将对值 \(a\) 的承诺定义为 \(C(x, a) = x G + a H\)，其中 \(x\) 是盲因子（又名"掩码 (mask)"），用于防止观察者猜测 $a$。
 
-Commitment $C(x, a)$ is information-theoretically private because there are many possible combinations of $x$ and $a$ that would output the same $C$.\footnote{Basically, there are many $x’$ and $a’$ such that $x’+a’ \gamma = x+a \gamma$. A committer knows one combination, but an attacker has no way to know which one. This property is also known as `perfect hiding' \cite{adam-zero-to-bulletproofs}. Furthermore, even the committer can't find another combination without solving the DLP for $\gamma$, a property called `computational binding' \cite{adam-zero-to-bulletproofs}.} If $x$ is truly random, an attacker would have literally no way to figure out $a$ \cite{maxwell-ct, SCOZZAFAVA1993313}.%{https://people.xiph.org/~greg/confidential_values.txt}
-
+承诺 $C(x, a)$ 在信息论上是私密的，因为有许多可能的 $x$ 和 $a$ 组合会输出相同的 $C$。\footnote{基本上，有许多 $x'$ 和 $a'$ 使得 $x'+a' \gamma = x+a \gamma$。承诺者知道一种组合，但攻击者无法知道是哪一种。这种性质也被称为"完美隐藏 (perfect hiding)" \cite{adam-zero-to-bulletproofs}。此外，即使是承诺者也不能在不解决 $\gamma$ 的离散对数问题的情况下找到另一种组合，这种性质称为"计算绑定 (computational binding)" \cite{adam-zero-to-bulletproofs}。}如果 $x$ 是真正随机的，攻击者将完全没有方法推断出 $a$ \cite{maxwell-ct, SCOZZAFAVA1993313}。%{https://people.xiph.org/~greg/confidential_values.txt}
 
 
-\section{Amount commitments}
+\section{金额承诺 (Amount commitments)}
 \label{sec:pedersen_monero}
 
-In Monero, output amounts are stored in transactions as Pedersen commitments. We define a commitment to an output’s amount $b$ as:\vspace{.175cm}
+在门罗币中，output 金额以 Pedersen commitment 的形式存储在交易中。我们将对 output 金额 $b$ 的承诺定义为：\vspace{.175cm}
 \[C(y,b) = y G + b H\marginnote{src/ringct/ rctOps.cpp {\tt addKeys2()}}\]
 
-Recipients should be able to know how much money is in each output they own, as well as reconstruct the amount commitments, so they can be used as the inputs to new transactions. This means the blinding factor $y$ and amount $b$ must be communicated to the receiver.
+接收者应该能够知道他们拥有的每个 output 中有多少钱，以及重建金额承诺，以便它们可以作为新交易的 input。这意味着盲因子 $y$ 和金额 $b$ 必须传达给接收者。
 
-The solution adopted is a Diffie-Hellman shared secret $r K_B^v$ using the `transaction public key' (recall Section \ref{sec:multi_out_transactions}). For any given transaction in the blockchain, each of its outputs $t \in \{0, ..., p-1\}$ has a mask $y_t$ that senders and receivers can privately compute, and an {\em amount} stored in the transaction's data. While $y_t$ is an elliptic curve scalar and occupies 32 bytes, $b$ will be restricted to 8 bytes by the range proof so only an 8 byte value needs to be stored.\footnote{As\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ tx\_with\_ tx\_key()} calls {\tt generate\_ output\_ ephemeral\_ keys()}} with the one-time address $K^o$ from Section \ref{sec:one-time-addresses}, the output index $t$ is appended to the shared secret before hashing. This ensures outputs directed to the same address do not have similar masks and {\em amounts}, except with negligible probability. Also like before, the term $r K^v_B$ is multiplied by 8, so it's really $8rK^v_B.$}\footnote{This solution (implemented in v10 of the protocol) replaced a previous method that used more data, thereby causing the transaction type to change from v3 ({\tt RCTTypeBulletproof}) to v4 ({\tt RCTTypeBulletproof2}). The first edition of this report discussed the previous method \cite{ztm-1}.}\marginnote{src/ringct/ rctOps.cpp {\tt ecdh- Encode()}}[.725cm]\vspace{.175cm}%Under construct_tx_with_tx_key, key_amounts is created with the shared secret r K_B^v concatenated with the index by calling generate_output_ephemeral_keys() which then uses derivation_to_scalar(), then ecdhEncode builds the mask and amount when key_amounts is passed to it with the unmasked mask & amount. After update, ecdhHash and xor8 also play a role.
+采用的解决方案是使用 Diffie-Hellman 共享密钥 $r K_B^v$（回顾第 \ref{sec:multi_out_transactions} 节中的"交易公钥"）。对于区块链中的任何给定交易，其每个 output $t \in \{0, ..., p-1\}$ 都有一个掩码 $y_t$（发送者和接收者可以私下计算）和一个存储在交易数据中的{金额}。虽然 $y_t$ 是椭圆曲线标量，占 32 字节，但 $b$ 将被范围证明限制为 8 字节，因此只需要存储一个 8 字节的值。\footnote{与\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ tx\_with\_ tx\_key()} 调用 {\tt generate\_ output\_ ephemeral\_ keys()}}第 \ref{sec:one-time-addresses} 节中的一次性地址 $K^o$ 一样，output 索引 $t$ 在 hash 前被附加到共享密钥中。这确保了发往同一地址的 output 不会有相似的掩码和{金额}，概率可忽略不计。也和之前一样，项 $r K^v_B$ 乘以 8，所以实际上是 $8rK^v_B.$}\footnote{这个解决方案（在协议 v10 中实现）替代了之前使用更多数据的方法，从而导致交易类型从 v3（{\tt RCTTypeBulletproof}）变为 v4（{\tt RCTTypeBulletproof2}）。本报告的第一版讨论了之前的方法 \cite{ztm-1}。}\marginnote{src/ringct/ rctOps.cpp {\tt ecdh- Encode()}}[.725cm]\vspace{.175cm}%Under construct_tx_with_tx_key, key_amounts is created with the shared secret r K_B^v concatenated with the index by calling generate_output_ephemeral_keys() which then uses derivation_to_scalar(), then ecdhEncode builds the mask and amount when key_amounts is passed to it with the unmasked mask & amount. After update, ecdhHash and xor8 also play a role.
 \begin{align*}
   y_t &= \mathcal{H}_n(``commitment\_mask",\mathcal{H}_n(r K_B^v, t)) \\
-  \mathit{amount}_t &= b_t \oplus_8 \mathcal{H}_n(``amount”, \mathcal{H}_n(r K_B^v, t))
+  \mathit{amount}_t &= b_t \oplus_8 \mathcal{H}_n(``amount", \mathcal{H}_n(r K_B^v, t))
 \end{align*}
 
-Here, $\oplus_8$ means to perform an XOR operation (Section \ref{sec:XOR_section}) between the first 8 bytes of each operand ($b_t$ which is already 8 bytes, and $\mathcal{H}_n(...)$ which is 32 bytes). Recipients can perform the same XOR operation on $\mathit{amount}_t$ to reveal $b_t$.
+这里，$\oplus_8$ 表示对每个操作数的前 8 字节执行 XOR 操作（第 \ref{sec:XOR_section} 节）（$b_t$ 已经是 8 字节，$\mathcal{H}_n(...)$ 是 32 字节）。接收者可以对 $\mathit{amount}_t$ 执行相同的 XOR 操作来揭示 $b_t$。
 
-The receiver Bob will be able to calculate the blinding factor $y_t$ and the amount $b_t$ using the transaction public key $r G$ and his view key $k_B^v$. He can also check that the commitment $C(y_t, b_t)$ provided in the transaction data, henceforth denoted $C_t^b$, corresponds to the amount at hand.\\
+接收者 Bob 将能够使用交易公钥 $r G$ 和他的查看密钥 $k_B^v$ 计算盲因子 $y_t$ 和金额 $b_t$。他还可以检查交易数据中提供的承诺 $C(y_t, b_t)$（此后记为 $C_t^b$）是否与手头的金额一致。\\
 
-More generally, any third party with access to Bob’s view key could decrypt his output amounts, and also make sure they agree with their associated commitments.
+更一般地说，任何可以访问 Bob 查看密钥的第三方都可以解密他的 output 金额，还可以确保它们与关联的承诺一致。
 
 
 
-\section{RingCT introduction}
+\section{RingCT 简介 (RingCT introduction)}
 \label{sec:ringct-introduction}
 
-A transaction will contain references to other transactions' outputs (telling observers which old outputs are to be spent), and its own outputs. The content of an output includes a one-time address (assigning ownership of the output) and an output commitment hiding the amount (also the encoded output amount from Section \ref{sec:pedersen_monero}).
+一笔交易将包含对其他交易 output 的引用（告诉观察者哪些旧的 output 将被花费），以及它自己的 output。output 的内容包括一个一次性地址（分配 output 的所有权）和一个隐藏金额的 output 承诺（以及第 \ref{sec:pedersen_monero} 节中的编码 output 金额）。
 
-While a transaction's verifiers don’t know how much money is contained in each input and output, they still need to be sure the sum of input amounts equals the sum of output amounts. Monero uses a technique called RingCT \cite{MRL-0005-ringct}, first implemented in January 2017 (v4 of the protocol), to accomplish this.
+虽然交易的验证者不知道每个 input 和 output 中包含多少钱，但他们仍然需要确保 input 金额之和等于 output 金额之和。门罗币使用一种叫做 RingCT \cite{MRL-0005-ringct} 的技术来实现这一点，该技术于 2017 年 1 月首次实现（协议 v4）。
 
-If we have a transaction with $m$ inputs containing amounts \(a_1, ..., a_m\), and $p$ outputs with amounts \(b_0, ..., b_{p-1}\), then an observer would justifiably expect that:\footnote{If the intended total output amount doesn't precisely equal any combination of owned outputs, then transaction authors can add a `change' output sending extra money back to themselves. By analogy to cash, with a 20\$ bill and 15\$ expense you will receive 5\$ back from the cashier.}\vspace{.175cm}
+如果我们有一笔包含金额 \(a_1, ..., a_m\) 的 $m$ 个 input 的交易，以及金额 \(b_0, ..., b_{p-1}\) 的 $p$ 个 output，那么观察者有理由期望：\footnote{如果预期的 output 总金额不精确等于所拥有的 output 的任何组合，那么交易作者可以添加一个"找零" output 将多余的钱发回给自己。打个比方，用一张 20 美元的钞票支付 15 美元的开销，你会从收银员那里收到 5 美元。}\vspace{.175cm}
 \[\sum_j a_j - \sum_t b_t = 0\]
 
-Since commitments are additive and we don't know $\gamma$, we could easily prove our inputs equal outputs to observers by making the sum of commitments to input and output amounts equal zero (i.e. by setting the sum of output blinding factors equal to the sum of old input blinding factors):\footnote{Recall from Section \ref{elliptic_curves_section} we can subtract a point by inverting its coordinates then adding it. If $P = (x, y)$, $-P = (-x, y)$. Recall also that negations of field elements are calculated$\pmod q$, so $(–x \pmod q)$.}\vspace{.175cm}
+由于承诺是加法的，我们不知道 $\gamma$，我们可以轻松地通过使 input 和 output 金额的承诺之和为零（即通过设置 output 盲因子之和等于旧 input 盲因子之和）来向观察者证明我们的 input 等于 output：\footnote{回忆第 \ref{elliptic_curves_section} 节，我们可以通过反转坐标然后相加来减去一个点。如果 $P = (x, y)$，$-P = (-x, y)$。还请回忆，域元素的取反是计算$\\pmod q$，所以 $(–x \\pmod q)$。}\vspace{.175cm}
 \[\sum_{j}{C_{j, in}} - \sum_{t}{C_{t, out}} = 0\]
 
-To avoid sender identifiability we use a slightly different approach. The amounts being spent correspond to the outputs of previous transactions, which had commitments\vspace{.175cm}
+为了避免发送者可识别性，我们使用一种略有不同的方法。被花费的金额对应于之前交易的 output，这些 output 有承诺\vspace{.175cm}
 \[C^a_{j} = x_j G + a_j H\]
 
-The sender can create new commitments to the same amounts but using different blinding factors; that is,
+发送者可以创建对相同金额但使用不同盲因子的新承诺；即，
 \[C'^a_{j} = x'_j G + a_j H\]
 
-Clearly, she would know the private key of the difference between the two commitments: \vspace{.175cm}
+显然，她会知道两个承诺之差的私钥：\vspace{.175cm}
 \[C^a_{j} - C'^a_{j} = (x_j - x'_j) G\]\\
-Hence, she would be able to use this value as a {\em commitment to zero}, since she can make a signature with the private key $(x_j - x'_j) = z_j$ and prove there is no $H$ component to the sum (assuming $\gamma$ is unknown). In other words prove that $C^a_{j} - C'^a_{j} = z_j G + 0H$, which we will actually do in Chapter \ref{chapter:transactions} when we discuss the structure of RingCT transactions.
+因此，她将能够使用这个值作为{零承诺 (commitment to zero)}，因为私钥 $(x_j - x'_j) = z_j$ 可以用来做签名，从而证明和中没有 $H$ 分量（假设 $\gamma$ 是未知的）。换句话说，证明 $C^a_{j} - C'^a_{j} = z_j G + 0H$，我们在讨论 RingCT 交易结构时将在第 \ref{chapter:transactions} 章中实际执行这一操作。
 
-Let us call $C'^a_j$ a {\em pseudo output commitment}. Pseudo output commitments are included in transaction data, and there is one for each input.
+让我们称 $C'^a_j$ 为{伪 output 承诺 (pseudo output commitment)}。伪 output 承诺包含在交易数据中，每个 input 一个。
 
-Before committing a transaction to the blockchain, the network will want to verify that its amounts balance. Blinding factors for pseudo and output commitments are selected such that\vspace{.175cm}
+在将交易提交到区块链之前，网络将想要验证其金额是平衡的。伪承诺和 output 承诺的盲因子被选择为使得\vspace{.175cm}
 \[\sum_j x'_j  - \sum_t y_t = 0\]
 
-This\marginnote{src/ringct/ rctSigs.cpp verRct- Semantics- Simple()} allows us to prove input amounts equal output amounts:\vspace{.175cm}
+这\marginnote{src/ringct/ rctSigs.cpp verRct- Semantics- Simple()}允许我们证明 input 金额等于 output 金额：\vspace{.175cm}
 \[(\sum_j C'^a_{j} - \sum_t C^b_{t}) = 0\]
 
-Fortunately, choosing such blinding factors is easy. In the current version of Monero, all blinding factors are random except for the $m$\nth pseudo out commitment, where $x'_m$ is simply\marginnote{genRct- Simple()}
+幸运的是，选择这样的盲因子很容易。在当前版本的门罗币中，除了第 $m$ 个伪 output 承诺外，所有盲因子都是随机的，其中 $x'_m$ 简单地是\marginnote{genRct- Simple()}
 \[x'_m = \sum_t y_t - \sum_{j=1}^{m-1} x'_j\]
 
 
 
-\section{Range proofs}
+\section{范围证明 (Range proofs)}
 \label{sec:range_proofs}
 
-One problem with additive commitments is that, if we have commitments $C(a_1)$, $C(a_2)$, $C(b_1)$, and $C(b_2)$ and we intend to use them to prove that $(a_1 + a_2) - (b_1 + b_2) = 0$, then those commitments would still apply if one value in the equation were `negative'.
+加法承诺的一个问题是，如果我们有承诺 $C(a_1)$、$C(a_2)$、$C(b_1)$ 和 $C(b_2)$，并且我们打算用它们来证明 $(a_1 + a_2) - (b_1 + b_2) = 0$，那么如果等式中有一个值是"负的"，这些承诺仍然成立。
 
-For instance, we could have $a_1 = 6$, $a_2 = 5$, $b_1 = 21$, and $b_2 = -10$.\vspace{.175cm}
+例如，我们可以有 $a_1 = 6$、$a_2 = 5$、$b_1 = 21$ 和 $b_2 = -10$。\vspace{.175cm}
 \begin{flalign*}
     && (6 + 5) - (&21 + -10) = 0&\\
      \intertext{\quad \quad \quad \quad \quad where} && 21G + -10G = 21G + (&l-10)G = (l + 11)G = 11G&
 \end{flalign*}
 
-Since $-10 = l-10$, we have effectively created $l$ more Moneroj (over 7.2x10$^{74}$!) than we put in.
+由于 $-10 = l-10$，我们实际上创造了比我们投入的多 $l$ 个门罗币（超过 7.2x10$^{74}$ 个！）。
 
 %Bulletproofs start here
-The solution addressing this issue in Monero is to prove each output amount is in a certain range (from 0 to $2^{64}-1$) using the Bulletproofs proving scheme first described by Benedikt B\"{u}nz {\em et al.} in \cite{Bulletproofs_paper} (and also explained in \cite{adam-zero-to-bulletproofs,dalek-bulletproofs-notes}).\footnote{It's conceivable that with several outputs in a legitimate range, the sum of their amounts could roll over and cause a similar problem. However, when the maximum output is much smaller than $l$ it takes a huge number of outputs for that to happen. For example, if the range is 0-5, and l = 99, then to counterfeit money using an input of 2, we would need $5 + 5 + …. + 5 + 1 = 101 \equiv 2 \pmod{99}$, for 21 total outputs. In Monero $l$ is about 2\^{}189 times bigger than the available range, which means a ridiculous 2\^{}189 outputs to counterfeit money.} Given the involved and intricate nature of Bulletproofs, it is not elucidated in this document. Moreover we feel the cited materials adequately present its concepts.\footnote{Prior to protocol v8 range proofs were accomplished with Borromean ring signatures, which were explained in the first edition of Zero to Monero \cite{ztm-1}.}
+解决门罗币中这个问题的方案是使用 Benedikt B\"{u}nz 等人在 \cite{Bulletproofs_paper} 中首次描述的 Bulletproofs 证明方案（也参见 \cite{adam-zero-to-bulletproofs,dalek-bulletproofs-notes} 中的解释）来证明每个 output 金额在某个范围内（从 0 到 $2^{64}-1$）。\footnote{可以想象，如果几个 output 都在合法范围内，它们金额之和可能会溢出并导致类似的问题。然而，当最大 output 远小于 $l$ 时，需要大量的 output 才会发生这种情况。例如，如果范围是 0-5，l = 99，那么要使用一个输入 2 来伪造货币，我们需要 $5 + 5 + …. + 5 + 1 = 101 \equiv 2 \pmod{99}$，总共需要 21 个 output。在门罗币中 $l$ 大约比可用范围大 2\^{}189 倍，这意味着需要荒谬的 2\^{}189 个 output 才能伪造货币。}鉴于 Bulletproofs 的复杂和精密性质，本文档不对其进行阐述。此外，我们认为引用的材料充分地呈现了其概念。\footnote{在协议 v8 之前，范围证明是通过 Borromean 环签名完成的，在 Zero to Monero 的第一版中有所解释 \cite{ztm-1}。}
 
-The Bulletproof proving algorithm\marginnote{src/ringct/ rctSigs.cpp {\tt proveRange- Bullet- proof()}} takes as input output amounts $b_t$ and commitment masks $y_t$, and outputs all $C^b_t$ and an $n$-tuple aggregate proof $\Pi_{BP} = (A, S, T_1, T_2, \tau_x, \mu, \mathbb{L}, \mathbb{R}, a, b, t)$\footnote{Vectors $\mathbb{L}$ and $\mathbb{R}$ contain $\lceil \textrm{log}_2(64 \cdot p) \rceil$ elements each. $\lceil$ $\rceil$ means the log function is rounded up. Due to their construction, some Bulletproofs use `dummy outputs' as padding to ensure $p$ plus the number of dummy outputs is a power of 2. Those dummy outputs can be generated during verification, and are not stored with the proof data.}\footnote{The variables in a Bulletproof are unrelated to other variables in this document. Symbol overlap is merely coincidental. Note that group elements $A, S, T_1, T_2, \mathbb{L},$ and $\mathbb{R}$ are multiplied by 1/8 before being stored, then multiplied by 8 during verification. This ensures they are all members of the $l$ sub-group (recall Section \ref{elliptic_curves_section}).}. That single proof is used to prove all output amounts are in range at the same time, as aggregating them greatly reduces space requirements (although it does increase the time to verify).\footnote{It turns out multiple separate Bulletproofs can be `batched'\marginnote{rct/ringct/ bulletproofs.cc {\tt bulletproof\_ VERIFY()}} together, which means they are verified simultaneously. Doing so improves how long it takes to verify them, and currently in Monero Bulletproofs are batched on a per-block basis, although there is no theoretical limit to how many can be batched together. Each transaction is only allowed to have one Bulletproof.} The verification algorithm takes as input all $C^b_t$, and $\Pi_{BP}$, and outputs {\tt true} if all committed amounts are in the range 0 to $2^{64} - 1$.
+Bulletproof 证明算法\marginnote{src/ringct/ rctSigs.cpp {\tt proveRange- Bullet- proof()}}以 output 金额 $b_t$ 和承诺掩码 $y_t$ 作为输入，输出所有 $C^b_t$ 和一个 $n$ 元组聚合证明 $\Pi_{BP} = (A, S, T_1, T_2, \tau_x, \mu, \mathbb{L}, \mathbb{R}, a, b, t)$\footnote{向量 $\mathbb{L}$ 和 $\mathbb{R}$ 各包含 $\lceil \textrm{log}_2(64 \cdot p) \rceil$ 个元素。$\lceil$ $\rceil$ 表示 log 函数向上取整。由于它们的构造方式，某些 Bulletproofs 使用"虚拟 output"作为填充，以确保 $p$ 加上虚拟 output 的数量是 2 的幂。这些虚拟 output 可以在验证期间生成，不与证明数据一起存储。}\footnote{Bulletproof 中的变量与本文档中的其他变量无关。符号重叠纯属巧合。注意群元素 $A, S, T_1, T_2, \mathbb{L},$ 和 $\mathbb{R}$ 在存储前乘以 1/8，在验证期间乘以 8。这确保它们都是 $l$ 子群的成员（回顾第 \ref{elliptic_curves_section} 节）。}。该单一证明用于同时证明所有 output 金额在范围内，聚合它们大大减少了空间需求（尽管确实增加了验证时间）。\footnote{实际上，多个单独的 Bulletproofs 可以被一起"批处理"\marginnote{rct/ringct/ bulletproofs.cc {\tt bulletproof\_ VERIFY()}}，这意味着它们被同时验证。这样做改善了验证它们所需的时间，目前在门罗币中 Bulletproofs 是按区块批处理的，尽管理论上批处理多少没有限制。每笔交易只允许有一个 Bulletproof。}验证算法以所有 $C^b_t$ 和 $\Pi_{BP}$ 作为输入，如果所有承诺的金额都在 0 到 $2^{64} - 1$ 的范围内则输出 {\tt true}。
 
-The $n$-tuple $\Pi_{BP}$ occupies $(2 \cdot \lceil \textrm{log}_2(64 \cdot p) \rceil + 9) \cdot 32$ bytes of storage.
+$n$ 元组 $\Pi_{BP}$ 占用 $(2 \cdot \lceil \textrm{log}_2(64 \cdot p) \rceil + 9) \cdot 32$ 字节的存储空间。

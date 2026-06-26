@@ -1,62 +1,58 @@
-\chapter{Monero Ring Confidential Transactions (RingCT)}
+\chapter{门罗币环机密交易 (RingCT) (Monero Ring Confidential Transactions (RingCT))}
 \label{chapter:transactions}
 
-Throughout Chapters \ref{chapter:addresses} and \ref{chapter:pedersen-commitments} we built up several aspects of Monero transactions. At this point a simple one-input, one-output transaction from some unknown author to some unknown recipient sounds like:
+在第 \ref{chapter:addresses} 章和第 \ref{chapter:pedersen-commitments} 章中，我们逐步建立了门罗币交易的多个方面。到目前为止，一个简单的单 input、单 output 的交易——从某个未知作者到某个未知接收者——听起来像这样：
 
-``My transaction uses transaction public key $r G$. I will spend old output $X$ (note that it has a hidden amount $A_X$, committed to in $C_X$). I will give it a pseudo output commitment $C'_X$. I will make one output $Y$, which may be spent by the one-time address $K^o_Y$. It has a hidden amount $A_Y$ committed to in $C_Y$, encrypted for the recipient, and proven in range with a Bulletproofs-style range proof. Please note that $C'_X - C_Y = 0$."
+"我的交易使用交易公钥 $r G$。我将花费旧的 output $X$（注意它有一个隐藏的金额 $A_X$，在 $C_X$ 中做出承诺）。我将给它一个伪 output 承诺 $C'_X$。我将创建一个 output $Y$，可由一次性地址 $K^o_Y$ 花费。它有一个隐藏的金额 $A_Y$ 在 $C_Y$ 中做出承诺，为接收者加密，并通过 Bulletproofs 风格的范围证明证明在范围内。请注意 $C'_X - C_Y = 0$。"
 
-Some questions remain. Did the author actually own $X$? Does the pseudo output commitment $C'_X$ actually correspond to $C_X$, such that $A_X = A'_X = A_Y$? Has someone tampered with the transaction, and perhaps directed the output at a recipient unintended by the original author?
-\\
+还有一些问题。作者是否真的拥有 $X$？伪 output 承诺 $C'_X$ 是否真的对应于 $C_X$，使得 $A_X = A'_X = A_Y$？是否有人篡改了交易，也许将 output 指向了原始作者未打算的接收者？\\
 
-As mentioned in Section \ref{sec:one-time-addresses}, we can prove ownership of an output by signing a message with its one-time address (whoever has the address's key owns the output). We can also prove it has the same amount as a pseudo output commitment by proving knowledge of the commitment to zero's private key ($C_X - C'_X = z_X G$). Moreover, if that message is {\em all the transaction data} (except the signature itself), then verifiers can be assured everything is as the author intended (the signature only works with the original message). MLSAG signatures allow us to do all of this while also obscuring the actual spent output amongst other outputs from the blockchain, so observers can't be sure which one is being spent.
-
+如第 \ref{sec:one-time-addresses} 节所述，我们可以通过使用一次性地址签名消息来证明对 output 的所有权（谁拥有该地址的密钥就拥有该 output）。我们还可以通过证明对零承诺的私钥的知识来证明它与伪 output 承诺有相同的金额（$C_X - C'_X = z_X G$）。此外，如果该消息是{所有交易数据}（签名本身除外），那么验证者可以确信一切都是按作者的意图（签名只对原始消息有效）。MLSAG 签名允许我们做到所有这些，同时还将实际花费的 output 混入区块链中的其他 output 中，这样观察者就无法确定正在花费的是哪一个。
 
 
-\section{Transaction types}
+
+\section{交易类型 (Transaction types)}
 \label{sec:transaction_types}
 
-Monero\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ tx\_with\_ tx\_key()}} is a cryptocurrency under steady development. Transaction structures, protocols, and cryptographic schemes are always prone to evolving as new innovations, objectives, or threats are found.
+门罗币\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ tx\_with\_ tx\_key()}}是一种持续发展中的加密货币。交易结构、协议和密码方案总是会随着新的创新、目标或威胁的发现而演变。
 
-In this report we have focused our attention on {\em Ring Confidential Transactions}, a.k.a. {\em RingCT}, as they are implemented in the current version of Monero. RingCT is mandatory for all new Monero transactions, so we will not describe any deprecated transaction schemes, even if they are still partially supported.\footnote{RingCT was first implemented in January 2017 (v4 of the protocol). It was made mandatory for all new transactions in September 2017 (v6 of the protocol) \cite{ringct-dates}. RingCT is version 2 of Monero's transaction protocol.} The transaction type we have discussed so far, and which will be further elaborated in this chapter, is {\tt RCTTypeBulletproof2}.\footnote{Within the RingCT era there are three deprecated transaction types: {\tt RCTTypeFull}, {\tt RCTTypeSimple}, and {\tt RCTTypeBulletproof}. The former two coexisted in the first iteration of RingCT and are explored in the first edition of this report \cite{ztm-1}, then with the advent of Bulletproofs (protocol v8) {\tt RCTTypeFull} was deprecated, and {\tt RCTTypeSimple} was upgraded to {\tt RCTTypeBulletproof}. {\tt RCTTypeBulletproof2} arrived due to a minor improvement in encrypting output commitments' masks and amounts (v10).}
+在本报告中，我们将注意力集中在{环机密交易 (Ring Confidential Transactions)}，即 {RingCT}，因为它们是在当前版本的门罗币中实现的。RingCT 对所有新的门罗币交易都是强制性的，因此我们不会描述任何已弃用的交易方案，即使它们仍然被部分支持。\footnote{RingCT 于 2017 年 1 月首次实现（协议 v4）。它在 2017 年 9 月（协议 v6）被强制要求用于所有新交易 \cite{ringct-dates}。RingCT 是门罗币交易协议的第 2 版。}我们到目前为止讨论的交易类型，以及将在本章中进一步详细说明的，是 {\tt RCTTypeBulletproof2}。\footnote{在 RingCT 时代有三种已弃用的交易类型：{\tt RCTTypeFull}、{\tt RCTTypeSimple} 和 {\tt RCTTypeBulletproof}。前两种在 RingCT 的第一次迭代中并存，本报告的第一版 \cite{ztm-1} 中有探讨，然后随着 Bulletproofs 的出现（协议 v8）{\tt RCTTypeFull} 被弃用，{\tt RCTTypeSimple} 被升级为 {\tt RCTTypeBulletproof}。{\tt RCTTypeBulletproof2} 由于对 output 承诺的掩码和金额进行加密的小改进（v10）而到来。}
 
-We present a conceptual summary of transactions in Section \ref{sec:transaction_summary}.
+我们在第 \ref{sec:transaction_summary} 节中给出交易的概念性总结。
 
 
 
-\section{Ring Confidential Transactions of type {\tt RCTTypeBulletproof2}}
+\section{类型为 {\tt RCTTypeBulletproof2} 的环机密交易 (Ring Confidential Transactions of type {\tt RCTTypeBulletproof2})}
 \label{sec:RCTTypeBulletproof2}
 
-Currently (protocol v12) all new transactions must use this transaction type, in which each input is signed separately. An actual example of an {\tt RCTTypeBulletproof2} transaction, with all its components, can be inspected in Appendix \ref{appendix:RCTTypeBulletproof2}.
+目前（协议 v12）所有新交易都必须使用这种交易类型，其中每个 input 是单独签名的。一个 {\tt RCTTypeBulletproof2} 交易的实际示例，包含所有组件，可以在附录 \ref{appendix:RCTTypeBulletproof2} 中查看。
 
 
-\subsection{Amount commitments and transaction fees}
+\subsection{金额承诺与交易手续费 (Amount commitments and transaction fees)}
 \label{sec:commitments-and-fees}
 
-Assume a transaction sender has previously received various outputs with amounts $a_1, ..., a_m$ addressed to one-time addresses $K^o_{\pi,1}, ..., K^o_{\pi,m}$ and with amount commitments $C^a_{\pi,1}, ..., C^a_{\pi,m}$.
+假设一个交易发送者之前收到了各种 output，金额为 $a_1, ..., a_m$，地址为一次性地址 $K^o_{\pi,1}, ..., K^o_{\pi,m}$，金额承诺为 $C^a_{\pi,1}, ..., C^a_{\pi,m}$。
 
-This sender knows the private keys $k^o_{\pi,1}, ..., k^o_{\pi,m}$ corresponding to the one-time addresses (Section \ref{sec:one-time-addresses}). The sender also knows the blinding factors $x_j$ used in commitments $C^a_{\pi,j}$ (Section \ref{sec:pedersen_monero}).
+该发送者知道对应于一次性地址的私钥 $k^o_{\pi,1}, ..., k^o_{\pi,m}$（第 \ref{sec:one-time-addresses} 节）。发送者还知道承诺 $C^a_{\pi,j}$ 中使用的盲因子 $x_j$（第 \ref{sec:pedersen_monero} 节）。
 
-Typically transaction outputs are {\em lower} in total than transaction inputs, in order to provide a fee that will incentivize miners to include the transaction in the blockchain.\footnote{In Monero there is a minimum base fee that scales with transaction weight. It is semi-mandatory because while you can create new blocks containing tiny-fee transactions, most Monero nodes won't relay such transactions to other nodes. The result is few if any miners will try to include them in blocks. Transaction authors can provide miner fees above the minimum if they want. We go into more detail on this in Section \ref{subsec:dynamic-minimum-fee}.} Transaction fee amounts $f$ are stored in clear text in the transaction data transmitted to the network. Miners can create an additional output for themselves with the fee (see Section \ref{subsec:miner-transaction}).
+通常，交易 output 的总额{低于}交易 input，以提供手续费来激励矿工将交易纳入区块链。\footnote{在门罗币中，有一个最低基础手续费，按交易权重缩放。它是半强制性的，因为虽然你可以创建包含微小手续费交易的新区块，但大多数门罗币节点不会将此类交易转发给其他节点。结果是很少有矿工会尝试将它们纳入区块。如果交易作者愿意，可以提供高于最低值的矿工手续费。我们在第 \ref{subsec:dynamic-minimum-fee} 节中对此进行了更详细的讨论。}交易手续费金额 $f$ 以明文存储在发送给网络的交易数据中。矿工可以为自己创建一个额外的 output 来收取手续费（见第 \ref{subsec:miner-transaction} 节）。
 
-A transaction consists of inputs \(a_1, ..., a_m\) and outputs \(b_0, ..., b_{p-1}\) such that \(\sum\limits_{j=1}^m a_j - \sum\limits_{t=0}^{p-1} b_t - f = 0\).\footnote{Outputs\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ tx\_with\_ tx\_key()}}[-1.9cm] are randomly shuffled by the core implementation before getting assigned an index, so observers can't build heuristics around their order. Inputs are sorted by key image within transaction data.}
+一笔交易由 input \(a_1, ..., a_m\) 和 output \(b_0, ..., b_{p-1}\) 组成，使得 \(\sum\limits_{j=1}^m a_j - \sum\limits_{t=0}^{p-1} b_t - f = 0\)。\footnote{Output\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ tx\_with\_ tx\_key()}}[-1.9cm] 在被分配索引之前由核心实现随机打乱，因此观察者无法围绕其顺序建立启发式规则。Input 在交易数据中按 key image 排序。}
 
-The sender calculates pseudo output commitments for the input amounts, $C'^a_{\pi,1}, ..., C'^a_{\pi,m}$, and creates commitments for intended output amounts $b_0, ..., b_{p-1}$. Let these new commitments be $C^b_0, ..., C^b_{p-1}$.
+发送者为 input 金额计算伪 output 承诺 $C'^a_{\pi,1}, ..., C'^a_{\pi,m}$，并为预期的 output 金额 $b_0, ..., b_{p-1}$ 创建承诺。设这些新承诺为 $C^b_0, ..., C^b_{p-1}$。
 
-He knows the private keys $z_1,...,z_m$ to the commitments to zero $(C^a_{\pi,1} - C'^a_{\pi,1}),...,(C^a_{\pi,m} - C'^a_{\pi,m})$.
+他知道零承诺 $(C^a_{\pi,1} - C'^a_{\pi,1}),...,(C^a_{\pi,m} - C'^a_{\pi,m})$ 的私钥 $z_1,...,z_m$。
 
-For verifiers to confirm transaction amounts sum to zero, the fee amount must be converted into a commitment. The solution is to calculate the commitment of the fee $f$ without the masking effect of any blinding factor. That is, $C(f) = f H$.
+为了让验证者确认交易金额之和为零，手续费金额必须转换为承诺。解决方案是在没有任何盲因子的掩蔽效果下计算手续费 $f$ 的承诺。即 $C(f) = f H$。
 
-Now\marginnote{src/ringct/ rctSigs.cpp verRct- Semantics- Simple()} we can prove input amounts equal output amounts:\\
+现在\marginnote{src/ringct/ rctSigs.cpp verRct- Semantics- Simple()}我们可以证明 input 金额等于 output 金额：\\
 \[(\sum_j C'^a_{j} - \sum_t C^b_{t}) - f H = 0\]
 
 
-\subsection{Signature}
+\subsection{签名 (Signature)}
 \label{full-signature}
 
-The sender selects $m$ sets of size $v$, of additional unrelated one-time addresses and their commitments from the blockchain, corresponding to apparently unspent outputs.\footnote{\label{input-selection}In Monero it is standard for the sets\marginnote{src/wallet/ wallet2.cpp {\tt get\_outs()}} of `additional unrelated addresses' to be selected from a gamma\marginnote{{\tt gamma\_picker ::pick()}}[1.2cm] distribution across the range of historical outputs (RingCT outputs only, a triangle distribution is used for pre-RingCT outputs). This method uses a binning procedure to smooth out differences in block densities. First calculate the average time between transaction outputs over up to a year ago of RingCT outputs (avg time = [\#outputs/\#blocks]*blocktime). Select an output via the gamma distribution, then look inside its block and grab a random output to be a member of the set. \cite{AnalysisOfLinkability}}\footnote{As of protocol v12, all transaction inputs must be at least 10 blocks old ({\tt CRYPTONOTE\_DEFAULT\_TX \_SPENDABLE\_AGE}). Prior to v12 the core implementation used 10 blocks by default, but it was not required so an alternate wallet could make different choices, and some apparently did \cite{visualizing-monero-vid}.} To sign input $j$, she stirs a set of size $v$ into a {\em ring} with her own $j$\nth unspent one-time address (placed at unique index $\pi$), along with false commitments to zero, as follows:\footnote{In Monero each of a transaction's rings must have the same size, and the protocol controls how many ring members there can be per output-to-be-spent. It has changed with different protocol versions: v2 March 2016 $\geq$ 3, v6 Sept. 2017 $\geq$ 5, v7 April 2018 $\geq$ 7, v8 Oct. 2018 11-only. Since\marginnote{src/crypto- note\_core/ cryptonote\_ core.cpp {\tt check\_ tx\_inputs\_ ring\_members\_ diff()}} v6 each individual ring can not contain duplicate members, though there may be duplicates between rings to allow multiple inputs when there are insufficient total outputs in the transaction history (i.e. to assemble rings without cross-over) \cite{duplicate-ring-members}.}
-%functions get_random_rct_outs for rct outputs mixed into an rct spend, and get_random_outputs for pre-rct outputs mixed into a pre-rct spend. These are only used for light wallets -> instead it is wallet2::get_outs for most situations.
-%--ring member selection changing to gamma distribution in fall 2018
-%CRYPTONOTE_DEFAULT_TX_SPENDABLE_AGE = 10 blocks
+发送者从区块链中选择 $m$ 组、每组 $v$ 个额外的不相关一次性地址及其承诺，对应于看似未花费的 output。\footnote{\label{input-selection}在门罗币中，"额外不相关地址"的集合\marginnote{src/wallet/ wallet2.cpp {\tt get\_outs()}}通常从 Gamma\marginnote{{\tt gamma\_picker ::pick()}}[1.2cm] 分布中选择，覆盖历史 output 的范围（仅限 RingCT output，对于 pre-RingCT output 使用三角分布）。此方法使用分箱程序来平滑区块密度的差异。首先计算 RingCT output 过去一年内的平均每区块 output 数量（平均时间 = [\#outputs/\#blocks]*blocktime）。通过 Gamma 分布选择一个 output，然后在其区块内查找并抓取一个随机 output 作为集合成员。\cite{AnalysisOfLinkability}}\footnote{从协议 v12 起，所有交易 input 必须至少有 10 个区块的确认时间（{\tt CRYPTONOTE\_DEFAULT\_TX \_SPENDABLE\_AGE}）。在 v12 之前，核心实现默认使用 10 个区块，但不是强制要求，因此替代钱包可以做出不同选择，有些确实这样做了 \cite{visualizing-monero-vid}。}要签名 input $j$，她将一个 $v$ 大小的集合搅入一个{环 (ring)}中，同时加入她自己第 $j$ 个未花费的一次性地址（放在唯一索引 $\pi$ 处），以及虚假的零承诺，如下：\footnote{在门罗币中，每笔交易的每个环必须具有相同的大小，协议控制每个待花费 output 可以有多少环成员。它随不同的协议版本而改变：v2 2016 年 3 月 $\geq$ 3，v6 2017 年 9 月 $\geq$ 5，v7 2018 年 4 月 $\geq$ 7，v8 2018 年 10 月仅 11。自\marginnote{src/crypto- note\_core/ cryptonote\_ core.cpp {\tt check\_ tx\_inputs\_ ring\_members\_ diff()}} v6 起，每个单独的环不能包含重复成员，但环之间可能存在重复以允许多个 input...
 
 \begin{align*}
     \mathcal{R}_j = \{&\{K^o_{1, j}, (C_{1, j} - C'^a_{\pi, j})\}, \\
@@ -66,100 +62,100 @@ The sender selects $m$ sets of size $v$, of additional unrelated one-time addres
     &\{ K^o_{v+1, j}, (C_{v+1, j} - C'^a_{\pi, j})\}\}
 \end{align*}
 
-Alice\marginnote{src/ringct/ rctSigs.cpp proveRct- MGSimple()} uses an MLSAG signature (Section \ref{sec:MLSAG}) to sign this ring, where she knows the private keys $k^o_{\pi,j}$ for $K^o_{\pi,j}$, and $z_j$ for the commitment to zero $(C^a_{\pi,j}$ - $C'^a_{\pi,j})$. Since no key image is needed for the commitments to zero, there is consequently no corresponding key image component in the signature’s construction.\footnote{Building and verifying the signature excludes the term $r_{i,2} \mathcal{H}_p(C_{i, j} - C'^a_{\pi, j}) + c_i \tilde{K}_{z_j}$.}
+Alice\marginnote{src/ringct/ rctSigs.cpp proveRct- MGSimple()}使用 MLSAG 签名（第 \ref{sec:MLSAG} 节）来签名这个环，她知道 $K^o_{\pi,j}$ 的私钥 $k^o_{\pi,j}$，以及零承诺 $(C^a_{\pi,j}$ - $C'^a_{\pi,j})$ 的私钥 $z_j$。由于零承诺不需要 key image，因此签名的构造中也没有相应的 key image 分量。\footnote{构建和验证签名时排除项 $r_{i,2} \mathcal{H}_p(C_{i, j} - C'^a_{\pi, j}) + c_i \tilde{K}_{z_j}$。}
 
-Each input in a transaction is signed individually using rings like \(\mathcal{R}_j\) as defined above, thereby obscuring the real outputs being spent, ($K^o_{\pi,1},...,K^o_{\pi,m}$), amongst other unspent outputs.\footnote{The advantage of signing inputs individually is that the set of real inputs and commitments to zero need not be placed at the same index $\pi$, as they would be in the aggregated case. This means even if one input's origin becomes identifiable, the other inputs' origins would not. The old transaction type {\tt RCTTypeFull} used aggregated ring signatures, combining all rings into one, and as we understand it was deprecated for that reason.} Since part of each ring includes a commitment to zero, the pseudo output commitment used must contain an amount equal to the real input being spent. This ties input amounts to the proof that amounts balance, without compromising which ring member is the real input.
+交易中的每个 input 都使用如上定义的 \(\\mathcal{R}_j\) 等环单独签名，从而将实际花费的 output（$K^o_{\pi,1},...,K^o_{\pi,m}$）隐藏在其他未花费的 output 中。\footnote{单独签名 input 的优势在于，真实 input 和零承诺的集合不必放在相同的索引 $\pi$ 处，而在聚合的情况下则需要如此。这意味着即使一个 input 的来源变得可识别，其他 input 的来源也不会。旧的交易类型 {\tt RCTTypeFull} 使用聚合环签名，将所有环合并为一个，据我们了解正是因此而被弃用。}由于每个环的部分包含一个零承诺，因此使用的伪 output 承诺必须包含与实际花费的 input 相等的金额。这将 input 金额与金额平衡的证明绑定在一起，而不会泄露哪个环成员是真正的 input。
 
-The message $\mathfrak{m}$ signed by each input is essentially a hash of all transaction data {\em except} for the MLSAG signatures.\footnote{The\marginnote{src/ringct/ rctSigs.cpp {\tt get\_pre\_ mlsag\_hash()}} actual message is $\mathfrak{m} = \mathcal{H}(\mathcal{H}(tx\textunderscore prefix),\mathcal{H}(ss),\mathcal{H}(\text{range proofs}))$ where:\par
-$tx\textunderscore prefix = $\{transaction era version (i.e. RingCT = 2), inputs \{ring member key offsets, key images\}, outputs \{one-time addresses\}, extra \{transaction public key, payment ID or encoded payment ID, misc.\}\}\par
-$ss = $\{transaction type ({\tt RCTTypeBulletproof2} = `4'), transaction fee, pseudo output commitments for inputs, ecdhInfo (encrypted amounts), output commitments\}.\par
-See Appendix \ref{appendix:RCTTypeBulletproof2} regarding this terminology.} This ensures transactions are tamper-proof from the perspective of both transaction authors and verifiers. Only one message is produced, and each input MLSAG signs it.
+每个 input 签名的消息 $\mathfrak{m}$ 本质上是所有交易数据的 hash，{不包括} MLSAG 签名。\footnote{实际\marginnote{src/ringct/ rctSigs.cpp {\tt get\_pre\_ mlsag\_hash()}}消息是 $\mathfrak{m} = \mathcal{H}(\mathcal{H}(tx\textunderscore prefix),\mathcal{H}(ss),\mathcal{H}(\text{range proofs}))$，其中：\par
+$tx\textunderscore prefix = $\{交易时代版本（即 RingCT = 2），input \{环成员 key 偏移，key image\}，output \{一次性地址\}，extra \{交易公钥，支付 ID 或编码支付 ID，杂项。\}\}\par
+$ss = $\{交易类型（{\tt RCTTypeBulletproof2} = '4'），交易手续费，input 的伪 output 承诺，ecdhInfo（加密金额），output 承诺\}。\par
+参见附录 \ref{appendix:RCTTypeBulletproof2} 关于此术语。}这确保了从交易作者和验证者的角度来看，交易是防篡改的。只产生一个消息，每个 input 的 MLSAG 都签名它。
 
-One-time private key $k^o$ is the essence of Monero's transaction model. Signing $\mathfrak{m}$ with $k^o$ proves you are the owner of the amount committed to in $C^a$. Verifiers can be confident that transaction authors are spending their own funds, without even knowing which funds are being spent, how much is being spent, or what other funds they might own!
-
-
-\subsection{Avoiding double-spending}
-
-An\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt have\_tx\_ keyimges\_ as\_spent()}} MLSAG signature (Section \ref{sec:MLSAG}) contains images \(\tilde{K}_{j}\) of private keys \(k_{\pi, j}\). An important property for any cryptographic signature scheme is that it should be unforgeable with non-negligible probability. Therefore, to all practical effects, we can assume a signature’s key images must have been deterministically produced from legitimate private keys.
-
-The network only needs to verify that key images included with MLSAG signatures (corresponding to inputs and calculated as $\tilde{K}^o_{j} = k^o_{\pi,j} \mathcal{H}_p(K^o_{\pi,j})$) have not appeared before in other transactions.\footnote{Verifiers must also check the key image is a member of the generator's subgroup (recall Section \ref{blsag_note}).} If they have, then we can be sure we are witnessing an attempt to re-spend an output $(C^a_{\pi,j}, K_{\pi,j}^o)$.
+一次性私钥 $k^o$ 是门罗币交易模型的本质。用 $k^o$ 签名 $\mathfrak{m}$ 证明你是 $C^a$ 中承诺的金额的所有者。验证者可以确信交易作者在花费自己的资金，而甚至不知道在花费哪笔资金、花了多少，或者他们还拥有什么其他资金！
 
 
-\subsection{Space requirements}
+\subsection{避免双花 (Avoiding double-spending)}
+
+一个\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt have\_tx\_ keyimges\_ as\_spent()}} MLSAG 签名（第 \ref{sec:MLSAG} 节）包含私钥 \(k_{\pi, j}\) 的像 \(\\tilde{K}_{j}\)。任何密码签名方案的一个重要性质是它应该是不可伪造的，概率不可忽略。因此，在所有实际效果中，我们可以假设签名的 key image 必须是由合法私钥确定性产生的。
+
+网络只需验证 MLSAG 签名中包含的 key image（对应于 input，计算为 $\tilde{K}^o_{j} = k^o_{\pi,j} \mathcal{H}_p(K^o_{\pi,j})$）没有在其他交易中出现过。\footnote{验证者还必须检查 key image 是否是生成元子群的成员（回顾第 \ref{blsag_note} 节）。}如果出现过，那么我们可以确信我们正在目睹一个重新花费 output $(C^a_{\pi,j}, K_{\pi,j}^o)$ 的企图。
+
+
+\subsection{空间需求 (Space requirements)}
 \label{subsec:space-and-ver-rcttypefull}
 
-\subsubsection*{MLSAG signature (inputs)}
+\subsubsection*{MLSAG 签名（input）}
 
-From Section \ref{sec:MLSAG} we recall that an MLSAG signature in this context would be expressed as
+从第 \ref{sec:MLSAG} 节我们回顾，在此上下文中的 MLSAG 签名可以表示为
 
 \hfill \(\sigma_j(\mathfrak{m}) = (c_1, r_{1, 1}, r_{1, 2}, ..., r_{v+1, 1}, r_{v+1, 2}) \textrm{ with } \tilde{K}^o_j \) \hfill \phantom{.}
 
-As a legacy of CryptoNote, the values \(\tilde{K}^o_j\) are not referred to as part of the signature, but rather as {\em images} of the private keys $k^o_{\pi,j}$. These {\em key images} are normally stored separately in the transaction structure, as they are used to detect double-spending attacks.
+作为 CryptoNote 的遗留问题，值 \(\tilde{K}^o_j\) 不被称为签名的一部分，而是私钥 $k^o_{\pi,j}$ 的{像 (images)}。这些{key image} 通常在交易结构中单独存储，因为它们用于检测双花攻击。
 
-With this in mind and assuming point compression (Section \ref{point_compression_section}), since each ring \(\mathcal{R}_j\) contains \((v+1) \cdot 2\) keys, an input signature $\sigma_j$ will require \( (2(v+1) + 1) \cdot 32  \) bytes. On top of this, the key image $\tilde{K}^o_{\pi,j}$ and the pseudo output commitment $C'^a_{\pi,j}$ leave a total of $(2(v+1)+3) \cdot 32$ bytes per input.
+考虑到这一点并假设点压缩（第 \ref{point_compression_section} 节），由于每个环 \(\mathcal{R}_j\) 包含 \((v+1) \cdot 2\) 个密钥，一个 input 签名 $\sigma_j$ 将需要 \( (2(v+1) + 1) \cdot 32  \) 字节。除此之外，key image $\tilde{K}^o_{\pi,j}$ 和伪 output 承诺 $C'^a_{\pi,j}$ 总共留下 $(2(v+1)+3) \cdot 32$ 字节 per input。
 
-To this value we would need additional space to store the ring member offsets in the blockchain (see Appendix \ref{appendix:RCTTypeBulletproof2}). These offsets are used by verifiers to find each MLSAG signature's ring members' output keys and commitments in the blockchain, and are stored as variable length integers, hence we can not exactly quantify the space needed.\footnote{See \cite{varint-description} or \cite{varint-spec} for an explanation of Monero's varint data type\marginnote{src/common/ varint.h}. It is an integer type that uses up to 9 bytes, and stores up to 63 bits of information.}\footnote{Imagine\marginnote{src/crypto- note\_basic/ cryptonote\_ format\_ utils.cpp {\tt absolute\_out- put\_offsets\_ to\_relative()}} the blockchain contains a long list of transaction outputs. We report the indices of outputs we want to use in rings. Now, bigger indexes require more storage space. We just need the `absolute' position of {\em one} index from each ring, and the `relative' positions of the other ring members' indices. For example, with real indices \{7,11,15,20\} we just need to report \{7,4,4,5\}. Verifiers can compute the last index with (7+4+4+5 = 20). Ring members are organized in ascending order of blockchain index within rings.}\footnote{A transaction with 10 inputs using rings with 11 total members will need \(((11 \cdot 2 + 3) \cdot 32) \cdot 10 = 8000 \) bytes for its inputs, with around 110 to 330 bytes for the offsets (there are 110 ring members).}%src/cryptonote_basic/cryptonote_format_utils.cpp absolute_output_offsets_to_relative
+对于这个值，我们还需要额外的空间来存储区块链中的环成员偏移量（参见附录 \ref{appendix:RCTTypeBulletproof2}）。这些偏移量被验证者用来在区块链中找到每个 MLSAG 签名的环成员的 output 密钥和承诺，并以可变长度整数存储，因此我们无法精确量化所需的空间。\footnote{参见 \cite{varint-description} 或 \cite{varint-spec} 了解门罗币的 varint 数据类型\marginnote{src/common/ varint.h}。它是一种最多使用 9 字节的整数类型，最多可存储 63 位信息。}\footnote{假设\marginnote{src/crypto- note\_basic/ cryptonote\_ format\_ utils.cpp {\tt absolute\_out- put\_offsets\_ to\_relative()}}区块链包含一个长长的交易 output 列表。我们报告想要在环中使用的 output 的索引。现在，更大的索引需要更多的存储空间。我们只需要从每个环中报告{一个}索引的"绝对"位置，以及其他环成员索引的"相对"位置。例如，对于真实索引 \{7,11,15,20\}，我们只需要报告 \{7,4,4,5\}。验证者可以用 (7+4+4+5 = 20) 计算最后一个索引。环成员在环内按区块链索引升序排列。}\footnote{使用 11 个总成员的环和 10 个 input 的交易将需要 \(((11 \cdot 2 + 3) \cdot 32) \cdot 10 = 8000 \) 字节来存储其 input，大约 110 到 330 字节用于偏移量（有 110 个环成员）。}%src/cryptonote_basic/cryptonote_format_utils.cpp absolute_output_offsets_to_relative
 
-Verifying\marginnote{src/ringct/ rctSigs.cpp verRctMG- Simple() verRct- Semantics- Simple()}[-1cm] all of an {\tt RCTTypeBulletproof2} transaction's MLSAGs includes the computation of \( (C_{i, j} - C'^a_{\pi, j}) \) and \( (\sum_j C'^a_{j} \stackrel{?}{=} \sum_t C^b_{t} + f H)\), and verifying key images are in $G$'s subgroup with $l \tilde{K} \stackrel{?}{=} 0$.
+验证\marginnote{src/ringct/ rctSigs.cpp verRctMG- Simple() verRct- Semantics- Simple()}[-1cm]一笔 {\tt RCTTypeBulletproof2} 交易的所有 MLSAG 包括计算 \( (C_{i, j} - C'^a_{\pi, j}) \) 和 \( (\sum_j C'^a_{j} \stackrel{?}{=} \sum_t C^b_{t} + f H)\)，以及验证 key image 在 $G$ 的子群中，即 $l \tilde{K} \stackrel{?}{=} 0$。
 
-\subsubsection*{Range proofs (outputs)}
+\subsubsection*{范围证明（output）}
 
-An\marginnote{src/ringct/ bullet- proofs.cpp {\tt bullet- proof\_ VERIFY()}} aggregate Bulletproof range proof will require $(2 \cdot \lceil \textrm{log}_2(64 \cdot p) \rceil + 9) \cdot 32$ total bytes.
+一个\marginnote{src/ringct/ bullet- proofs.cpp {\tt bullet- proof\_ VERIFY()}}聚合 Bulletproof 范围证明将需要 $(2 \cdot \lceil \textrm{log}_2(64 \cdot p) \rceil + 9) \cdot 32$ 字节的总存储空间。
 
 
 
 \newpage
-\section{Concept summary: Monero transactions}
+\section{概念总结：门罗币交易 (Concept summary: Monero transactions)}
 \label{sec:transaction_summary}
 
-To summarize this chapter, and the previous two chapters, we present the main content of a transaction, organized for conceptual clarity. A real example can be found in Appendix \ref{appendix:RCTTypeBulletproof2}.
+为了总结本章以及前两章，我们以概念清晰的方式呈现交易的主要内容。真实示例可以在附录 \ref{appendix:RCTTypeBulletproof2} 中找到。
 
 \begin{itemize}
-    \item \underline{Type}: `0' is {\tt RCTTypeNull} (for miners), `4' is {\tt RCTTypeBulletproof2} %see chapter 7, blockchain, about type 0 transactions
-    \item \underline{Inputs}: for each input $j \in \{1,...,m\}$ spent by the transaction author
+    \item \underline{类型 (Type)}：`0' 是 {\tt RCTTypeNull}（用于矿工），`4' 是 {\tt RCTTypeBulletproof2} %see chapter 7, blockchain, about type 0 transactions
+    \item \underline{Input}：对于交易作者花费的每个 input $j \in \{1,...,m\}$
     \begin{itemize}
-        \item \textbf{Ring member offsets}: a list of `offsets' indicating where a verifier can find input $j$'s ring members $i \in \{1,...,v+1\}$ in the blockchain (includes the real input)
-        \item \textbf{MLSAG Signature}: $\sigma_j$ terms $c_1$, and $r_{i,1}$ \& $r_{i,2}$ for $i \in \{1,...,v+1\}$
-        \item \textbf{Key image}: the key image $\tilde{K}^{o,a}_j$ for input $j$
-        \item \textbf{Pseudo output commitment}: $C'^{a}_j$ for input $j$
+        \item \textbf{环成员偏移量 (Ring member offsets)}：一个"偏移量"列表，指示验证者可以在区块链中找到 input $j$ 的环成员 $i \in \{1,...,v+1\}$（包括真实 input）
+        \item \textbf{MLSAG 签名}：$\sigma_j$ 项 $c_1$，以及 $i \in \{1,...,v+1\}$ 的 $r_{i,1}$ \& $r_{i,2}$
+        \item \textbf{Key image}：input $j$ 的 key image $\tilde{K}^{o,a}_j$
+        \item \textbf{伪 output 承诺 (Pseudo output commitment)}：input $j$ 的 $C'^{a}_j$
     \end{itemize}
     
-    \item \underline{Outputs}: for each output $t \in \{0,...,p-1\}$ to address or subaddress $(K^v_t,K^s_t)$
+    \item \underline{Output}：对于发往地址或子地址 $(K^v_t,K^s_t)$ 的每个 output $t \in \{0,...,p-1\}$
     \begin{itemize}
-        \item \textbf{One-time address}: $K^{o,b}_t$ for output $t$
-        \item \textbf{Output commitment}: $C^{b}_t$ for output $t$
-        \item \textbf{Encoded amount}: so output owners can compute $b_t$ for output $t$
+        \item \textbf{一次性地址 (One-time address)}：output $t$ 的 $K^{o,b}_t$
+        \item \textbf{Output 承诺}：output $t$ 的 $C^{b}_t$
+        \item \textbf{编码金额 (Encoded amount)}：以便 output 所有者可以计算 output $t$ 的 $b_t$
         \begin{itemize}
-            \item \textit{Amount}: $b_t \oplus_8 \mathcal{H}_n(``amount”, \mathcal{H}_n(r K_B^v, t))$
+            \item \textit{金额 (Amount)}：$b_t \oplus_8 \mathcal{H}_n(``amount", \mathcal{H}_n(r K_B^v, t))$
         \end{itemize}
-        \item \textbf{Range proof}: an aggregate Bulletproof for all output amounts $b_t$
+        \item \textbf{范围证明 (Range proof)}：所有 output 金额 $b_t$ 的聚合 Bulletproof
         \begin{itemize}
-            \item \textit{Proof}: $\Pi_{BP} = (A, S, T_1, T_2, \tau_x, \mu, \mathbb{L}, \mathbb{R}, a, b, t)$
+            \item \textit{证明 (Proof)}：$\Pi_{BP} = (A, S, T_1, T_2, \tau_x, \mu, \mathbb{L}, \mathbb{R}, a, b, t)$
         \end{itemize}
     \end{itemize}
-    \item \underline{Transaction fee}: communicated in clear text multiplied by $10^{12}$ (i.e. atomic units, see Section \ref{subsec:block-reward}), so a fee of 1.0 would be recorded as 1000000000000
-    \item \underline{Extra}: includes the transaction public key $r G$, or, if at least one output is directed to a subaddress, $r_t K^{s,i}_t$ for each subaddress'd output $t$ and $r_t G$ for each normal address'd output $t$, and maybe an encoded payment ID (should be at most one per transaction)\footnote{No information stored in the `extra' field is verified, though it {\em is} signed by input MLSAGs, so no tampering is possible (except with negligible probability). The field has no limit on how much data it can store, so long as the maximum transaction weight is respected. See \cite{extra-field-stackexchange} for more details.}
+    \item \underline{交易手续费 (Transaction fee)}：以明文传达，乘以 $10^{12}$（即原子单位，见第 \ref{subsec:block-reward} 节），因此 1.0 的手续费将被记录为 1000000000000
+    \item \underline{附加数据 (Extra)}：包括交易公钥 $r G$，或者如果至少有一个 output 发往子地址，则包括每个子地址 output $t$ 的 $r_t K^{s,i}_t$ 和每个普通地址 output $t$ 的 $r_t G$，也许还有一个编码的支付 ID（每笔交易最多一个）\footnote{存储在"extra"字段中的信息不会被验证，但它{确实}由 input MLSAG 签名，因此不可能被篡改（概率可忽略不计）。该字段对可以存储多少数据没有限制，只要遵守最大交易权重即可。更多详情请参见 \cite{extra-field-stackexchange}。}
 \end{itemize}
 
-Our final one-input/one-output example transaction sounds like this: ``My transaction uses transaction public key $r G$. I will spend one of the outputs in set $\mathbb{X}$ (note that it has a hidden amount $A_X$, committed to in $C_X$). The output being spent is owned by me (I made a MSLAG signature on the one-time addresses in $\mathbb{X}$), and hasn't been spent before (its key image $\tilde{K}$ has not yet appeared in the blockchain). I will give it a pseudo output commitment $C'_X$. I will make one output $Y$, which may be spent by the one-time address $K^o_Y$. It has a hidden amount $A_Y$ committed to in $C_Y$, encrypted for the recipient, and proven in range with a Bulletproofs-style range proof. My transaction includes a transaction fee $f$. Please note that $C'_X - (C_Y + C_f) = 0$, and that I have signed the commitment to zero $C'_X - C_X = z G$ which means the input amount equals the output amount ($A_X = A'_X = A_Y + f$). My MLSAG signed all transaction data, so observers can be sure it hasn't been tampered with."
+我们最后的单 input/单 output 示例交易听起来像这样："我的交易使用交易公钥 $r G$。我将花费集合 $\mathbb{X}$ 中的一个 output（注意它有一个隐藏的金额 $A_X$，在 $C_X$ 中做出承诺）。正在花费的 output 由我拥有（我在 $\mathbb{X}$ 中的一次性地址上做了 MLSAG 签名），并且之前没有被花费过（它的 key image $\tilde{K}$ 尚未出现在区块链中）。我将给它一个伪 output 承诺 $C'_X$。我将创建一个 output $Y$，可由一次性地址 $K^o_Y$ 花费。它有一个隐藏的金额 $A_Y$ 在 $C_Y$ 中做出承诺，为接收者加密，并通过 Bulletproofs 风格的范围证明证明在范围内。我的交易包含交易手续费 $f$。请注意 $C'_X - (C_Y + C_f) = 0$，并且我已经对零承诺 $C'_X - C_X = z G$ 进行了签名，这意味着 input 金额等于 output 金额（$A_X = A'_X = A_Y + f$）。我的 MLSAG 签名了所有交易数据，因此观察者可以确信它没有被篡改。"
 
 
 \newpage
-\subsection{Storage requirements}
+\subsection{存储需求 (Storage requirements)}
 
-For {\tt RCTTypeBulletproof2} we need $(2(v+1)+2) \cdot m \cdot 32$ bytes of storage, and the aggregate Bulletproof range proof needs $(2 \cdot \lceil \textrm{log}_2(64 \cdot p) \rceil + 9) \cdot 32$ bytes of storage.\footnote{The amount of transaction content is limited by a maximum so-called `transaction weight'.\marginnote{src/crypto- note\_core/ tx\_pool.cpp {\tt get\_trans- action\_weight \_limit()}} Before Bulletproofs were added in protocol v8 (and indeed currently when transactions have only two outputs) the transaction weight and size in bytes were equivalent. The maximum weight is (0.5*300kB - {\tt CRYPTONOTE\_COINBASE\_BLOB\_RESERVED\_SIZE}), where the blob reserve (600 bytes) is intended to leave room for the miner transaction within blocks. Before v8 the 0.5x multiplier was not included, and the 300kB term was smaller in earlier protocol versions (20kB v1, 60kB v2, 300kB v5). We elaborate on these topics in Section \ref{subsec:dynamic-block-weight}.}
+对于 {\tt RCTTypeBulletproof2}，我们需要 $(2(v+1)+2) \cdot m \cdot 32$ 字节的存储空间，聚合 Bulletproof 范围证明需要 $(2 \cdot \lceil \textrm{log}_2(64 \cdot p) \rceil + 9) \cdot 32$ 字节的存储空间。\footnote{交易内容的数量受所谓最大"交易权重"的限制。\marginnote{src/crypto- note\_core/ tx\_pool.cpp {\tt get\_trans- action\_weight \_limit()}}在 Bulletproofs 于协议 v8 中被添加之前（实际上目前当交易只有两个 output 时），交易权重和字节大小是等价的。最大权重为 (0.5*300kB - {\tt CRYPTONOTE\_COINBASE\_BLOB\_RESERVED\_SIZE})，其中 blob 预留（600 字节）旨在为区块中的矿工交易留出空间。在 v8 之前不包含 0.5 倍乘数，300kB 项在早期协议版本中更小（v1 为 20kB，v2 为 60kB，v5 为 300kB）。我们在第 \ref{subsec:dynamic-block-weight} 节中详细说明这些话题。}
 
-Miscellaneous requirements:
+杂项需求：
 \begin{itemize}
     \setlength\itemsep{\listspace}
-    \item Input key images: $m*32$ bytes
-    \item One-time output addresses: $p*32$ bytes
-    \item Output commitments: $p*32$ bytes
-    \item Encoded output amounts: $p*8$ bytes
-    \item Transaction public key: 32 bytes normally, $p*32$ bytes if sending to at least one subaddress.
-    \item Payment ID: 8 bytes for an integrated address. There should be no more than one per tx.
-    \item Transaction fee: stored as a variable length integer, so $\leq 9$ bytes
-    \item Input offsets: stored as variable length integers, so $\leq 9$ bytes per offset, for $m*(v+1)$ ring members
-    \item Unlock time: stored as a variable length integer, so $\leq 9$ bytes\footnote{Any transaction's author can lock its outputs\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt is\_tx\_ spendtime\_ unlocked()}}, rendering them unspendable until a specified block height where it may be spent (or until a UNIX timestamp, at which time its outputs may be included in a block's transaction's ring members). He only has the option to lock all outputs to the same block height. It is not clear if this offers any meaningful utility to transaction authors (perhaps smart contracts). Miner transactions have a mandatory 60-block lock time. As of protocol v12 normal outputs can't be spent until after the default spendable age (10 blocks) which is functionally equivalent to a mandatory minimum 10-block lock time. If a transaction is published in the 10\nth block with an unlock time of 25, it may be spent in the 25\nth block or later. Unlock time is probably the least used of all transaction features for normal transactions.}
-    \item `Extra' tags: each piece of data in the `extra' field (e.g. a transaction public key) begins with a 1 byte `tag', and some pieces also have a 1+ byte `length'; see Appendix \ref{appendix:RCTTypeBulletproof2} for more details
+    \item Input key image：$m*32$ 字节
+    \item 一次性 output 地址：$p*32$ 字节
+    \item Output 承诺：$p*32$ 字节
+    \item 编码 output 金额：$p*8$ 字节
+    \item 交易公钥：通常 32 字节，如果向至少一个子地址发送则为 $p*32$ 字节。
+    \item 支付 ID：集成地址为 8 字节。每笔交易不应超过一个。
+    \item 交易手续费：以可变长度整数存储，因此 $\leq 9$ 字节
+    \item Input 偏移量：以可变长度整数存储，因此每个偏移量 $\leq 9$ 字节，共 $m*(v+1)$ 个环成员
+    \item 解锁时间：以可变长度整数存储，因此 $\leq 9$ 字节\footnote{任何交易的作者都可以锁定其 output\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt is\_tx\_ spendtime\_ unlocked()}},使其在指定区块高度之前不可花费（或直到 UNIX 时间戳，届时其 output 可以被纳入区块交易的环成员中）。他只能将所有 output 锁定到相同的区块高度。目前尚不清楚这是否为交易作者提供了有意义的用途（也许是智能合约）。矿工交易有强制的 60 区块锁定时间。从协议 v12 起，普通 output 在默认可花费时间（10 个区块）之前不能被花费，这在功能上等同于强制的最低 10 区块锁定时间。如果一笔交易在第 10 个区块发布，解锁时间为 25，则它可以在第 25 个区块或之后被花费。解锁时间可能是普通交易中最少使用的交易功能。}
+    \item "Extra" 标签："extra" 字段中的每条数据（例如交易公钥）以 1 字节的 "tag" 开头，某些数据还有 1+ 字节的 "length"；更多详情请参见附录 \ref{appendix:RCTTypeBulletproof2}
 \end{itemize}

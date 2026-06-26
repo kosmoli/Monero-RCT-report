@@ -1,40 +1,40 @@
-/chapter{Monero the Cryptocurrency}
+/chapter{Monero 加密货币 (Monero the Cryptocurrency)}
 /label{chapter:Monero-cryptocurrency}
 
-final chapter ties it all together (? technical enough to skip rest of report? might make it too long - aim to redirect to other parts of report)
+最终章节将所有内容串联在一起（？技术性足够强到可以跳过报告其余部分？可能使篇幅过长——目标是引导读者查阅报告的其他部分）
 
 
--curve ed25519
--address creation
-    -basic
-    -subaddresses
-    -multisig
-    -payment ID (integrated addresses)
--receipt of old transactions
-    -scan blockchain, look at output addresses, use view key and transaction public key to see if any spend keys match
-    -organize results
--building transaction
-    -structure of a transaction (how the data is serialized/organized and transmitted)
-    -obtain addresses (or subaddresses) of intended recipients, specify amounts intended for each
-    -from sending amounts + fee, select a set of owned outputs with amounts sum(a)>=(sum(b)+fee), and set change = sum(a) - (sum(b)+fee)
-    -construct outputs:
-        -create transaction public key (or keys if at least one subaddress and >1 output)
-        -create one-time output address for each output
-        -commit to each output amount C(b)
-        -create D-H 'amount' and 'mask' terms for each output commitment
-        -range proof: borromean ring signature on each output amount
-        -if payment ids, encrypt them
-    -construct inputs:
-        -create pseudo output commitments if transaction type rcttypesimple
-        -select ring members for each input mlsag
-        -calculate key images for each input
-        -build MLSAG signatures on each input, signing a message that contains all other transaction info
-    -fill out transaction data structure appropriately (continuous throughout transaction procedure)
--submission of transaction
-    -verified, placed in mempool
--mining into blockchain
-    -transactions organized into merkle tree, hashed
-    -nonce searched until difficulty reached
-    -block published to network
-    -block accepted or rejected (orphaned); consensus mechanism
-    -[potential] signature data pruned
+-曲线 ed25519
+-地址创建
+    -基本地址
+    -子地址
+    -多重签名
+    -支付 ID（集成地址）
+-接收旧交易
+    -扫描区块链，查看 output 地址，使用 view key 和交易公钥查看是否有匹配的 spend key
+    -整理结果
+-构建交易
+    -交易结构（数据的序列化/组织和传输方式）
+    -获取预期接收者的地址（或子地址），指定每个接收者的金额
+    -根据发送金额 + 手续费，选择一组 owned output 使得 sum(a)>=(sum(b)+fee)，并设置找零 = sum(a) - (sum(b)+fee)
+    -构建 output：
+        -创建交易公钥（如果有至少一个子地址且 output 数 >1 则创建多个）
+        -为每个 output 创建一次性 output 地址
+        -为每个 output 金额创建承诺 C(b)
+        -为每个 output 承诺创建 Diffie-Hellman 'amount' 和 'mask' 项
+        -范围证明：对每个 output 金额进行 borromean 环签名
+        -如有支付 ID，将其加密
+    -构建 input：
+        -如果交易类型为 rcttypesimple 则创建伪 output 承诺
+        -为每个 input 的 MLSAG 选择环成员
+        -为每个 input 计算 key image
+        -在每个 input 上构建 MLSAG 签名，签名的消息包含所有其他交易信息
+    -适当地填写交易数据结构（贯穿交易全过程）
+-提交交易
+    -验证后放入内存池
+-挖矿入区块链
+    -交易被组织成 Merkle 树并进行哈希
+    -搜索 nonce 直到满足难度要求
+    -区块发布到网络
+    -区块被接受或拒绝（被孤立）；共识机制
+    -[可能的] 签名数据被修剪

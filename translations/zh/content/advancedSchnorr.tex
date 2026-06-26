@@ -1,400 +1,400 @@
-\chapter{Advanced Schnorr-like Signatures}
+\chapter{高级类 Schnorr 签名 (Advanced Schnorr-like Signatures)}
 \label{chapter:advanced-schnorr}
 
-A basic Schnorr signature has one signing key. As it happens, we can apply its core concepts to create a variety of progressively more complex signature schemes. One of those schemes, MLSAG, will be of central importance in Monero's transaction protocol.
+一个基本的 Schnorr 签名只有一个签名密钥。事实上，我们可以应用其核心概念来创建各种复杂度递增的签名方案。其中一种方案 MLSAG 将在 Monero 的 transaction 协议中具有核心重要性。
 
 
 
 %-same signing key across multiple bases
-\section{Prove knowledge of a discrete logarithm across multiple bases}
+\section{跨多个基底证明离散对数知识 (Prove knowledge of a discrete logarithm across multiple bases)}
 \label{sec:proofs-discrete-logarithm-multiple-bases}
 
-It is often useful to prove the same private key was used to construct public keys on different `base' keys. For example, we could have a normal public key $k G$, and a Diffie-Hellman shared secret $k R$ with some other person's public key (recall Section \ref{DH_exchange_section}), where the base keys are $G$ and $R$. As we will soon see, we can prove knowledge of the discrete log $k$ in $k G$, prove knowledge of $k$ in $k R$, {\em and} prove that $k$ is the same in both cases (all without revealing $k$).
+证明同一个私钥被用于在不同"基底"密钥上构建公钥通常很有用。例如，我们可以有一个普通公钥 $k G$，以及与某个人的公钥的 Diffie-Hellman 共享密钥 $k R$（回顾第 \ref{DH_exchange_section} 节），其中基底密钥是 $G$ 和 $R$。正如我们将很快看到的，我们可以证明知道 $k G$ 中的离散对数 $k$，证明知道 $k R$ 中的 $k$，{\em 并}证明两种情况下的 $k$ 是相同的（全部不泄露 $k$）。
 
 
-\subsection*{Non-interactive proof}
+\subsection*{非交互式证明 (Non-interactive proof)}
 
-Suppose we have a private key $k$, and $d$ base keys $\mathcal{J} = \{J_1,...,J_d\}$. The corresponding public keys are $\mathcal{K} = \{K_1,...,K_d\}$. We make a Schnorr-like proof (recall Section \ref{sec:schnorr-fiat-shamir}) across all bases.\footnote{While we say `proof', it can be trivially made a signature by including a message $\mathfrak{m}$ in the challenge hash. The terminology is loosely interchangeable in this context.} Assume the existence of a hash function \(\mathcal{H}_n\) 
-mapping to integers from 0 to $l-1$.\footnote{In Monero, the hash function $\mathcal{H}_n(x) = \textrm{sc\textunderscore reduce32}(\mathit{Keccak}(x))$ where $\mathit{Keccak}$ is the basis of SHA3 and sc\textunderscore reduce32() puts the 256 bit result in the range 0 to $l-1$ (although it should really be 1 to $l-1$).} 
+假设我们有一个私钥 $k$ 和 $d$ 个基底密钥 $\mathcal{J} = \{J_1,...,J_d\}$。对应的公钥为 $\mathcal{K} = \{K_1,...,K_d\}$。我们在所有基底上进行类 Schnorr 证明（回顾第 \ref{sec:schnorr-fiat-shamir} 节）。\footnote{虽然我们说的是"证明"，但通过在挑战 hash 中包含消息 $\mathfrak{m}$ 可以轻易地将其变为签名。在此语境中，这两个术语可以互换使用。}假设存在一个 hash 函数 \(\mathcal{H}_n\)
+映射到0到 $l-1$ 之间的整数。\footnote{在 Monero 中，hash 函数 $\mathcal{H}_n(x) = \textrm{sc\textunderscore reduce32}(\mathit{Keccak}(x))$，其中 $\mathit{Keccak}$ 是 SHA3 的基础，sc\textunderscore reduce32() 将256位结果放在0到 $l-1$ 的范围内（虽然严格来说应该是1到 $l-1$）。}
 
 \begin{enumerate}
-	\item Generate random number $\alpha \in_R \mathbb{Z}_l$, and compute, for all $i \in (1,...,d)$, $\alpha J_i$.
-	\item Calculate the challenge,\vspace{.175cm}
+	\item 生成随机数 $\alpha \in_R \mathbb{Z}_l$，并计算所有 $i \in (1,...,d)$ 的 $\alpha J_i$。
+	\item 计算挑战，\vspace{.175cm}
 	\[c = \mathcal{H}_n(\mathcal{J},\mathcal{K},[\alpha J_1],[\alpha J_2],...,[\alpha J_d])\]
-	\item Define the response $r = \alpha - c*k$.
-	\item Publish the signature $(c, r)$.
+	\item 定义响应 $r = \alpha - c*k$。
+	\item 公开签名 $(c, r)$。
 \end{enumerate}
 
 
-\subsection*{Verification}
+\subsection*{验证 (Verification)}
 
-Assuming the verifier knows $\mathcal{J}$ and $\mathcal{K}$, he does the following.
+假设验证者知道 $\mathcal{J}$ 和 $\mathcal{K}$，他执行以下操作。
 
 \begin{enumerate}
-	\item Calculate the challenge:\vspace{.175cm}
+	\item 计算挑战：\vspace{.175cm}
 	\[c' = \mathcal{H}(\mathcal{J},\mathcal{K},[r J_1 + c*K_1],[r J_2 + c*K_2],...,[r J_d + c*K_d])\]
-	\item If $c = c'$ then the signer must know the discrete logarithm across all bases, and it's the same discrete logarithm in each case (as always, except with negligible probability).
+	\item 如果 $c = c'$，则签名者必须知道跨所有基底的离散对数，且每种情况下都是同一个离散对数（一如既往，除了可忽略的概率外）。
 \end{enumerate}
 
 
-\subsection*{Why it works}
+\subsection*{为什么有效 (Why it works)}
 
-If instead of $d$ base keys there was just one, this proof would clearly be the same as our original Schnorr proof (Section \ref{sec:schnorr-fiat-shamir}). We can imagine each base key in isolation to see that the multi-base proof is just a bunch of Schnorr proofs connected together. Moreover, by using only one challenge and response for all of those proofs, they must have the same discrete logarithm $k$. To get a single response that works for multiple keys the challenge would need to be known before defining an $\alpha$ for each key, but $c$ is a function of $\alpha$!
+如果 $d$ 个基底密钥只有一个，这个证明显然与我们原始的 Schnorr 证明相同（第 \ref{sec:schnorr-fiat-shamir} 节）。我们可以将每个基底密钥单独来看，发现多基底证明只是一系列连接在一起的 Schnorr 证明。此外，通过对所有这些证明使用唯一的挑战和响应，它们必须具有相同的离散对数 $k$。要获得适用于多个密钥的单一响应，挑战需要在为每个密钥定义 $\alpha$ 之前就被知道，但 $c$ 是 $\alpha$ 的函数！
 
 
 
 %-multiple signing keys on their own unique bases (or they can be the same e.g. G)
-\section{Multiple private keys in one proof}
+\section{一个证明中的多个私钥 (Multiple private keys in one proof)}
 \label{sec:multiple_private_keys_in_one_proof}
 
-Much like a multi-base proof, we can combine many Schnorr proofs that use different private keys. Doing so proves we know all the private keys for a set of public keys, and reduces storage requirements by making just one challenge for all proofs.
+与多基底证明非常相似，我们可以组合多个使用不同私钥的 Schnorr 证明。这样做证明了我们知道一组公钥的所有私钥，并通过为所有证明只生成一个挑战来减少存储需求。
 
 
-\subsection*{Non-interactive proof}
+\subsection*{非交互式证明 (Non-interactive proof)}
 
-Suppose we have $d$ private keys $k_1,...,k_d$, and base keys $\mathcal{J} = \{J_1,...,J_d\}$.\footnote{There is no reason $\mathcal{J}$ can't contain duplicate base keys here, or for all base keys to be the same (e.g. $G$). Duplicates would be redundant for multi-base proofs, but now we are dealing with different private keys.} The corresponding public keys are $\mathcal{K} = \{K_1,...,K_d\}$. We make a Schnorr-like proof for all keys simultaneously.
+假设我们有 $d$ 个私钥 $k_1,...,k_d$，以及基底密钥 $\mathcal{J} = \{J_1,...,J_d\}$。\footnote{这里没有理由 $\mathcal{J}$ 不能包含重复的基底密钥，或者所有基底密钥都相同（例如 $G$）。对于多基底证明来说重复是冗余的，但现在我们处理的是不同的私钥。}对应的公钥为 $\mathcal{K} = \{K_1,...,K_d\}$。我们同时为所有密钥进行类 Schnorr 证明。
 
 \begin{enumerate}
-	\item Generate random numbers $\alpha_i \in_R \mathbb{Z}_l$ for all $i \in (1,...,d)$, and compute all $\alpha_i J_i$.
-	\item Calculate the challenge,\vspace{.175cm}
+	\item 为所有 $i \in (1,...,d)$ 生成随机数 $\alpha_i \in_R \mathbb{Z}_l$，并计算所有 $\alpha_i J_i$。
+	\item 计算挑战，\vspace{.175cm}
 	\[c = \mathcal{H}_n(\mathcal{J},\mathcal{K},[\alpha_1 J_1],[\alpha_2 J_2],...,[\alpha_d J_d])\]
-	\item Define each response $r_i = \alpha_i - c*k_i$.
-	\item Publish the signature $(c, r_1,...,r_d)$.
+	\item 定义每个响应 $r_i = \alpha_i - c*k_i$。
+	\item 公开签名 $(c, r_1,...,r_d)$。
 \end{enumerate}
 
 
-\subsection*{Verification}
+\subsection*{验证 (Verification)}
 
-Assuming the verifier knows $\mathcal{J}$ and $\mathcal{K}$, he does the following.
+假设验证者知道 $\mathcal{J}$ 和 $\mathcal{K}$，他执行以下操作。
 
 \begin{enumerate}
-	\item Calculate the challenge:\vspace{.175cm}
+	\item 计算挑战：\vspace{.175cm}
 	\[c' = \mathcal{H}(\mathcal{J},\mathcal{K},[r_1 J_1 + c*K_1],[r_2 J_2 + c*K_2],...,[r_d J_d + c*K_d])\]
-	\item If $c = c'$ then the signer must know the private keys for all public keys in $\mathcal{K}$ (except with negligible probability).
+	\item 如果 $c = c'$，则签名者必须知道 $\mathcal{K}$ 中所有公钥的私钥（除了可忽略的概率外）。
 \end{enumerate}
 
 
 
-\section{Spontaneous Anonymous Group (SAG) signatures}
+\section{自发匿名群 (SAG) 签名 (Spontaneous Anonymous Group (SAG) signatures)}
 \label{SAG_section}
 
-Group signatures are a way of proving a signer belongs to a group, without necessarily identifying him. Originally (Chaum in \cite{Chaum:1991:GS:1754868.1754897}), group signature schemes required the system be set up, and in some cases managed, by a trusted person in order to prevent illegitimate signatures, and, in a few schemes, adjudicate disputes. These relied on a {\em group secret} which is not desirable since it creates a disclosure risk that could undermine anonymity. Moreover, requiring coordination between group members (i.e. for setup and management) is not scalable beyond small groups or inside companies.
+群签名是一种证明签名者属于某个群组而不必识别他的方式。最初（Chaum 在 \cite{Chaum:1991:GS:1754868.1754897} 中），群签名方案要求系统由可信人员设置，并在某些情况下由其管理，以防止非法签名，并在少数方案中裁决争议。这些方案依赖于{\em 群密钥}，这是不理想的，因为它造成了可能破坏匿名性的泄露风险。此外，要求群成员之间的协调（即设置和管理）对于小群组或公司内部以外的场景是不可扩展的。
 
-Liu {\em et al.} presented a more interesting scheme in \cite{Liu2004} building on the work of Rivest {\em et al.} in \cite{rivest-leak-secret}. The authors detailed a group signature algorithm called LSAG characterized by three properties: {\em anonymity, linkability,} and {\em spontaneity}. Here we discuss SAG, the non-linkable version of LSAG, for conceptual clarity. We reserve the idea of linkability for later sections.
+Liu {\em 等人}在 \cite{Liu2004} 中基于 Rivest {\em 等人} 在 \cite{rivest-leak-secret} 中的工作提出了一个更有趣的方案。作者详细介绍了一种名为 LSAG 的群签名算法，具有三个特性：{\em 匿名性、可链接性}和{\em 自发性}。这里我们讨论 SAG，即 LSAG 的不可链接版本，以获得概念上的清晰性。我们将可链接性的概念留到后面的章节。
+
+具有匿名性和自发性的方案通常被称为"环签名"。在 Monero 的语境中，它们最终将实现不可伪造的、签名者模糊的 transaction，使资金流向在很大程度上不可追踪。
+
+
+\subsection*{签名 (Signature)}
+
+环签名由一个环和一个签名组成。每个{\em 环}是一组公钥，其中一个属于签名者，其余的与之无关。{\em 签名}使用该密钥环生成，任何验证它的人都无法分辨哪个环成员是实际的签名者。
+
+我们在第 \ref{sec:signing-messages} 节中的类 Schnorr 签名方案可以被视为单密钥环签名。通过不立即定义 $r$，而是生成一个诱饵 $r'$ 并创建新的挑战来定义 $r$，我们得到了双密钥版本。
 \\
 
-Schemes with anonymity and spontaneity are typically referred to as `ring signatures'. In the context of Monero they will ultimately allow for unforgeable, signer-ambiguous transactions that leave currency flows largely untraceable.
-
-
-\subsection*{Signature}
-
-Ring signatures are composed of a ring and a signature. Each {\em ring} is a set of public keys, one of which belongs to the signer and the rest of which are unrelated. The {\em signature} is generated with that ring of keys, and anyone verifying it would not be able to tell which ring member was the actual signer.
-
-Our Schnorr-like signature scheme in Section \ref{sec:signing-messages} can be considered a one-key ring signature. We get to two keys by, instead of defining $r$ right away, generating a decoy $r'$ and creating a new challenge to define $r$ with.
-\\
-
-Let \(\mathfrak{m}\) be the message to sign, \(\mathcal{R} = \{K_1, K_2, ..., K_n\}\) a set of distinct public keys (a group/ring), and \(k_\pi\) the signer's private key corresponding to his public key \(K_\pi \in \mathcal{R}\), where $\pi$ is a secret index.
+设 \(\mathfrak{m}\) 为待签名的消息，\(\mathcal{R} = \{K_1, K_2, ..., K_n\}\) 为一组不重复的公钥（一个群/环），\(k_\pi\) 为签名者的私钥，对应其公钥 \(K_\pi \in \mathcal{R}\)，其中 $\pi$ 是秘密索引。
 
 \begin{enumerate}
-	\item Generate random number \(\alpha \in_R \mathbb{Z}_l\) and fake responses  \(r_i \in_R \mathbb{Z}_l\) for \(i \in \{1, 2, ..., n\}\) but excluding \(i = \pi\).
+	\item 生成随机数 \(\alpha \in_R \mathbb{Z}_l\) 和伪响应 \(r_i \in_R \mathbb{Z}_l\)，其中 \(i \in \{1, 2, ..., n\}\) 但排除 \(i = \pi\)。
 
-	\item Calculate
+	\item 计算
 	\[c_{\pi+1} = \mathcal{H}_n(\mathcal{R}, \mathfrak{m}, [\alpha G])\]
 
-	\item For \(i = \pi+1, \pi+2, ..., n, 1, 2, ..., \pi-1\) calculate, replacing \(n + 1 \rightarrow 1\),\vspace{.175cm}
+	\item 对于 \(i = \pi+1, \pi+2, ..., n, 1, 2, ..., \pi-1\) 计算，将 \(n + 1 \rightarrow 1\)，\vspace{.175cm}
 	\[  c_{i+1} = \mathcal{H}_n(\mathcal{R}, \mathfrak{m}, [r_i G + c_i K_i])\] 
 
-	\item Define the real response $r_\pi$ such that \(\alpha = r_\pi + c_\pi k_\pi \pmod l\).
+	\item 定义真实响应 $r_\pi$ 使得 \(\alpha = r_\pi + c_\pi k_\pi \pmod l\)。
 \end{enumerate}
 
-The ring signature contains the signature \(\sigma(\mathfrak{m}) = (c_1, r_1, ..., r_n) \), and the ring $\mathcal{R}$.
+环签名包含签名 \(\sigma(\mathfrak{m}) = (c_1, r_1, ..., r_n) \) 和环 $\mathcal{R}$。
 
 
-\subsection*{Verification}
+\subsection*{验证 (Verification)}
 
-Verification means proving $\sigma(\mathfrak{m})$ is a valid signature created by a private key corresponding to a public key in $\mathcal{R}$ (without necessarily knowing which one), and is done in the following manner:
+验证意味着证明 $\sigma(\mathfrak{m})$ 是由 $\mathcal{R}$ 中某个公钥对应的私钥创建的有效签名（不必知道是哪一个），方式如下：
 
 \begin{enumerate}
-	\item For \(i = 1, 2, ..., n\) iteratively compute, replacing \(n + 1 \rightarrow 1\),\vspace{.175cm}
+	\item 对于 \(i = 1, 2, ..., n\) 迭代计算，将 \(n + 1 \rightarrow 1\)，\vspace{.175cm}
 	\begin{align*}
 	c'_{i+1}   = \mathcal{H}_n(\mathcal{R}, \mathfrak{m}, [r_i G + c_i {K_i}])
 	\end{align*}
 
-	\item If \(c_1 = c'_1\) then the signature is valid. Note that $c'_1$ is the last term calculated.
+	\item 如果 \(c_1 = c'_1\)，则签名有效。注意 $c'_1$ 是最后计算的项。
 \end{enumerate}
 
-In this scheme we store (1+$n$) integers and use $n$ public keys.
+在此方案中，我们存储 (1+$n$) 个整数并使用 $n$ 个公钥。
 
 
-\subsection*{Why it works}
+\subsection*{为什么有效 (Why it works)}
 
-We can informally convince ourselves the algorithm works by going through an example. Consider ring $R = \{K_1, K_2, K_3\}$ with $k_\pi = k_2$. First the signature:
+我们可以通过一个例子来非正式地说服自己该算法是有效的。考虑环 $R = \{K_1, K_2, K_3\}$，其中 $k_\pi = k_2$。首先签名：
 \begin{enumerate}
-    \item Generate random numbers: $\alpha$, $r_1$, $r_3$
+    \item 生成随机数：$\alpha$，$r_1$，$r_3$
 \begin{align*}
-    \intertext{\item Seed the signature loop:}	c_3 &= \mathcal{H}_n(\mathcal{R}, \mathfrak{m}, [\alpha G])
-    \intertext{\item Iterate: \vspace{-.2cm}}
+    \intertext{\item 初始化签名循环：}	c_3 &= \mathcal{H}_n(\mathcal{R}, \mathfrak{m}, [\alpha G])
+    \intertext{\item 迭代：\vspace{-.2cm}}
         c_1 &= \mathcal{H}_n(\mathcal{R}, \mathfrak{m}, [r_3 G + c_3 K_3])\\
         c_2 &= \mathcal{H}_n(\mathcal{R}, \mathfrak{m}, [r_1 G + c_1 K_1])
 \end{align*}
-    \item Close the loop by responding: $r_2 = \alpha - c_2 k_2 \pmod{l}$
+    \item 通过响应来闭合循环：$r_2 = \alpha - c_2 k_2 \pmod{l}$
 \end{enumerate}
 
-We can substitute $\alpha$ into $c_3$ to see where the word ‘ring' comes from:\vspace{.175cm}
+我们可以将 $\alpha$ 代入 $c_3$ 来看看"环"这个词的由来：\vspace{.175cm}
 \begin{alignat*}{3}
     c_3 &= \mathcal{H}_n(\mathcal{R}, \mathfrak{m}, [(r_2 + c_2 k_2) G &&])\\
     c_3 &= \mathcal{H}_n(\mathcal{R}, \mathfrak{m}, [r_2 G + c_2 K_2 &&])
 \end{alignat*}\vspace{.05cm}
 
-Then verification using $\mathcal{R}$, and $\sigma(\mathfrak{m}) = (c_1, r_1, r_2, r_3)$:
+然后使用 $\mathcal{R}$ 和 $\sigma(\mathfrak{m}) = (c_1, r_1, r_2, r_3)$ 进行验证：
 \begin{enumerate}
-    \item We use $r_1$ and $c_1$ to compute\vspace{.175cm}
+    \item 我们使用 $r_1$ 和 $c_1$ 来计算\vspace{.175cm}
     \begin{align*}
 c'_2 &= \mathcal{H}_n(\mathcal{R}, \mathfrak{m}, [r_1 G + c_1 K_1])
-    \intertext{\item From when we made the signature, we see $c'_2 = c_2$. With $r_2$ and $c'_2$ we compute\vspace{.175cm}}
+    \intertext{\item 根据创建签名时的情况，我们看到 $c'_2 = c_2$。使用 $r_2$ 和 $c'_2$ 我们计算\vspace{.175cm}}
 c'_3 &= \mathcal{H}_n(\mathcal{R}, \mathfrak{m}, [r_2 G + c'_2 K_2])
-    \intertext{\item We can easily see that $c'_3 = c_3$ by substituting $c_2$ for $c'_2$. Using $r_3$ and $c'_3$ we get\vspace{.175cm}}
+    \intertext{\item 通过将 $c_2$ 替换为 $c'_2$，我们可以很容易看出 $c'_3 = c_3$。使用 $r_3$ 和 $c'_3$ 我们得到\vspace{.175cm}}
 c'_1 &= \mathcal{H}_n(\mathcal{R}, \mathfrak{m}, [r_3 G + c'_3 K_3])
     \end{align*}
 \end{enumerate}
-\quad No surprises here: $c'_1 = c_1$ if we substitute $c_3$ for $c'_3$.\vspace{-.3cm}
+\quad 不出意外：如果我们将 $c_3$ 替换为 $c'_3$，则 $c'_1 = c_1$。\vspace{-.3cm}
 
 
 
-\section{Back's Linkable Spontaneous Anonymous Group (bLSAG) signatures}
+\section{Back 的可链接自发匿名群 (bLSAG) 签名 (Back's Linkable Spontaneous Anonymous Group (bLSAG) signatures)}
 \label{blsag_note}
 
-The ring signature schemes discussed here on out display several properties that will be useful for producing confidential transactions.\footnote{Keep in mind that all robust signature schemes have security models which contain various properties. The properties mentioned here are perhaps most relevant to understanding the purpose of Monero's ring signatures, but are not a comprehensive overview of linkable ring signature properties.} Note that both `signer ambiguity' and `unforgeability' also apply to SAG signatures.
+从这里开始讨论的环签名方案展示了几个对产生 confidential transaction 有用的特性。\footnote{请记住，所有健壮的签名方案都有包含各种特性的安全模型。这里提到的特性也许与理解 Monero 环签名的目的最为相关，但不是对可链接环签名特性的全面概述。}注意，"签名者模糊性"和"不可伪造性"也适用于 SAG 签名。
 
 \begin{description}
-	\item[Signer Ambiguity]
-	An observer should be able to determine the signer must be a member of the ring (except with negligible probability), but not which member.\footnote{\label{anonymity_note}Anonymity for an action is usually in terms of an `anonymity set’, which is `all the people who could have possibly taken that action’. The largest anonymity set is `humanity’, and for Monero it is the ring size, or e.g. the so-called `mixin level' $v$ plus the real signer. Mixin refers to how many fake members each ring signature has. If the mixin is $v$ = 4 then there are 5 possible signers. Expanding anonymity sets makes it progressively harder to track down real actors.} Monero uses this to obfuscate the origin of funds in each transaction.
+	\item[签名者模糊性 (Signer Ambiguity)]
+	观察者应该能够确定签名者必须是环的成员（除了可忽略的概率外），但不能确定是哪个成员。\footnote{\label{anonymity_note}操作的匿名性通常用"匿名集"来衡量，即"所有可能执行该操作的人"。最大的匿名集是"全人类"，对于 Monero 来说是环的大小，例如所谓的"混合级别" $v$ 加上真实签名者。混合（Mixin）指的是每个环签名有多少个假成员。如果混合为 $v$ = 4，则有5个可能的签名者。扩大匿名集使得追踪真实行为者变得越来越困难。}Monero 用此来混淆每笔 transaction 中资金的来源。
 
-	\item[Linkability]
-	If a private key is used to sign two different messages then the messages will become linked.\footnote{\label{linkability_note}The linkability property does not apply to non-signing public keys. That is, a ring member whose public key has been used in different ring signatures will not cause linkage.} As we will show, this property is used to prevent double-spending attacks in Monero (except with negligible probability).
+	\item[可链接性 (Linkability)]
+	如果一个私钥被用来签署两个不同的消息，那么这些消息将被链接在一起。\footnote{\label{linkability_note}可链接性属性不适用于非签名公钥。也就是说，公钥已被用于不同环签名的环成员不会导致链接。}正如我们将要展示的，此属性用于防止 Monero 中的双花攻击（除了可忽略的概率外）。
 
-	\item[Unforgeability]
-    No attacker can forge a signature except with negligible probability.\footnote{\label{unforgeability_note}Certain ring signature schemes, including the one in Monero, are strong against adaptive chosen-message and adaptive chosen-public-key attacks. An attacker who can obtain legitimate signatures for chosen messages and corresponding to specific public keys in rings of his choice cannot discover how to forge the signature of even one message. This is called {\em existential unforgeability}; see \cite{MRL-0005-ringct} and \cite{Liu2004}.} This is used to prevent theft of Monero funds by those not in possession of the appropriate private keys.
+	\item[不可伪造性 (Unforgeability)]
+    没有攻击者能够在除了可忽略的概率外伪造签名。\footnote{\label{unforgeability_note}某些环签名方案，包括 Monero 中的方案，对于自适应选择消息和自适应选择公钥攻击具有强安全性。攻击者即使能够获取所选消息的合法签名，并且这些签名对应于他选择的环中的特定公钥，也无法发现如何伪造哪怕一条消息的签名。这被称为{\em 存在不可伪造性}；参见 \cite{MRL-0005-ringct} 和 \cite{Liu2004}。}这用于防止没有相应私钥的人盗窃 Monero 资金。
 \end{description}
 
-In the LSAG signature scheme \cite{Liu2004}, the owner of a private key could produce one anonymous unlinked signature per ring.\footnote{\label{lsag_linkability_note}In the LSAG scheme linkability only applies to signatures using rings with the same members and in the same order, the `exact same ring.’ It is really ``one anonymous signature per ring member per ring.” Signatures can be linked even if made for different messages.} In this section we present an enhanced version of the LSAG algorithm where linkability is independent of the ring’s decoy members.\footnote{LSAG was discussed in the first edition of this report. \cite{ztm-1}}
+在 LSAG 签名方案 \cite{Liu2004} 中，私钥的所有者可以为每个环产生一个匿名的、不可链接的签名。\footnote{\label{lsag_linkability_note}在 LSAG 方案中，可链接性仅适用于使用相同成员且相同顺序的环的签名，即"完全相同的环"。实际上是"每个环成员每个环一个匿名签名"。即使为不同的消息制作，签名也可以被链接。}在本节中，我们提出了 LSAG 算法的增强版本，其中可链接性独立于环的诱饵成员。\footnote{LSAG 在本报告第一版中有讨论。\cite{ztm-1}}
 
-The modification was unraveled in \cite{MRL-0005-ringct} based on a publication by Adam Back \cite{AdamBack-ring-efficiency} regarding the CryptoNote \cite{cryptoNoteWhitePaper} ring signature algorithm (previously used in Monero, and now deprecated; see Section \ref{subsec:proofs-input-creation-spendproof}), which was in turn inspired by Fujisaki and Suzuki's work in \cite{Fujisaki2007}.
+该修改在 \cite{MRL-0005-ringct} 中被揭示，基于 Adam Back \cite{AdamBack-ring-efficiency} 关于 CryptoNote \cite{cryptoNoteWhitePaper} 环签名算法的出版物（此前在 Monero 中使用，现已弃用；参见第 \ref{subsec:proofs-input-creation-spendproof} 节），而这又受到 Fujisaki 和 Suzuki 在 \cite{Fujisaki2007} 中工作的启发。
 
 
-\subsection*{Signature}
+\subsection*{签名 (Signature)}
 
-As with SAG, let \(\mathfrak{m}\) be the message to sign, \(\mathcal{R} = \{K_1, K_2, ..., K_n\}\) a set of distinct public keys, and \(k_\pi\) the signer's private key corresponding to his public key \(K_\pi \in \mathcal{R}\), where $\pi$ is a secret index. Assume the existence of a hash function \(\mathcal{H}_p\), which maps to curve points in EC.\footnote{It doesn’t matter if points from $\mathcal{H}_p$ are compressed or not. They can always be decompressed.}\footnote{Monero uses a hash function\marginnote{src/ringct/ rctOps.cpp {\tt hash\_to\_p3()}} that returns curve points directly, rather than computing some integer that is then multiplied by $G$. $\mathcal{H}_p$ would be broken if someone discovered a way to find $n_x$ such that $n_x G = \mathcal{H}_p(x)$. See a description of the algorithm in \cite{hashtopoint-writeup}. According to the CryptoNote whitepaper \cite{cryptoNoteWhitePaper} its origin was this paper: \cite{hashtopoint-original-paper}.}
+与 SAG 一样，设 \(\mathfrak{m}\) 为待签名的消息，\(\mathcal{R} = \{K_1, K_2, ..., K_n\}\) 为一组不重复的公钥，\(k_\pi\) 为签名者的私钥，对应其公钥 \(K_\pi \in \mathcal{R}\)，其中 $\pi$ 是秘密索引。假设存在一个 hash 函数 \(\mathcal{H}_p\)，映射到 EC 中的曲线点。\footnote{$\mathcal{H}_p$ 产生的点是否压缩并不重要。它们总是可以被解压的。}\footnote{Monero 使用一个\marginnote{src/ringct/ rctOps.cpp {\tt hash\_to\_p3()}}直接返回曲线点的 hash 函数，而不是计算某个整数然后乘以 $G$。如果有人发现了找到 $n_x$ 使得 $n_x G = \mathcal{H}_p(x)$ 的方法，$\mathcal{H}_p$ 就会被破解。参见 \cite{hashtopoint-writeup} 中的算法描述。根据 CryptoNote 白皮书 \cite{cryptoNoteWhitePaper}，其来源是这篇论文：\cite{hashtopoint-original-paper}。}
 
 \begin{enumerate}
-	\item Calculate key image \(\tilde{K} = k_\pi \mathcal{H}_p(K_\pi)\).\footnote{In Monero it's important to use the hash to point function for key images instead of another base point so linearity doesn't lead to linking signatures created by the same address (even if for different one-time addresses). See \cite{cryptoNoteWhitePaper} page 18.}
+	\item 计算 key image \(\tilde{K} = k_\pi \mathcal{H}_p(K_\pi)\)。\footnote{在 Monero 中，使用 hash 到点函数来计算 key image 而不是另一个基底点非常重要，这样线性性就不会导致由相同地址（即使是一次性地址）创建的签名被链接。参见 \cite{cryptoNoteWhitePaper} 第18页。}
 
-	\item Generate random number \(\alpha \in_R \mathbb{Z}_l\) and random numbers \(r_i \in_R \mathbb{Z}_l\) for \(i \in \{1, 2, ..., n\}\) but excluding \(i = \pi\).
+	\item 生成随机数 \(\alpha \in_R \mathbb{Z}_l\) 和随机数 \(r_i \in_R \mathbb{Z}_l\)，其中 \(i \in \{1, 2, ..., n\}\) 但排除 \(i = \pi\)。
 
-	\item Compute
+	\item 计算
 	\[c_{\pi+1} = \mathcal{H}_n(\mathfrak{m}, [\alpha G], [\alpha \mathcal{H}_p(K_\pi)])\]
 
-	\item For \(i = \pi+1, \pi+2, ..., n, 1, 2, ..., \pi-1\) calculate, replacing \(n + 1 \rightarrow 1\),\vspace{.175cm}
+	\item 对于 \(i = \pi+1, \pi+2, ..., n, 1, 2, ..., \pi-1\) 计算，将 \(n + 1 \rightarrow 1\)，\vspace{.175cm}
 	\[c_{i+1} = \mathcal{H}_n(\mathfrak{m}, [r_i G + c_i K_i], [r_i \mathcal{H}_p(K_i) + c_i \tilde{K}])\]
 
-	\item Define \(r_\pi = \alpha - c_\pi k_\pi \pmod l\).
+	\item 定义 \(r_\pi = \alpha - c_\pi k_\pi \pmod l\)。
 \end{enumerate}
 
-The signature will be \(\sigma(\mathfrak{m}) = (c_1, r_1, ..., r_n)\), with key image $\tilde{K}$ and ring $\mathcal{R}$.
+签名为 \(\sigma(\mathfrak{m}) = (c_1, r_1, ..., r_n)\)，附带 key image $\tilde{K}$ 和环 $\mathcal{R}$。
 
 
-\subsection*{Verification}
+\subsection*{验证 (Verification)}
 
-Verification means proving $\sigma(\mathfrak{m})$ is a valid signature created by a private key corresponding to a public key in $\mathcal{R}$, and is done in the following manner:
+验证意味着证明 $\sigma(\mathfrak{m})$ 是由 $\mathcal{R}$ 中某个公钥对应的私钥创建的有效签名，方式如下：
 
 \begin{enumerate}
-    \item Check $l \tilde{K} \stackrel{?}{=} 0$.
-	\item For \(i = 1, 2, ..., n\) iteratively compute, replacing \(n + 1 \rightarrow 1\),\vspace{.175cm}
+    \item 检查 $l \tilde{K} \stackrel{?}{=} 0$。
+	\item 对于 \(i = 1, 2, ..., n\) 迭代计算，将 \(n + 1 \rightarrow 1\)，\vspace{.175cm}
 	\begin{align*}
 	c'_{i+1} = \mathcal{H}_n(\mathfrak{m}, [r_i G + c_i {K_i}], [r_i \mathcal{H}_p(K_i) + c_i \tilde{K}])
 	\end{align*}
 
-	\item If \(c_1 = c'_1\) then the signature is valid.
+	\item 如果 \(c_1 = c'_1\)，则签名有效。
 \end{enumerate}
 
-In this scheme we store (1+$n$) integers, have one EC key image, and use $n$ public keys.
+在此方案中，我们存储 (1+$n$) 个整数，有一个 EC key image，并使用 $n$ 个公钥。
 
-We\marginnote{src/crypto- note\_core/ cryptonote\_ core.cpp {\tt check\_tx\_ inputs\_key- images\_do- main()}} must check $l \tilde{K} \stackrel{?}{=} 0$ because it is possible to add an EC point from the subgroup of size $h$ (the cofactor) to $\tilde{K}$ and, if all $c_i$ are multiples of $h$ (which we could achieve with automated trial and error using different $\alpha$ and $r_i$ values), make $h$ unlinked valid signatures using the same ring and signing key.\footnote{We are not concerned with points from other subgroups because the output of $\mathcal{H}_n$ is confined to $\mathbb{Z}_l$. For EC order $N = h l$, all divisors of $N$ (and hence, possible subgroups) are either multiples of $l$ (a prime) or divisors of $h$.} This is because an EC point multiplied by its subgroup's order is zero.\footnote{In Monero's early history this was not checked for. Fortunately, it was not exploited before a fix was implemented in April 2017 (v5 of the protocol) \cite{key-image-bug}.}
+我们\marginnote{src/crypto- note\_core/ cryptonote\_ core.cpp {\tt check\_tx\_ inputs\_key- images\_do- main()}}必须检查 $l \tilde{K} \stackrel{?}{=} 0$，因为可以将大小为 $h$（余因子）的子群中的 EC 点加到 $\tilde{K}$ 上，并且如果所有 $c_i$ 都是 $h$ 的倍数（我们可以使用不同的 $\alpha$ 和 $r_i$ 值通过自动试错来实现），就可以使用相同的环和签名密钥制作 $h$ 个不可链接的有效签名。\footnote{我们不关心来自其他子群的点，因为 $\mathcal{H}_n$ 的输出限制在 $\mathbb{Z}_l$ 中。对于 EC 阶 $N = h l$，$N$ 的所有因数（以及因此可能的子群）要么是 $l$（素数）的倍数，要么是 $h$ 的因数。}这是因为 EC 点乘以其子群的阶等于零。\footnote{在 Monero 的早期历史中，这没有被检查。幸运的是，在2017年4月修复实现（协议第5版）之前，这个漏洞没有被利用 \cite{key-image-bug}。}
 
-To be clear, given some point $K$ in the subgroup of order $l$, some point $K^h$ with order $h$, and an integer $c$ divisible by $h$:
+明确地说，给定阶为 $l$ 的子群中的某个点 $K$，阶为 $h$ 的某个点 $K^h$，以及一个能被 $h$ 整除的整数 $c$：
 \begin{align*}
     c*(K + K^h) &= cK + cK^h\\
                 &= cK + 0
 \end{align*}
 
-We can demonstrate correctness (i.e. `how it works') in a similar way to the more simple SAG signature scheme.
+我们可以用与更简单的 SAG 签名方案类似的方式展示正确性（即"它是如何工作的"）。
 
-Our description attempts to be faithful to the original explanation of bLSAG, which does not include $\mathcal{R}$ in the hash that calculates $c_i$. Including keys in the hash is known as `key prefixing'. Recent research \cite{key-prefix-paper} suggests it may not be necessary, although adding the prefix is standard practice for similar signature schemes (LSAG uses key prefixing).
+我们的描述力求忠实于 bLSAG 的原始解释，该解释在计算 $c_i$ 的 hash 中不包含 $\mathcal{R}$。将密钥包含在 hash 中被称为"密钥前缀"。最近的研究 \cite{key-prefix-paper} 表明这可能不是必需的，尽管添加前缀是类似签名方案的标准做法（LSAG 使用密钥前缀）。
 
 
-\subsection*{Linkability}
+\subsection*{可链接性 (Linkability)}
 
-Given two valid signatures that are different in some way (e.g. different fake responses, different messages, different overall ring members),\vspace{.1cm}
+给定两个在某些方面不同的有效签名（例如不同的伪响应、不同的消息、不同的整体环成员），\vspace{.1cm}
 \begin{align*}
 	\sigma(\mathfrak{m})   &= (c_1, r_1, ..., r_n)\textrm{ with } \tilde{K}\textrm{, and}\\
 	\sigma'(\mathfrak{m}')  &= (c_1', r'_1, ..., r'_{n'})\textrm{ with } \tilde{K}'\textrm{,}
 \end{align*}
-\quad if \(\tilde{K} =  \tilde{K}'\) then clearly both signatures come from the same private key.% because $\tilde{K}= k_{\pi} \mathcal{H}_p(\mathcal{R})$.
+\quad 如果 \(\tilde{K} =  \tilde{K}'\)，则显然两个签名来自同一个私钥。
 
-While an observer could link $\sigma$ and $\sigma'$, he wouldn’t necessarily know which $K_i$ in $\mathcal{R}$ or $\mathcal{R}'$ was the culprit unless there was only one common key between them. If there was more than one common ring member, his only recourse would be solving the DLP or auditing the rings in some way (such as learning all $k_i$ with $i \neq \pi$, or learning $k_\pi$).\footnote{\label{lsag_unforgeable_note}LSAG, which is quite similar to bLSAG, is unforgeable, meaning no attacker could make a valid ring signature without knowing a private key. If he invents a fake $\tilde{K}$ and seeds his signature computation with $c_{\pi+1}$, then, not knowing $k_\pi$, he can’t calculate a number $r_\pi = \alpha - c_\pi k_\pi$ that would produce $[r_\pi G + c_\pi K_\pi] = \alpha G$. A verifier would reject his signature. Liu {\em et al.} prove forgeries that manage to pass verification are extremely improbable \cite{Liu2004}.}
+虽然观察者可以将 $\sigma$ 和 $\sigma'$ 链接起来，但他不一定知道 $\mathcal{R}$ 或 $\mathcal{R}'$ 中的哪个 $K_i$ 是罪魁祸首，除非它们之间只有一个共同密钥。如果有多个共同环成员，他唯一的办法就是求解 DLP 或以某种方式审计环（例如学习所有 $i \neq \pi$ 的 $k_i$，或学习 $k_\pi$）。\footnote{\label{lsag_unforgeable_note}LSAG 与 bLSAG 非常相似，是不可伪造的，这意味着没有攻击者可以在不知道私钥的情况下制作有效的环签名。如果他发明了一个假的 $\tilde{K}$ 并用 $c_{\pi+1}$ 初始化他的签名计算，那么，由于不知道 $k_\pi$，他无法计算一个数 $r_\pi = \alpha - c_\pi k_\pi$ 来产生 $[r_\pi G + c_\pi K_\pi] = \alpha G$。验证者会拒绝他的签名。Liu {\em 等人}证明，能够通过验证的伪造行为概率极低 \cite{Liu2004}。}
 
 
 
-\section{Multilayer Linkable Spontaneous Anonymous Group (MLSAG) signatures}
+\section{多层可链接自发匿名群 (MLSAG) 签名 (Multilayer Linkable Spontaneous Anonymous Group (MLSAG) signatures)}
 \label{sec:MLSAG}
 
-In order to sign transactions, one has to sign with multiple private keys. In \cite{MRL-0005-ringct}, Shen Noether {\em et al.} describe a multi-layered generalization of the bLSAG signature scheme applicable when we have a set of \(n \cdot m\) keys; that is, the set\vspace{.175cm}
+为了签署 transaction，必须使用多个私钥进行签名。在 \cite{MRL-0005-ringct} 中，Shen Noether {\em 等人}描述了一种 bLSAG 签名方案的多层推广，适用于我们有 \(n \cdot m\) 个密钥集合的情况；即集合\vspace{.175cm}
 \[\mathcal{R} = \{K_{i,j}\}  \quad \textrm{for} \quad  i \in \{1, 2, ..., n\} \quad \textrm{and} \quad j \in \{1, 2, ..., m\}\]
 
-where we know the $m$ private keys \(\{k_{\pi, j}\}\) corresponding to the subset \(\{K_{\pi, j}\}\) for some index \(i = \pi\). Such an algorithm would address our needs if we generalize the notion of linkability.
+其中我们知道对应于子集 \(\{K_{\pi, j}\}\) 的 $m$ 个私钥 \(\{k_{\pi, j}\}\)，对于某个索引 \(i = \pi\)。如果我们推广可链接性的概念，这样的算法将满足我们的需求。
 \begin{description}
-	\item[Linkability] If any private key \(k_{\pi, j}\) is used in 2 different signatures, then those signatures will be automatically linked.
+	\item[可链接性 (Linkability)] 如果任何私钥 \(k_{\pi, j}\) 被用于2个不同的签名中，则这些签名将被自动链接。
 \end{description}
 
 
-\subsection*{Signature}
+\subsection*{签名 (Signature)}
 
 \begin{enumerate}
-	\item Calculate key images \(\tilde{K_j} = k_{\pi, j} \mathcal{H}_p(K_{\pi, j})\) for all \(j \in \{1, 2, ..., m\}\).
+	\item 为所有 \(j \in \{1, 2, ..., m\}\) 计算 key image \(\tilde{K_j} = k_{\pi, j} \mathcal{H}_p(K_{\pi, j})\)。
 
-	\item Generate random numbers  \(\alpha_j \in_R \mathbb{Z}_l\), and \(r_{i, j} \in_R \mathbb{Z}_l\) for \(i \in \{1, 2, ..., n\}\) (except \(i = \pi\)) and \(j \in \{1, 2, ..., m\}\).
+	\item 生成随机数 \(\alpha_j \in_R \mathbb{Z}_l\)，以及 \(r_{i, j} \in_R \mathbb{Z}_l\)，其中 \(i \in \{1, 2, ..., n\}\)（排除 \(i = \pi\)）和 \(j \in \{1, 2, ..., m\}\)。
 
-	\item Compute\footnote{Monero\marginnote{src/ringct/ rctSigs.cpp {\tt MLSAG\_Gen()}} MLSAG uses key prefixing. Each challenge contains explicit public keys like this (adding the $K$ terms absent from bLSAG; key images are included in the message signed):\vspace{-.25cm}
+	\item 计算\footnote{Monero\marginnote{src/ringct/ rctSigs.cpp {\tt MLSAG\_Gen()}} MLSAG 使用密钥前缀。每个挑战包含如下显式公钥（添加了 bLSAG 中缺失的 $K$ 项；key image 包含在签名的消息中）：\vspace{-.25cm}
 	\[c_{\pi+1} = \mathcal{H}_n(\mathfrak{m}, K_{\pi, 1}, [\alpha_1 G], [\alpha_1 \mathcal{H}_p(K_{\pi, 1})], ..., K_{\pi, m}, [\alpha_m G], [\alpha_m \mathcal{H}_p(K_{\pi, m})])
 	\]}
 	\[c_{\pi+1} = \mathcal{H}_n(\mathfrak{m}, [\alpha_1 G], [\alpha_1 \mathcal{H}_p(K_{\pi, 1})], ..., [\alpha_m G], [\alpha_m \mathcal{H}_p(K_{\pi, m})])\]
 
-	\item For \(i = \pi+1, \pi+2, ..., n, 1, 2, ..., \pi-1\) calculate, replacing \(n + 1 \rightarrow 1\),\vspace{.175cm}
+	\item 对于 \(i = \pi+1, \pi+2, ..., n, 1, 2, ..., \pi-1\) 计算，将 \(n + 1 \rightarrow 1\)，\vspace{.175cm}
 	\[ c_{i+1} = \mathcal{H}_n(\mathfrak{m}, [r_{i, 1} G + c_i K_{i, 1}], [r_{i, 1} \mathcal{H}_p(K_{i, 1}) + c_i \tilde{K}_1], 
 	..., [r_{i, m} G + c_i K_{i, m}], [r_{i, m} \mathcal{H}_p(K_{i, m}) + c_i \tilde{K}_m])\]
 
-	\item Define all \(r_{\pi, j} = \alpha_j - c_\pi k_{\pi, j} \pmod l\).
+	\item 定义所有 \(r_{\pi, j} = \alpha_j - c_\pi k_{\pi, j} \pmod l\)。
 \end{enumerate}
 
-The signature will be \(\sigma(\mathfrak{m}) = (c_1, r_{1, 1}, ..., r_{1, m}, ..., r_{n, 1}, ..., r_{n, m}) \), with key images $(\tilde{K}_1, ...,  \tilde{K}_m)$.
+签名为 \(\sigma(\mathfrak{m}) = (c_1, r_{1, 1}, ..., r_{1, m}, ..., r_{n, 1}, ..., r_{n, m}) \)，附带 key image $(\tilde{K}_1, ...,  \tilde{K}_m)$。
 
-%One way to think about MLSAG is that there are $m$ sub-loops of size $n$, and in each sub-loop we know a private key at index $i = \pi$ ($m \cdot n$ total public keys). The signature algorithm ties together a ‘stack’ of keys at each stage $c$, composed of one key from each sub-loop. bLSAG is the special case where $m = 1$.
+%理解 MLSAG 的一种方式是：有 $m$ 个大小为 $n$ 的子循环，在每个子循环中我们在索引 $i = \pi$ 处知道一个私钥（总共 $m \cdot n$ 个公钥）。签名算法在每个阶段 $c$ 将一个"栈"的密钥绑定在一起，由每个子循环中的一个密钥组成。bLSAG 是 $m = 1$ 的特殊情况。
 
 
-\subsection*{Verification}
+\subsection*{验证 (Verification)}
 
-Verification of a signature is done in the following manner:
+签名的验证按以下方式进行：
 
 \begin{enumerate}
-    \item For all $j \in \{1,...,m\}$ check $l \tilde{K}_j \stackrel{?}{=} 0$.
-	\item For \(i = 1, ..., n\) compute, replacing \(n + 1 \rightarrow 1\),\vspace{.175cm}
+    \item 对所有 $j \in \{1,...,m\}$ 检查 $l \tilde{K}_j \stackrel{?}{=} 0$。
+	\item 对于 \(i = 1, ..., n\) 计算，将 \(n + 1 \rightarrow 1\)，\vspace{.175cm}
 	\begin{align*}
 	c'_{i+1} = \mathcal{H}_n(\mathfrak{m}, [r_{i, 1} G + c_i K_{i, 1}], [r_{i, 1} \mathcal{H}_p(K_{i, 1}) + c_i \tilde{K}_1], 
 	..., [r_{i, m} G + c_i K_{i, m}], [r_{i, m} \mathcal{H}_p(K_{i, m}) + c_i \tilde{K}_m])
 	\end{align*}
 
-	\item If \(c_1 = c'_1\) then the signature is valid.
+	\item 如果 \(c_1 = c'_1\)，则签名有效。
 \end{enumerate}
 
 
-\subsection*{Why it works}
+\subsection*{为什么有效 (Why it works)}
 
-Just as with the SAG algorithm, we can readily observe that
+正如 SAG 算法一样，我们可以容易地观察到
 
 \begin{itemize}
-    \item If \(i \ne \pi \), then clearly the values \(c'_{i + 1}\) are calculated as described in the signature algorithm.
+    \item 如果 \(i \ne \pi \)，则显然值 \(c'_{i + 1}\) 是按照签名算法中描述的方式计算的。
 
-    \item If \(i = \pi\) then, since \(r_{\pi, j} = \alpha_j - c_\pi k_{\pi, j} \) closes the loop,\vspace{.175cm}
+    \item 如果 \(i = \pi\)，由于 \(r_{\pi, j} = \alpha_j - c_\pi k_{\pi, j} \) 闭合了循环，\vspace{.175cm}
     \begin{alignat*}{6}
         r_{\pi, j} G + c_\pi K_{\pi,j} &= (\alpha_j - c_\pi k_{\pi, j}) G + c_\pi K_{\pi,j} = \alpha_j G\\
-        \intertext{and}
+        \intertext{并且}
         r_{\pi, j} \mathcal{H}_p(K_{\pi, j}) + c_\pi \tilde{K}_j &= (\alpha_j - c_\pi k_{\pi, j}) \mathcal{H}_p(K_{\pi, j}) + c_\pi \tilde{K}_j = \alpha_j \mathcal{H}_p(K_{\pi, j})\\
     \end{alignat*}
-    In other words, it holds also that \(c'_{\pi + 1} = c_{\pi+1}\).
+    换句话说，\(c'_{\pi + 1} = c_{\pi+1}\) 也成立。
 \end{itemize}
 
 
-\subsection*{Linkability}
+\subsection*{可链接性 (Linkability)}
 
-If a private key \(k_{\pi, j}\) is re-used to make any signature, the corresponding key image \(\tilde{K}_j\) supplied in the signature will reveal it. This observation matches our generalized definition of linkability.\footnote{As with bLSAG, linked MLSAG signatures do not indicate which public key was used to sign it. However, if the linking key image's sub-loops' rings have only one key in common, the culprit is obvious. If the culprit is identified, all other signing members of both signatures are revealed since they share the culprit's indices.}
-
-
-\subsection*{Space requirements}
-
-In this scheme we store (1+$m*n$) integers, have $m$ EC key images, and use $m*n$ public keys.
+如果私钥 \(k_{\pi, j}\) 被重复使用来制作任何签名，签名中提供的对应 key image \(\tilde{K}_j\) 将揭示这一点。这一观察符合我们对可链接性的推广定义。\footnote{与 bLSAG 一样，链接的 MLSAG 签名不会指明使用了哪个公钥进行签名。然而，如果链接的 key image 的子循环环只有一个共同密钥，那么罪魁祸首就是显而易见的。如果罪魁祸首被识别，两个签名的所有其他签名成员都会被揭露，因为它们共享罪魁祸首的索引。}
 
 
+\subsection*{空间需求 (Space requirements)}
 
-\section{Concise Linkable Spontaneous Anonymous Group (CLSAG) signatures}
+在此方案中，我们存储 (1+$m*n$) 个整数，有 $m$ 个 EC key image，并使用 $m*n$ 个公钥。
+
+
+
+\section{简洁可链接自发匿名群 (CLSAG) 签名 (Concise Linkable Spontaneous Anonymous Group (CLSAG) signatures)}
 \label{sec:CLSAG}
 
-CLSAG \cite{MRL-0011-CLSAG}\footnote{The paper this section is based on is a pre-print being finalized for external review. CLSAG is promising as a replacement for MLSAG in future protocol versions, but has not been implemented, and might not be in the future.} is sort of half-way between bLSAG and MLSAG. Suppose you have a `primary' key, and associated with it are several `auxiliary' keys. It is important to prove knowledge of all private keys, but linkability only applies to the primary. This linkability retraction allows smaller, faster signatures than afforded by MLSAG.
+CLSAG \cite{MRL-0011-CLSAG}\footnote{本节所依据的论文是一份正在定稿以供外部评审的预印本。CLSAG 作为 MLSAG 在未来协议版本中的替代方案很有前景，但尚未实现，也可能不会在未来实现。}是介于 bLSAG 和 MLSAG 之间的一种方案。假设你有一个"主"密钥，与之相关联的是几个"辅助"密钥。证明知道所有私钥很重要，但可链接性仅适用于主密钥。这种可链接性收缩允许比 MLSAG 更小、更快的签名。
 
-As with MLSAG, we have a set of \(n \cdot m\) keys ($n$ is the ring size, $m$ is the number of signing keys), and the primary keys are at index 1. In other words, there are $n$ primary keys, and the $\pi$\nth such key and its auxiliaries will sign.\vspace{.175cm}
+与 MLSAG 一样，我们有一个 \(n \cdot m\) 个密钥的集合（$n$ 是环的大小，$m$ 是签名密钥的数量），主密钥位于索引1。换句话说，有 $n$ 个主密钥，第 $\pi$ 个主密钥及其辅助密钥将进行签名。\vspace{.175cm}
 \[\mathcal{R} = \{K_{i,j}\}  \quad \textrm{for} \quad  i \in \{1, 2, ..., n\} \quad \textrm{and} \quad j \in \{1, 2, ..., m\}\]
 
-We know the private keys \(\{k_{\pi, j}\}\) corresponding to the subset \(\{K_{\pi, j}\}\) for some index \(i = \pi\).
+我们知道对应于子集 \(\{K_{\pi, j}\}\) 的私钥 \(\{k_{\pi, j}\}\)，对于某个索引 \(i = \pi\)。
 
 
-\subsection*{Signature}
+\subsection*{签名 (Signature)}
 
 \begin{enumerate}
-	\item Calculate key images \(\tilde{K_j} = k_{\pi, j} \mathcal{H}_p(K_{\pi, 1})\) for all \(j \in \{1, 2, ..., m\}\). Note the base key is always the same, and so key images with $j>1$ are `auxiliary key images'. For notational simplicity we call them all $\tilde{K}_j$.
+	\item 为所有 \(j \in \{1, 2, ..., m\}\) 计算 key image \(\tilde{K_j} = k_{\pi, j} \mathcal{H}_p(K_{\pi, 1})\)。注意基底密钥始终相同，因此 $j>1$ 的 key image 是"辅助 key image"。为简化符号，我们统称它们为 $\tilde{K}_j$。
 
-	\item Generate random numbers  \(\alpha \in_R \mathbb{Z}_l\), and \(r_{i} \in_R \mathbb{Z}_l\) for \(i \in \{1, 2, ..., n\}\) (except \(i = \pi\)).
+	\item 生成随机数 \(\alpha \in_R \mathbb{Z}_l\)，以及 \(r_{i} \in_R \mathbb{Z}_l\)，其中 \(i \in \{1, 2, ..., n\}\)（排除 \(i = \pi\)）。
 
-    \item Calculate aggregate public keys $W_i$ for \(i \in \{1, 2, ..., n\}\), and aggregate key image $\tilde{W}$\footnote{The CLSAG paper says to use different hash functions for domain separation, which we model by prefixing each hash with a tag \cite{MRL-0011-CLSAG}, e.g. $T_1 =$ ``CLSAG\_1", $T_c =$ ``CLSAG\_c", etc. Domain separated hash functions have different outputs even with the same inputs. We also use key prefixing here (including $\mathcal{R}$, which has all the keys, in the hash). Domain separating is a new policy for Monero development, and will likely be done with all applications of hash functions added in the future (v13+). Historical uses of hash functions will probably be left alone.}%an actual implementation may use $j$ flags, instead of the index itself
+    \item 为 \(i \in \{1, 2, ..., n\}\) 计算聚合公钥 $W_i$ 和聚合 key image $\tilde{W}$\footnote{CLSAG 论文建议使用不同的 hash 函数来进行域分离，我们通过在每个 hash 前加标签来建模 \cite{MRL-0011-CLSAG}，例如 $T_1 =$ "CLSAG\_1"，$T_c =$ "CLSAG\_c" 等。域分离的 hash 函数即使输入相同也产生不同的输出。我们这里也使用密钥前缀（将包含所有密钥的 $\mathcal{R}$ 包含在 hash 中）。域分离是 Monero 开发的新策略，未来添加的所有 hash 函数应用（v13+）都可能会这样做。历史上的 hash 函数使用可能将保持不变。}%实际实现可能使用 $j$ 标志，而不是索引本身
     \begin{align*}
     W_i &= \sum^{m}_{j=1} \mathcal{H}_n(T_j, \mathcal{R}, \tilde{K}_1,...,\tilde{K}_{m})*K_{i,j}\\
     \tilde{W} &= \sum^{m}_{j=1} \mathcal{H}_n(T_j, \mathcal{R}, \tilde{K}_1,...,\tilde{K}_{m})*\tilde{K}_j
     \end{align*}{}
-    where $w_{\pi} = \sum_j \mathcal{H}_n(T_j,...)*k_{\pi,j}$ is the aggregate private key.
+    其中 $w_{\pi} = \sum_j \mathcal{H}_n(T_j,...)*k_{\pi,j}$ 是聚合私钥。
 
-	\item Compute
+
+	\item 计算
 	\[c_{\pi+1} = \mathcal{H}_n(T_c, \mathcal{R}, \mathfrak{m}, [\alpha G], [\alpha \mathcal{H}_p(K_{\pi, 1})])\]
 
-	\item For \(i = \pi+1, \pi+2, ..., n, 1, 2, ..., \pi-1\) calculate, replacing \(n + 1 \rightarrow 1\),\vspace{.175cm}
+	\item 对于 \(i = \pi+1, \pi+2, ..., n, 1, 2, ..., \pi-1\) 计算，将 \(n + 1 \rightarrow 1\)，\vspace{.175cm}
 	\[c_{i+1} = \mathcal{H}_n(T_c, \mathcal{R}, \mathfrak{m}, [r_i G + c_i W_i], [r_{i} \mathcal{H}_p(K_{i,1}) + c_i \tilde{W}])\]
 
-	\item Define \(r_{\pi} = \alpha - c_\pi w_\pi \pmod l\).
+	\item 定义 \(r_{\pi} = \alpha - c_\pi w_\pi \pmod l\)。
 \end{enumerate}
 
-Therefore \(\sigma(\mathfrak{m}) = (c_1, r_1, ..., r_n) \), with primary key image $\tilde{K}_1$, and auxiliary images $(\tilde{K}_2,...,\tilde{K}_{m})$.
+因此 \(\sigma(\mathfrak{m}) = (c_1, r_1, ..., r_n) \)，附带主 key image $\tilde{K}_1$ 和辅助 image $(\tilde{K}_2,...,\tilde{K}_{m})$。
 
 
-\subsection*{Verification}
+\subsection*{验证 (Verification)}
 
-The verification of a signature is done in the following manner:
+签名的验证按以下方式进行：
 
 \begin{enumerate}
-    \item For all $j \in \{1,...,m\}$ check $l \tilde{K}_j \stackrel{?}{=} 0$.\footnote{In Monero we would only check $l*\tilde{K}_1 \stackrel{?}{=} 0$ for the primary key image. Auxiliary keys would be stored as $(1/8)*\tilde{K}_j$, and during verification multiplied by 8 (recall Section \ref{elliptic_curves_section}), which is more efficient. The method discrepancy is an implementation choice, since linkable key images are very important and so shouldn't be messed with aggressively, and the other method was employed in prior protocol versions.}
+    \item 对所有 $j \in \{1,...,m\}$ 检查 $l \tilde{K}_j \stackrel{?}{=} 0$。\footnote{在 Monero 中，我们只为主 key image 检查 $l*\\tilde{K}_1 \\stackrel{?}{=} 0$。辅助密钥将存储为 $(1/8)*\\tilde{K}_j$，在验证时乘以8（回顾第 \ref{elliptic_curves_section} 节），这更高效。方法差异是一种实现选择，因为可链接的 key image 非常重要，不应被激进地修改，而另一种方法在之前的协议版本中使用过。}
 
-    \item Calculate aggregate public keys $W_i$ for \(i \in \{1, 2, ..., n\}\), and aggregate key image $\tilde{W}$\vspace{.175cm}
+    \item 为 \(i \in \{1, 2, ..., n\}\) 计算聚合公钥 $W_i$ 和聚合 key image $\tilde{W}$\vspace{.175cm}
     \begin{align*}
     W_i &= \sum^{m}_{j=1} \mathcal{H}_n(T_j, \mathcal{R}, \tilde{K}_1,...,\tilde{K}_{m})*K_{i,j}\\
     \tilde{W} &= \sum^{m}_{j=1} \mathcal{H}_n(T_j, \mathcal{R}, \tilde{K}_1,...,\tilde{K}_{m})*\tilde{K}_j
     \end{align*}{}
 
-	\item For \(i = 1, ..., n\) compute, replacing \(n + 1 \rightarrow 1\),\vspace{.175cm}
+	\item 对于 \(i = 1, ..., n\) 计算，将 \(n + 1 \rightarrow 1\)，\vspace{.175cm}
 	\[c_{i+1} = \mathcal{H}_n(T_c, \mathcal{R}, \mathfrak{m}, [r_i G + c_i W_i], [r_{i} \mathcal{H}_p(K_{i,1}) + c_i \tilde{W}])\]
 
-	\item If \(c_1 = c'_1\) then the signature is valid.
+	\item 如果 \(c_1 = c'_1\)，则签名有效。
 \end{enumerate}
 
 
-\subsection*{Why it works}
+\subsection*{为什么有效 (Why it works)}
 
-The biggest danger in concise signatures like this is key cancellation, where the key images reported aren't legitimate, yet still sum to a legitimate aggregate value. This is where the aggregation coefficients $\mathcal{H}_n(T_j, \mathcal{R}, \tilde{K}_1,...,\tilde{K}_{m})$ come into play, locking down each key to its expected value. We leave tracing out the circular repercussions of faking a key image as an exercise to the reader (perhaps start by imagining those coefficients don't exist). Auxiliary key images are an artifact of proving the primary image is legitimate, since the aggregate private key $w_{\pi}$, which contains all the private keys, is applied to base point $\mathcal{H}_p(K_{\pi,1})$.
-
-
-\subsection*{Linkability}
-
-If a private key \(k_{\pi, 1}\) is re-used to make any signature, the corresponding primary key image \(\tilde{K}_1\) supplied in the signature will reveal it. Auxiliary key images are ignored, as they only exist to facilitate the `Concise' part of CLSAG.
+在这种简洁签名中最大的危险是密钥抵消，即报告的 key image 不是合法的，但仍然求和得到合法的聚合值。这就是聚合系数 $\mathcal{H}_n(T_j, \mathcal{R}, \tilde{K}_1,...,\tilde{K}_{m})$ 发挥作用的地方，它将每个密钥锁定到其预期值。我们将追踪伪造 key image 的循环影响作为练习留给读者（也许可以先想象这些系数不存在）。辅助 key image 是证明主 image 合法性的副产品，因为包含所有私钥的聚合私钥 $w_{\pi}$ 被应用于基底点 $\mathcal{H}_p(K_{\pi,1})$。
 
 
-\subsection*{Space requirements}
+\subsection*{可链接性 (Linkability)}
 
-We store (1+$n$) integers, have $m$ key images, and use $m*n$ public keys.
+如果私钥 \(k_{\pi, 1}\) 被重复使用来制作任何签名，签名中提供的对应主 key image \(\tilde{K}_1\) 将揭示这一点。辅助 key image 被忽略，因为它们的存在只是为了促进 CLSAG 的"简洁"部分。
 
-%NOTE: in Monero CLSAG key prefixing is a bit different.
+
+\subsection*{空间需求 (Space requirements)}
+
+我们存储 (1+$n$) 个整数，有 $m$ 个 key image，并使用 $m*n$ 个公钥。
+
+%注意：在 Monero 中，CLSAG 密钥前缀略有不同。
 %\[c_{i+1} = \mathcal{H}_n(T_c, one-time addresses, output commitments, pseudo output commitment, \mathfrak{m}, [r_i G + c_i W_i], [r_{i} \mathcal{H}_p(K_{i,1}) + c_i \tilde{W}])\]

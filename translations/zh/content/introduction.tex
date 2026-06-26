@@ -1,115 +1,114 @@
-\chapter{Introduction}
+\chapter{引言 (Introduction)}
 \label{chapter:introduction}
 
-In the digital realm it is often trivial to make endless copies of information, with equally endless alterations. For a currency to exist digitally and be widely adopted, its users must believe its supply is strictly limited. A money recipient must trust they are not receiving counterfeit coins, or coins that have already been sent to someone else. To accomplish that without requiring the collaboration of any third party like a central authority, its supply and complete transaction history must be publicly verifiable.
+在数字领域，复制信息并对其进行任意修改通常都是轻而易举的事。一种货币要以数字化形式存在并被广泛接受，其使用者必须相信其供应量受到严格限制。货币接收者必须确信自己不会收到伪造的货币，或是已经被发送给其他人的货币。为了在不需要任何第三方（如中央机构）协作的情况下实现这一点，货币的供应量和完整的交易历史必须可以公开验证。
 
-We can use cryptographic tools to allow data registered in an easily accessible database - the blockchain - to be virtually immutable and unforgeable, with legitimacy that cannot be disputed by any party.
-\\ \newline
-Cryptocurrencies store transactions in the blockchain, which acts as a public ledger\footnote{In this context ledger just means a record of all currency creation and exchange events. Specifically, how much money was transferred in each event and to whom.} of all the currency operations. Most cryptocurrencies store transactions in clear text, to facilitate verification of transactions by the community of users.
-\\ \newline
-Clearly, an open blockchain defies any basic understanding of privacy or fungibility\footnote{``\textbf{Fungible} means capable of mutual substitution in use or satisfaction of a contract. ... Examples: ... money, etc."\cite{mises-org-fungible} In an open blockchain such as Bitcoin, the coins owned by Alice can be differentiated from those owned by Bob based on the `transaction history' of those coins. If Alice's transaction history includes transactions related to supposedly nefarious actors, then her coins might be `tainted' \cite{bitcoin-big-bang-taint}, and hence less valuable than Bob's (even if they own the same amount of coins). Reputable figures claim that newly minted Bitcoins trade at a premium over used coins, since they don't have a history \cite{new-bitcoin-premium}.}, since it literally {\em publicizes} the complete transaction histories of its users.
-\\ \newline
-To address the lack of privacy, users of cryptocurrencies such as Bitcoin can obfuscate transactions by using temporary intermediate addresses \cite{DBLP:journals/corr/NarayananM17}. However, with appropriate tools it is possible to analyze flows and to a large extent link true senders with receivers \cite{DBLP:journals/corr/ShenTuY15b, DK-police-tracing-btc, Andrew-Cox-Sandia, chainalysis-2020-report}.
+我们可以利用密码学工具，使存储在易于访问的数据库——即 blockchain——中的数据实际上不可篡改和不可伪造，其合法性不容任何一方质疑。
+\\ \\newline
+加密货币将 transaction 存储在 blockchain 中，后者充当所有货币操作的公开账本\footnote{此处"账本"仅指所有货币创建和交换事件的记录。具体而言，即每次事件中转移了多少金额以及转移给了谁。}。大多数加密货币以明文形式存储 transaction，以便社区用户验证 transaction。
+\\ \\newline
+显然，公开的 blockchain 违背了对隐私或可替代性\footnote{``\textbf{可替代的} 指在使用或合同履行中可以相互替代的。……例如：……货币等。''\cite{mises-org-fungible} 在 Bitcoin 等公开 blockchain 中，Alice 持有的币可以与 Bob 持有的币通过这些币的"交易历史"加以区分。如果 Alice 的交易历史中包含与所谓恶意行为者相关的交易，那么她的币可能被"污染" \cite{bitcoin-big-bang-taint}，从而比 Bob 的币价值更低（即使他们拥有相同数量的币）。知名人士声称，新铸造的 Bitcoin 相比已使用的币有溢价，因为它们没有历史记录 \cite{new-bitcoin-premium}。}的基本认知，因为它实际上{\em 公开了}用户的完整交易历史。
+\\ \\newline
+为了解决隐私缺失的问题，Bitcoin 等加密货币的用户可以通过使用临时中间地址来混淆 transaction \cite{DBLP:journals/corr/NarayananM17}。然而，借助适当的工具，仍然可以分析资金流向，并在很大程度上将真正的发送者与接收者关联起来 \cite{DBLP:journals/corr/ShenTuY15b, DK-police-tracing-btc, Andrew-Cox-Sandia, chainalysis-2020-report}。
 
-In contrast, the cryptocurrency Monero (Moe-neh-row) attempts to tackle the issue of privacy by storing only single-use addresses for receipt of funds in the blockchain, and by authenticating the dispersal of funds in each transaction with ring signatures. With these methods there are no known generally effective ways to link receivers or trace the origin of funds.\footnote{Depending on the behavior of users, there may be cases where transactions can be analyzed to some extent. For an example see this article: \cite{monero-ring-heuristics-ryo}.}
+相比之下，加密货币 Monero（Moe-neh-row）试图通过仅在 blockchain 中存储一次性接收地址来解决隐私问题，并通过环签名来验证每笔 transaction 中资金的分散。采用这些方法，目前没有已知的通用有效方法来关联接收者或追溯资金来源。\footnote{根据用户的行为，某些情况下 transaction 可能在一定程度上被分析。相关示例请参见这篇文章：\cite{monero-ring-heuristics-ryo}。}
 
-Additionally, transaction amounts in the Monero blockchain are concealed behind cryptographic constructions, rendering currency flows opaque.
+此外，Monero blockchain 中的交易金额隐藏在密码学构造之后，使得资金流向变得不透明。
 
-The result is a cryptocurrency with a high level of privacy and fungibility.
+其结果是一种具有高度隐私性和可替代性的加密货币。
 
 
 
-\section{Objectives}
+\section{目标 (Objectives)}
 \label{sec:goals}
 
-Monero is an established cryptocurrency with over five years of development \cite{bitmonero-launched, monero-history}, and maintains a steadily increasing level of adoption \cite{justin-defcon-2019-community-growth}.\footnote{\label{marketcap_note}In terms of market capitalization, Monero has been steady relative to other cryptocurrencies. It was 14\nth as of June 14\nth, 2018, and 12\nth on January 5\nth, 2020; see \url{https://coinmarketcap.com/}.} Unfortunately, there is little comprehensive documentation describing the mechanisms it uses.\footnote{One documentation effort, at \url{https://monerodocs.org/}, has some helpful entries, especially related to the Command Line Interface. The CLI is a Monero wallet accessible through a console/terminal. It has the most functionality out of all Monero wallets, at the expense of no user-friendly graphical interface.}\footnote{Another, more general, documentation effort called Mastering Monero can be found here: \cite{mastering-monero}.} Even worse, essential parts of its theoretical framework have been published in non-peer-reviewed papers that are incomplete or contain errors. For significant parts of the theoretical framework of Monero, only the source code is reliable as a source of information.\footnote{Mr. Seguias has created the excellent Monero Building Blocks series \cite{monero-building-blocks}, which contains a thorough treatment of the cryptographic security proofs used to justify Monero's signature schemes. As with Zero to Monero: First Edition \cite{ztm-1}, Seguias's series is focused on v7 of the protocol.}
+Monero 是一种成熟的加密货币，拥有超过五年的开发历史 \cite{bitmonero-launched, monero-history}，并且采用率在稳步增长 \cite{justin-defcon-2019-community-growth}。\footnote{\label{marketcap_note}就市值而言，Monero 相对于其他加密货币一直保持稳定。截至2018年6月14日，其市值排名第14位，2020年1月5日排名第12位；参见 \url{https://coinmarketcap.com/}。}遗憾的是，描述其所用机制的全面文档很少。\footnote{一个文档项目位于 \url{https://monerodocs.org/}，其中有一些有用的条目，尤其是与命令行界面相关的内容。CLI 是一种可通过控制台/终端访问的 Monero 钱包。它在所有 Monero 钱包中功能最为丰富，但代价是没有用户友好的图形界面。}\footnote{另一个更通用的文档项目名为 Mastering Monero，可在此处找到：\cite{mastering-monero}。}更糟糕的是，其理论框架的关键部分发表在未经同行评审的论文中，这些论文不完整或包含错误。对于 Monero 理论框架的重要部分，只有源代码才是可靠的信息来源。\footnote{Seguias 先生创建了优秀的 Monero Building Blocks 系列 \cite{monero-building-blocks}，其中包含了对用于论证 Monero 签名方案的密码学安全证明的深入讨论。与《Zero to Monero：第一版》\cite{ztm-1}一样，Seguias 的系列专注于协议的 v7 版本。}
 
-Moreover, for those without a background in mathematics, learning the basics of elliptic curve cryptography, which Monero uses extensively, can be a haphazard and frustrating endeavor.\footnote{A previous attempt to explain how Monero works \cite{MRL-0003-about-monero} did not elucidate elliptic curve cryptography, was incomplete, and is now over five years outdated.}
+此外，对于没有数学背景的人来说，学习椭圆曲线密码学（Monero 大量使用）的基础知识可能是杂乱无章且令人沮丧的尝试。\footnote{之前一篇解释 Monero 工作原理的尝试 \cite{MRL-0003-about-monero} 没有阐明椭圆曲线密码学，内容不完整，而且已过时五年以上。}
 
-We intend to palliate this situation by introducing the fundamental concepts necessary to understand elliptic curve cryptography, reviewing algorithms and cryptographic schemes, and collecting in-depth information about Monero’s inner workings.
+我们旨在通过介绍理解椭圆曲线密码学所需的基本概念、回顾算法和密码学方案以及收集关于 Monero 内部运作的深入信息来改善这一状况。
 
-To provide the best experience for our readers, we have taken care to build a constructive, step-by-step description of the Monero cryptocurrency.
+为了给读者提供最佳体验，我们精心构建了一个循序渐进的 Monero 加密货币描述。
 
-In the second edition of this report we have centered our attention on version 12 of the Monero protocol\footnote{The `protocol' is the set of rules that each new block is tested against before it can be added to the blockchain. This set of rules includes the `transaction protocol' (currently version 2, RingCT), which are general rules pertaining to how a transaction is constructed. Specific transaction rules can, and do, change, without the transaction protocol's version changing. Only large-scale changes to the transaction structure warrant moving its version number.}, corresponding to version 0.15.x.x of the Monero software suite. All transaction and blockchain-related mechanisms described here belong to those versions.\footnote{The Monero codebase's integrity and reliability is predicated on assuming enough people have reviewed it to catch most or all significant errors. We hope that readers will not take our explanations for granted, and verify for themselves the code does what it's supposed to. If it doesn't, we hope you will make a responsible disclosure (\url{https://hackerone.com/monero}) for major problems, or Github pull request (\url{https://github.com/monero-project/monero}) for minor issues.}\footnote{Several protocols worth considering for the next generation of Monero transactions are undergoing research and investigation, including Triptych \cite{triptych-preprint}, RingCT3.0 \cite{ringct3-preprint}, Omniring \cite{omniring-paper}, and Lelantus \cite{lelantus-preprint}.} Deprecated transaction schemes have not been explored to any extent, even if they may be partially supported for backward compatibility. Likewise with deprecated blockchain features. The first edition \cite{ztm-1} corresponded to version 7 of the protocol, and version 0.12.x.x of the software suite.
-
-
-
-\section{Readership}
-
-We anticipate many readers will encounter this report with little to no understanding of discrete mathematics, algebraic structures, cryptography\footnote{An extensive textbook on applied cryptography can be found here: \cite{applied-cryptography-textbook}.}, and blockchains. We have tried to be thorough enough that laypeople from all perspectives may learn Monero without needing external research.
-
-We have purposefully omitted, or delegated to footnotes, some mathematical technicalities, when they would be in the way of clarity. We have also omitted concrete implementation details where we thought they were not essential. Our objective has been to present the subject half-way between mathematical cryptography and computer programming, aiming at completeness and conceptual clarity.\footnote{Some footnotes, especially in chapters related to the protocol, spoil future chapters or sections. These are intended to make more sense on a second read-through, since they usually involve specific implementation details that are only useful to those who have a grasp of how Monero works.}
+在本报告的第二版中，我们将注意力集中在 Monero 协议的第12版\footnote{``协议"是指在新区块被添加到 blockchain 之前对其进行检验的规则集。这套规则包括"transaction 协议"（目前为第2版，即 RingCT），这是关于如何构造 transaction 的通用规则。具体的 transaction 规则可以且确实会变化，而不会改变 transaction 协议的版本号。只有对 transaction 结构的大规模变更才值得提升其版本号。}上，对应于 Monero 软件套件 0.15.x.x 版本。此处描述的所有与 transaction 和 blockchain 相关的机制均属于这些版本。\footnote{Monero 代码库的完整性和可靠性建立在假设有足够多的人审查了代码以捕获大多数或所有重大错误的基础上。我们希望读者不要将我们的解释视为理所当然，而应自行验证代码是否按预期运行。如果没有，我们希望您会对重大问题进行负责任的披露（\url{https://hackerone.com/monero}），或对小问题提交 Github pull request（\url{https://github.com/monero-project/monero}）。}\footnote{几项值得考虑用于下一代 Monero transaction 的协议正在进行研究和调查，包括 Triptych \cite{triptych-preprint}、RingCT3.0 \cite{ringct3-preprint}、Omniring \cite{omniring-paper} 和 Lelantus \cite{lelantus-preprint}。}已弃用的 transaction 方案没有被探讨，即使它们可能为了向后兼容而被部分支持。弃用的 blockchain 功能亦是如此。第一版 \cite{ztm-1} 对应于协议第7版和软件套件 0.12.x.x 版本。
 
 
 
-\section{Origins of the Monero cryptocurrency}
+\section{读者群体 (Readership)}
 
-The cryptocurrency Monero, initially known as BitMonero, was created in April 2014 as a derivative of the proof-of-concept currency CryptoNote \cite{bitmonero-launched}. Monero means `money' in the language Esperanto, and its plural form is Moneroj (Moe-neh-rowje, similar to Moneros but using the -ge from orange).
+我们预计许多读者在接触本报告时，对离散数学、代数结构、密码学\footnote{一本关于应用密码学的广泛教科书可在此处找到：\cite{applied-cryptography-textbook}。}和 blockchain 几乎没有了解。我们力求足够详尽，使来自各方面的外行都能无需外部调研即可学习 Monero。
 
-CryptoNote is a cryptocurrency devised by various individuals. A landmark whitepaper describing it was published under the pseudonym of Nicolas van Saberhagen in October 2013 \cite{cryptoNoteWhitePaper}. It offered receiver anonymity through the use of one-time addresses, and sender ambiguity by means of ring signatures.
-
-Since its inception, Monero has further strengthened its privacy aspects by implementing amount hiding, as described by Greg Maxwell (among others) in \cite{Signatures2015BorromeanRS} and integrated into ring signatures based on Shen Noether's recommendations in \cite{MRL-0005-ringct}, then made more efficient with Bulletproofs \cite{Bulletproofs_paper}.
+我们有意省略了某些数学技术细节，或将它们安排在脚注中，以免妨碍理解。我们还在认为某些具体实现细节非必要时将其省略。我们的目标是在数学密码学和计算机编程之间找到平衡点，力求完整性和概念清晰性。\footnote{一些脚注，尤其是与协议相关的章节中的脚注，会剧透后续章节或部分内容。这些脚注旨在第二次阅读时更有意义，因为它们通常涉及只对已掌握 Monero 工作原理的人有用的特定实现细节。}
 
 
 
-\section{Outline}
+\section{Monero 加密货币的起源 (Origins of the Monero cryptocurrency)}
 
-As mentioned, our aim is to deliver a self-contained and step-by-step description of the Monero cryptocurrency. Zero to Monero has been structured to fulfill this objective, leading the reader through all parts of the currency’s inner workings.
+加密货币 Monero，最初称为 BitMonero，于2014年4月作为概念验证货币 CryptoNote 的衍生品被创建 \cite{bitmonero-launched}。Monero 在世界语中意为"金钱"，其复数形式为 Moneroj（Moe-neh-rowje，类似于 Moneros 但使用 orange 中的 -ge 发音）。
 
+CryptoNote 是由多位个人设计的加密货币。一份描述它的重要白皮书于2013年10月以 Nicolas van Saberhagen 的笔名发表 \cite{cryptoNoteWhitePaper}。它通过使用一次性地址提供接收者匿名性，并通过环签名实现发送者模糊性。
 
-\subsection{Part 1: `Essentials'}
-
-In our quest for comprehensiveness, we have chosen to present all the basic elements of cryptography needed to understand the complexities of Monero, and their mathematical antecedents. In Chapter \ref{chapter:basicConcepts} we develop essential aspects of elliptic curve cryptography.
-
-Chapter \ref{chapter:advanced-schnorr} expands on the Schnorr signature scheme from the prior chapter, and outlines the ring signature algorithms that will be applied to achieve confidential transactions.
-
-Chapter \ref{chapter:addresses} explores how Monero uses addresses to control ownership of funds, and the different kinds of addresses.
-
-In Chapter \ref{chapter:pedersen-commitments} we introduce the cryptographic mechanisms used to conceal amounts.
-
-With all the components in place, we explain the transaction scheme used in Monero in Chapter \ref{chapter:transactions}.
-
-The Monero blockchain is unfolded in Chapter \ref{chapter:blockchain}.
-
-
-\subsection{Part 2: `Extensions'}
-
-A cryptocurrency is more than just its protocol, and in `Extensions' we talk about a number of different ideas, many of which have not been implemented.\footnote{Please note that future protocol versions of Monero, especially those implementing new transaction protocols, may make any or all of these ideas impossible or impractical.}
-
-Various information about a transaction can be proven to observers, and those methods are the content of Chapter \ref{chapter:tx-knowledge-proofs}.
-
-While not essential to the operation of Monero, there is a lot of utility in multisignatures that allow multiple people to send and receive money collaboratively. Chapter \ref{chapter:multisignatures} describes Monero's current multisignature approach and outlines possible future developments in that area.%This is formally called (N-1)-of-N and N-of-N threshold authentication.
-
-Of extreme importance is applying multisig to the interactions of vendors and shoppers in online marketplaces. Chapter \ref{chapter:escrowed-market} constitutes our original design of an escrowed marketplace using Monero multisig.
-
-First presented here, TxTangle, outlined in Chapter \ref{chapter:txtangle}, is a decentralized protocol for joining the transactions of multiple individuals into one.
-
-
-\subsection{Additional content}
-
-Appendix \ref{appendix:RCTTypeBulletproof2} explains the structure of a sample transaction from the blockchain. Appendix \ref{appendix:block-content} explains the structure of blocks (including block headers and miner transactions) in Monero's blockchain. Finally, Appendix \ref{appendix:genesis-block} brings our report to a close by explaining the structure of Monero's genesis block. These provide a connection between the theoretical elements described in earlier sections with their real-life implementation.
-
-We\marginnote{Isn't this useful?} use margin notes to indicate where Monero implementation details can be found in the source code.\footnote{Our margin notes are accurate for version 0.15.x.x of the Monero software suite, but may gradually become inaccurate as the codebase is constantly changing. However, the code is stored in a git repository (\url{https://github.com/monero-project/monero}), so a complete history of changes is available.} There is usually a file path, such as src/ringct/rctOps.cpp, and a function, such as \(\textrm{{\tt ecdhEncode()}}\). Note: `-' indicates split text, such as crypto- note $\rightarrow$ cryptonote, and we neglect namespace qualifiers (e.g. {\tt Blockchain::}) in most cases.
+自创建以来，Monero 通过实现金额隐藏进一步增强了其隐私方面，正如 Greg Maxwell 等人在 \cite{Signatures2015BorromeanRS} 中所述，并根据 Shen Noether 的建议在 \cite{MRL-0005-ringct} 中将其集成到基于环签名的方案中，随后通过 Bulletproofs \cite{Bulletproofs_paper} 提高了效率。
 
 
 
-\section{Disclaimer}
+\section{大纲 (Outline)}
 
-All signature schemes, applications of elliptic curves, and Monero implementation details should be considered descriptive only. Readers considering serious practical applications (as opposed to a hobbyist's explorations) should consult primary sources and technical specifications (which we have cited where possible). Signature schemes need well-vetted security proofs, and Monero implementation details can be found in Monero's source code. In particular, as a common saying goes, `don't roll your own crypto'. Code implementing cryptographic primitives should be well-reviewed by experts and have a long history of dependable performance. Moreover, original contributions in this document may not be well-reviewed and are likely untested, so readers should exercise their judgement when reading them.
-
-
-
-\section{History of Zero to Monero}
-
-Zero to Monero is an expansion of Kurt Alonso's master's thesis, `Monero - Privacy in the Blockchain' \cite{kurt-original}, published in May 2018. The first edition was published in June 2018 \cite{ztm-1}.
-
-For the second edition we have improved how ring signatures are introduced (Chapter \ref{chapter:advanced-schnorr}), reorganized how transactions are explained (added Chapter \ref{chapter:addresses} on Monero Addresses), modernized the method used to communicate output amounts (Section \ref{sec:pedersen_monero}), replaced Borromean ring signatures with Bulletproofs (Section \ref{sec:range_proofs}), deprecated {\tt RCTTypeFull} (Chapter \ref{chapter:transactions}), updated and elaborated Monero's dynamic block weight and fee system (Chapter \ref{chapter:blockchain}), investigated transaction-related proofs (Chapter \ref{chapter:tx-knowledge-proofs}), described Monero multisignatures (Chapter \ref{chapter:multisignatures}), designed solutions for escrowed marketplaces (Chapter \ref{chapter:escrowed-market}), proposed a new decentralized joint transaction protocol named TxTangle (Chapter \ref{chapter:txtangle}), updated or added various minor details to align with the most current protocol (v12) and Monero software suite (v0.15.x.x), and scoured the document for quality-of-reading edits.\footnote{The \LaTeX{} source code for both editions of Zero to Monero can be found here (the first edition is in branch `ztm1'): \url{https://github.com/UkoeHB/Monero-RCT-report}.}
+如前所述，我们的目标是提供一个自包含且循序渐进的 Monero 加密货币描述。Zero to Monero 的结构正是为了实现这一目标，引导读者了解该货币内部运作的所有部分。
 
 
+\subsection{第一部分：``基础'' (Part 1: `Essentials')}
 
-\section{Acknowledgements}
+在追求全面性的过程中，我们选择介绍理解 Monero 复杂性所需的所有密码学基本要素及其数学基础。在第 \ref{chapter:basicConcepts} 章中，我们阐述了椭圆曲线密码学的基本方面。
+
+第 \ref{chapter:advanced-schnorr} 章扩展了前一章的 Schnorr 签名方案，并概述了将应用于实现 confidential transaction 的环签名算法。
+
+第 \ref{chapter:addresses} 章探讨了 Monero 如何使用地址来控制资金所有权，以及不同类型的地址。
+
+在第 \ref{chapter:pedersen-commitments} 章中，我们介绍了用于隐藏金额的密码学机制。
+
+在所有组件就位后，我们在第 \ref{chapter:transactions} 章中解释了 Monero 中使用的 transaction 方案。
+
+Monero blockchain 在第 \ref{chapter:blockchain} 章中被展开说明。
+
+
+\subsection{第二部分：``扩展'' (Part 2: `Extensions')}
+
+加密货币不仅仅是其协议，在"扩展"部分我们讨论了许多不同的想法，其中许多尚未实现。\footnote{请注意，Monero 未来的协议版本，特别是实现新 transaction 协议的版本，可能使这些想法中任何或全部变得不可能或不切实际。}
+
+关于 transaction 的各种信息可以向观察者证明，这些方法是第 \ref{chapter:tx-knowledge-proofs} 章的内容。
+
+虽然对 Monero 的运行不是必需的，但允许多人协作发送和接收资金的多重签名具有很大的实用价值。第 \ref{chapter:multisignatures} 章描述了 Monero 当前的多重签名方法，并概述了该领域可能的未来发展。
+
+在在线市场中将多重签名应用于商家和购物者之间的交互极为重要。第 \ref{chapter:escrowed-market} 章构成了我们使用 Monero 多重签名设计的托管市场的原创方案。
+
+首次在此提出的 TxTangle，在第 \ref{chapter:txtangle} 章中概述，是一种将多个个体的 transaction 合并为一个的去中心化协议。
+
+
+\subsection{附加内容 (Additional content)}
+
+附录 \ref{appendix:RCTTypeBulletproof2} 解释了 blockchain 中一个示例 transaction 的结构。附录 \ref{appendix:block-content} 解释了 Monero blockchain 中区块（包括区块头和矿工 transaction）的结构。最后，附录 \ref{appendix:genesis-block} 通过解释 Monero 创世区块的结构为我们的报告画上句号。这些附录在前述章节中描述的理论元素与其实际实现之间建立了联系。
+
+我们\marginnote{这很有用吧？}使用旁注来指示在源代码中可以找到 Monero 实现细节的位置。\footnote{我们的旁注在 Monero 软件套件 0.15.x.x 版本中是准确的，但随着代码库的不断变化，可能会逐渐变得不准确。然而，代码存储在 git 仓库中（\url{https://github.com/monero-project/monero}），因此可以查看完整的变更历史。}通常包含一个文件路径，如 src/ringct/rctOps.cpp，和一个函数，如 \(\textrm{{\tt ecdhEncode()}}\)。注意：`-' 表示拆分的文本，如 crypto- note $\rightarrow$ cryptonote，我们在大多数情况下省略命名空间限定符（如 {\tt Blockchain::}）。
+
+
+
+\section{免责声明 (Disclaimer)}
+
+所有签名方案、椭圆曲线应用和 Monero 实现细节都应仅视为描述性的。考虑进行严肃实际应用（而非爱好探索）的读者应查阅原始来源和技术规范（我们已在可能的地方引用）。签名方案需要经过严格审查的安全证明，Monero 实现细节可以在 Monero 的源代码中找到。特别是，正如一句老话所说，"不要自己造轮子"。实现密码学原语的代码应经过专家的充分审查并拥有长期可靠的运行记录。此外，本文档中的原创贡献可能未经充分审查且可能未经测试，因此读者在阅读时应自行判断。
+
+
+\section{Zero to Monero 的历史 (History of Zero to Monero)}
+
+Zero to Monero 是 Kurt Alonso 的硕士论文《Monero——区块链中的隐私》\cite{kurt-original}的扩展版本，该论文于2018年5月发表。第一版于2018年6月出版 \cite{ztm-1}。
+
+在第二版中，我们改进了环签名的介绍方式（第 \ref{chapter:advanced-schnorr} 章），重组了 transaction 的解释方式（新增了关于 Monero 地址的第 \ref{chapter:addresses} 章），更新了传输 output 金额的方法（第 \ref{sec:pedersen_monero} 节），用 Bulletproofs 替代了 Borromean 环签名（第 \ref{sec:range_proofs} 节），弃用了 {\tt RCTTypeFull}（第 \ref{chapter:transactions} 章），更新并详细阐述了 Monero 的动态区块权重和费用系统（第 \ref{chapter:blockchain} 章），调查了与 transaction 相关的证明（第 \ref{chapter:tx-knowledge-proofs} 章），描述了 Monero 多重签名（第 \ref{chapter:multisignatures} 章），设计了托管市场解决方案（第 \ref{chapter:escrowed-market} 章），提出了一种名为 TxTangle 的新型去中心化联合 transaction 协议（第 \ref{chapter:txtangle} 章），更新或添加了各种细节以与最新协议（v12）和 Monero 软件套件（v0.15.x.x）保持一致，并对文档进行了阅读质量的全面润色。\footnote{两版 Zero to Monero 的 \LaTeX{} 源代码可在此处找到（第一版在 `ztm1' 分支中）：\url{https://github.com/UkoeHB/Monero-RCT-report}。}
+
+
+
+\section{致谢 (Acknowledgements)}
 \label{sec:acknowledgements}
 
-Written by author `koe'.
+由作者 `koe' 撰写。
 
-This report would not exist without Kurt's original master's thesis \cite{kurt-original}, so to him I owe a great debt of gratitude. Monero Research Lab (MRL) researchers Brandon ``Surae Noether" Goodell and pseudonymous `Sarang Noether' (who collaborated with me on Section \ref{sec:range_proofs} and Chapter \ref{chapter:tx-knowledge-proofs}) have been a reliable and knowledgeable resource throughout both editions of Zero to Monero's development. Pseudonymous `moneromooo', the Monero Project's most prolific core developer, has probably the most extensive understanding of the codebase on this planet, and has pointed me in the right direction numerous times. And of course, many other wonderful Monero contributors have spent time answering my endless questions. Finally, to the various individuals who contacted us with proofreading feedback, and encouraging comments, thank you!
+本报告的诞生离不开 Kurt 的原始硕士论文 \cite{kurt-original}，因此我对他深表感谢。Monero 研究实验室（MRL）的研究人员 Brandon ``Surae Noether" Goodell 和化名 `Sarang Noether' 的研究者（他与我合作了第 \ref{sec:range_proofs} 节和第 \ref{chapter:tx-knowledge-proofs} 章）在两版 Zero to Monero 的开发过程中一直是可靠且知识渊博的资源。化名 `moneromooo' 的开发者是 Monero 项目最高产的核心开发者，可能拥有这个星球上对代码库最广泛的了解，并多次为我指明了正确的方向。当然，许多其他优秀的 Monero 贡献者也花时间回答了我无尽的问题。最后，感谢所有通过校对反馈和鼓励评论联系我们的人！

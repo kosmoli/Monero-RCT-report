@@ -1,33 +1,33 @@
-\chapter{Bulletproofs (WIP)}
+\chapter{Bulletproofs（未完成）(Bulletproofs (WIP))}
 \label{chapter:bulletproofs}
 %this chapter was not finished since I decided not to include a bulletproofs explanation in ztm2
 
 
 %----------
-\section{Vector Knowledge Proof}
+\section{向量知识证明 (Vector Knowledge Proof)}
 \label{sec:vectorzkproof}
 
-Prove knowledge of all elements in vector set $\boldsymbol{V}$ containing $m$ vectors of size $N$ ($m \neq N$), committed to in $(C_1, C_2,..., C_m)$ where $C_i = v_{i,1}*H_1 + v_{i,2}*H_2 + ... + v_{i,N}*H_N$. The discrete logarithms with respect to $G$ of generators in vector $\boldsymbol{H} = \langle H_1,..., H_N \rangle$, $\boldsymbol{\lambda} = \langle \lambda_1, ..., \lambda_N \rangle$, are unknown (and e.g. the discrete log of $H_2$ with respect to $H_4$). Verifiers know there are $m*N$ elements, but gain no information about them.
+证明已知向量集合 $\boldsymbol{V}$ 中的所有元素，该集合包含 $m$ 个大小为 $N$ 的向量（$m \neq N$），其承诺为 $(C_1, C_2,..., C_m)$，其中 $C_i = v_{i,1}*H_1 + v_{i,2}*H_2 + ... + v_{i,N}*H_N$。生成元向量 $\boldsymbol{H} = \langle H_1,..., H_N \rangle$ 中各生成元关于 $G$ 的离散对数 $\boldsymbol{\lambda} = \langle \lambda_1, ..., \lambda_N \rangle$ 是未知的（例如 $H_2$ 关于 $H_4$ 的离散对数也是未知的）。验证者知道共有 $m*N$ 个元素，但无法获得关于它们的任何信息。
 
-\subsubsection*{Non-interactive proof}
+\subsubsection*{非交互式证明 (Non-interactive proof)}
 
 \begin{enumerate}
-	\item Generate a vector (size N+1) of random integers \(\boldsymbol{\alpha} \in_R \mathbb{Z}_l\), and compute the inner product $C_{\alpha} = \boldsymbol{\alpha} \bullet \textbf{H}$.\footnote{The inner product (a.k.a. dot product) between vectors \(\boldsymbol{v} = \langle 1, 2, 3 \rangle\) and \(\boldsymbol{z} = \langle 4, 5, 6 \rangle\) is \(\boldsymbol{v} \bullet \boldsymbol{z} = 1*4 + 2*5 + 3*6 = 32\).}
-	\item Calculate the {\em challenge} $c = \mathcal{H}(T_{vec},\boldsymbol{V},C_{\alpha})$.\footnote{We explicitly do domain separation here with $T_{vec}$, and key prefixing with $\boldsymbol{V}$. For the rest of the chapter it is implied with ellipses (...). Those ellipses could also include a message $\mathfrak{m}$ to make the proof a signature.}
-	\item Define the {\em response vector} (size N+1) $\textbf{r}$, with an element $r_j$ for each generator $H_j$ (imagine vectors listed out in rows, and here we take the column sum with one $v_{i,j}$ from each vector $i$) (note each one is multiplied by $c$ raised to power $i$)
+	\item 生成随机整数向量（大小 N+1）\(\boldsymbol{\alpha} \in_R \mathbb{Z}_l\)，并计算内积 $C_{\alpha} = \boldsymbol{\alpha} \bullet \textbf{H}$。\footnote{向量 \(\boldsymbol{v} = \langle 1, 2, 3 \rangle\) 和 \(\boldsymbol{z} = \langle 4, 5, 6 \rangle\) 之间的内积（也称点积）为 \(\boldsymbol{v} \bullet \boldsymbol{z} = 1*4 + 2*5 + 3*6 = 32\)。}
+	\item 计算{\em 挑战} $c = \mathcal{H}(T_{vec},\boldsymbol{V},C_{\alpha})$。\footnote{此处我们显式地用 $T_{vec}$ 进行域分离，用 $\boldsymbol{V}$ 进行密钥前缀。在本章其余部分这些以省略号（...）隐含。这些省略号还可以包含消息 $\mathfrak{m}$，以使证明成为签名。}
+	\item 定义{\em 响应向量}（大小 N+1）$\textbf{r}$，其中对每个生成元 $H_j$ 有一个元素 $r_j$（想象向量按行排列，此处我们对每个向量 $i$ 取列求和得到一个 $v_{i,j}$）（注意每个都乘以 $c$ 的 $i$ 次幂）
 	\[r_j = \alpha_j - \sum^{m}_{i=1} c^i*v_{i,j}\]
-	\item Publish the proof pair $(c, \boldsymbol{r})$.
+	\item 公开证明对 $(c, \boldsymbol{r})$。
 \end{enumerate}
 
 
-\subsubsection*{Verification}
+\subsubsection*{验证 (Verification)}
 
 \begin{enumerate}
-	\item Calculate the challenge: \(c' = \mathcal{H}(...,\textbf{r} \bullet \textbf{H} + \sum^{m}_{i=1} (c')^i*C_i)\).
-	\item If $c = c'$ then the prover must know $\boldsymbol{V}$ (except with negligible probability).
+	\item 计算挑战：\(c' = \mathcal{H}(...,\textbf{r} \bullet \textbf{H} + \sum^{m}_{i=1} (c')^i*C_i)\)。
+	\item 若 $c = c'$，则证明者必然知道 $\boldsymbol{V}$（概率可忽略不计的情况除外）。
 \end{enumerate}
 
-\subsubsection*{Why it works}
+\subsubsection*{原理 (Why it works)}
 
 \begin{align*}
 \textbf{r} \bullet \textbf{H} &= C_{\alpha} - \sum^{m}_{i=1} (c')^i*C_i \\
@@ -38,39 +38,39 @@ C_{\alpha} - \sum^{m}_{i=1} c^i*[\sum^{N}_{j=1} v_{i,j}*H_j] &= C_{\alpha} - \su
 C_{\alpha} - \sum^{m}_{i=1} c^i*C_i &= C_{\alpha} - \sum^{m}_{i=1} (c')^i*C_i \\
 \end{align*}
 
-Verifiers can be confident that provers know all elements of $\boldsymbol{V}$ (except with negligible probability) thanks to a confluence of features in this proof (combined with the logic from basic Schnorr Signatures, explained in Section \ref{sec:schnorr-fiat-shamir}).%Verifiers can compute $R' = C_{\alpha} + \sum^{m}_{i=1} c^i*C_i$ before the prover, so providing $c$ is like saying ``I challenge you to respond with the discrete logarithm vector $\boldsymbol{r}$ of $R'$." 
+验证者可以确信证明者知道 $\boldsymbol{V}$ 的所有元素（概率可忽略不计的情况除外），这得益于本证明中多项特性的综合效果（结合了基本 Schnorr 签名的逻辑，见第 \ref{sec:schnorr-fiat-shamir} 节的说明）。
 
-\subsubsection*{Justification of Features}
+\subsubsection*{各特性的作用 (Justification of Features)}
 
 \begin{enumerate}
-    \item If we do not use $\boldsymbol{H}$ or powers of $c$, and the response was instead $r = \sum \boldsymbol{\alpha} + c* \sum_{i=1}^{m} (\sum_{j=1}^{N} v_{i,j})$, then provers have only demonstrated they know the sum of all vector elements (at most). Or, in other words, just the discrete logarithm of $K = \sum_{i=1}^{m} C_i$ as in a normal Schnorr signature.
+    \item 如果我们不使用 $\boldsymbol{H}$ 或 $c$ 的幂次，响应改为 $r = \sum \boldsymbol{\alpha} + c* \sum_{i=1}^{m} (\sum_{j=1}^{N} v_{i,j})$，那么证明者最多只证明了他们知道所有向量元素之和。换言之，就只是 $K = \sum_{i=1}^{m} C_i$ 的离散对数，如同普通 Schnorr 签名。
 
-    \item Adding in $\boldsymbol{H}$ makes $r_j = \alpha_j +  c* \sum_{i=1}^{m} v_{i,j}$, which ensures provers must at least know the sum at each vector index $j$. While there may exist many other $\boldsymbol{r'}$ vectors that produce $R = \boldsymbol{r'} \bullet \boldsymbol{H} = r'_1*\lambda_1*G + r'_2*\lambda_2*G + ...$, it is very difficult to find any of them using just the sum of all elements (step 1) without knowing $\boldsymbol{\lambda}$ (which we assume to be unknown).\footnote{Even if two or more vector indexes have the same sum ($\sum_{i=1}^{m} v_{i,a} = \sum_{i=1}^{m} v_{i,b} = k$), $k$ will not be revealed since in the equation pair $r_a = \alpha_a + c*k$ and $r_b = \alpha_b + c*k$ there are three unknowns ($\alpha_a$, $\alpha_b$, and $k$), and each additional equation $r_q = \alpha_q + c*k$ adds another unknown ($\alpha_q$).}
+    \item 加入 $\boldsymbol{H}$ 使 $r_j = \alpha_j +  c* \sum_{i=1}^{m} v_{i,j}$，这确保了证明者至少知道每个向量索引 $j$ 处的和。虽然可能存在许多其他 $\boldsymbol{r'}$ 向量使得 $R = \boldsymbol{r'} \bullet \boldsymbol{H} = r'_1*\lambda_1*G + r'_2*\lambda_2*G + ...$，但在不知道 $\boldsymbol{\lambda}$（我们假设其未知）的情况下，仅凭所有元素之和（步骤 1）很难找到其中任何一个。\footnote{即使两个或更多向量索引的和相同（$\sum_{i=1}^{m} v_{i,a} = \sum_{i=1}^{m} v_{i,b} = k$），$k$ 也不会被泄露，因为在方程对 $r_a = \alpha_a + c*k$ 和 $r_b = \alpha_b + c*k$ 中有三个未知数（$\alpha_a$、$\alpha_b$ 和 $k$），每增加一个方程 $r_q = \alpha_q + c*k$ 就多一个未知数（$\alpha_q$）。}
 
-    \item Including powers of $c$ turns each response element $r_j$ into a polynomial function of $c$, $r_j(c) = \alpha_j + v_{1,j}*c + v_{2,j}*c^2 + ... + v_{m,j}*c^m$. Now, given $c$, there are many combinations of ($\alpha'_j, v'_{1,j}, ..., v'_{m,j}$) that will produce $r_j$, but the probability of guessing one is negligible since $r_j$ is itself unknown (and can be anything between 1 and $l$ [$l$ is the elliptic curve subgroup]). Even if the sum at each vector index is known (step 2), guessing a useful factorization becomes increasingly difficult as the size of $\boldsymbol{V}$ rises (usually the only one that works will be the actual elements of $\boldsymbol{V}$). Moreover, $c$ is unknown in advance so provers can't report a random $r_j$ (recall Section \ref{sec:schnorr-fiat-shamir}). This means provers must know all elements of $\boldsymbol{V}$.\footnote{A person with partial knowledge of $\boldsymbol{V}$ can increase his chances of faking the proof (by only a negligible amount in most cases). For an extreme example, if he knows all elements of $\boldsymbol{V}$ except one, he knows all commitments $C_j$ and their blinding factors, and he knows the missing element is in the range ($q$ to $p$) where ($p - q < l$), then his chances of guessing that element (and checking by computing $C'_j$) are higher than solving the discrete logarithm problem via guess and check. Though in this case he ultimately knows all elements of $\boldsymbol{V}$ anyway. This logic extends to other partial-knowledge scenarios.}
+    \item 引入 $c$ 的幂次使每个响应元素 $r_j$ 成为 $c$ 的多项式函数，$r_j(c) = \alpha_j + v_{1,j}*c + v_{2,j}*c^2 + ... + v_{m,j}*c^m$。给定 $c$，存在许多 $(\alpha'_j, v'_{1,j}, ..., v'_{m,j})$ 的组合可以产生 $r_j$，但猜中的概率可以忽略不计，因为 $r_j$ 本身是未知的（可以是 1 到 $l$ 之间的任何值 [$l$ 是椭圆曲线子群的阶]）。即使每个向量索引处的和已知（步骤 2），随着 $\boldsymbol{V}$ 大小的增长，猜中有用的因式分解变得越来越困难（通常唯一可行的就是 $\boldsymbol{V}$ 的实际元素）。此外，$c$ 是事先未知的，因此证明者不能报告一个随机的 $r_j$（回忆第 \ref{sec:schnorr-fiat-shamir} 节）。这意味着证明者必须知道 $\boldsymbol{V}$ 的所有元素。\footnote{部分了解 $\boldsymbol{V}$ 的人可以提高伪造证明的概率（在大多数情况下仅提高可忽略不计的幅度）。一个极端的例子是，如果他知道了 $\boldsymbol{V}$ 中除一个元素以外的所有元素，他知道所有承诺 $C_j$ 及其盲化因子，并且知道缺失元素在范围（$q$ 到 $p$）内（其中 $p - q < l$），那么他猜中该元素（并通过计算 $C'_j$ 来验证）的概率高于通过猜测和检验来求解离散对数问题。不过在这种情况下他最终还是知道了 $\boldsymbol{V}$ 的所有元素。这一逻辑也适用于其他部分知识场景。}
 \end{enumerate}
 
 
 %----------
-\section{Inner Product Proof}
+\section{内积证明 (Inner Product Proof)}
 
-Suppose we have two vectors $\boldsymbol{v}$ and $\boldsymbol{z}$, each with $N$ elements. Their inner product is $s = \boldsymbol{v} \bullet \boldsymbol{z}$, we have their commitments $[C_s = x_s G + s H_1, C_v = (x_v, \boldsymbol{v}) \bullet (G,\boldsymbol{H}), C_z = (x_z, \boldsymbol{z}) \bullet (G,\boldsymbol{H})]$\footnote{Our notation $(x_v, \boldsymbol{v}) \bullet (G,\boldsymbol{H})$ here means blinding factor $x_v$ is appended to the front of $\boldsymbol{v}$ for the inner product, and likewise with generator $G$.}, and we want to prove the inner product equation holds (and that we know all the elements) without revealing any information (aside from N) about $(s, \boldsymbol{v}, \boldsymbol{z})$. In other words, prove the value in $C_s$ is the inner product of the vectors, size N, in $C_v$ and $C_z$. Note that now we include blinding factors $x_s$, $x_v$, and $x_z$, which are not strictly part of the vectors being considered. This concept will be useful in later sections, where it is important to hide the original values with a random mask.
+假设有两个向量 $\boldsymbol{v}$ 和 $\boldsymbol{z}$，各有 $N$ 个元素。它们的内积为 $s = \boldsymbol{v} \bullet \boldsymbol{z}$，我们有它们的承诺 $[C_s = x_s G + s H_1, C_v = (x_v, \boldsymbol{v}) \bullet (G,\boldsymbol{H}), C_z = (x_z, \boldsymbol{z}) \bullet (G,\boldsymbol{H})]$，\footnote{此处我们的记号 $(x_v, \boldsymbol{v}) \bullet (G,\boldsymbol{H})$ 意味着盲化因子 $x_v$ 被放在 $\boldsymbol{v}$ 前面进行内积运算，生成元 $G$ 同理。}我们希望证明内积方程成立（并且我们知道所有元素），同时不泄露关于 $(s, \boldsymbol{v}, \boldsymbol{z})$ 的任何信息（除了 $N$）。换言之，证明 $C_s$ 中的值是 $C_v$ 和 $C_z$ 中大小为 $N$ 的向量的内积。注意现在我们引入了盲化因子 $x_s$、$x_v$ 和 $x_z$，它们严格来说不属于被考虑的向量。这一概念在后续章节中很有用，因为用随机掩码隐藏原始值非常重要。
 
-Basically, we do two vector knowledge proofs (Section \ref{sec:vectorzkproof}) for $\boldsymbol{v}$ and $\boldsymbol{z}$, and an extra bit for the inner product.
+基本上，我们对 $\boldsymbol{v}$ 和 $\boldsymbol{z}$ 进行两次向量知识证明（第 \ref{sec:vectorzkproof} 节），并额外做一次内积证明。
 
 
-\subsubsection*{Non-interactive proof}
+\subsubsection*{非交互式证明 (Non-interactive proof)}
 
 \begin{enumerate}
-	\item Generate two vectors (size N) and four integers \((\alpha_{v,0}, \boldsymbol{\alpha_v}, \alpha_{z,0}, \boldsymbol{\alpha_z}, \alpha_{s,0}, \alpha_{s,1}) \in_R \mathbb{Z}_l\), and compute
+	\item 生成两个向量（大小 N）和四个整数 \((\alpha_{v,0}, \boldsymbol{\alpha_v}, \alpha_{z,0}, \boldsymbol{\alpha_z}, \alpha_{s,0}, \alpha_{s,1}) \in_R \mathbb{Z}_l\)，并计算
 	\begin{align*}
 	C_{\alpha}^{v} &= (\alpha_{v,0},\boldsymbol{\alpha_v}) \bullet (G,\textbf{H}) \\
 	C_{\alpha}^{z} &= (\alpha_{z,0}, \boldsymbol{\alpha_z}) \bullet (G,\textbf{H}) \\
 	C_{\alpha}^{s,0} &= \alpha_{s,0}*G + (\boldsymbol{\alpha_v} \bullet \boldsymbol{\alpha_z})*H_1 \\
 	C_{\alpha}^{s,1} &= \alpha_{s,1}*G + (\boldsymbol{v} \bullet \boldsymbol{\alpha_z} + \boldsymbol{z} \bullet \boldsymbol{\alpha_v})*H_1
 	\end{align*}
-	\item Calculate the {\em challenge} $c = \mathcal{H}(...,C_{\alpha}^{v},C_{\alpha}^{z},C_{\alpha}^{s,0},C_{\alpha}^{s,1})$.
-	\item Define the {\em response}, $\boldsymbol{r}$, containing vectors (size N) $\boldsymbol{r_v}, \boldsymbol{r_z}$, with $r_{v,0}, r_{z,0}$ for the vectors' blinding factors, and $r_s$ for the inner product blinding factor
+	\item 计算{\em 挑战} $c = \mathcal{H}(...,C_{\alpha}^{v},C_{\alpha}^{z},C_{\alpha}^{s,0},C_{\alpha}^{s,1})$。
+	\item 定义{\em 响应} $\boldsymbol{r}$，包含向量（大小 N）$\boldsymbol{r_v}, \boldsymbol{r_z}$，其中 $r_{v,0}, r_{z,0}$ 对应向量的盲化因子，$r_s$ 对应内积的盲化因子
 	\begin{align*}
 	r_{v,0} &= \alpha_{v,0} - c*x_v \\
 	r_{z,0} &= \alpha_{z,0} - c*x_z \\
@@ -78,15 +78,15 @@ Basically, we do two vector knowledge proofs (Section \ref{sec:vectorzkproof}) f
 	r_{z,j} &= \alpha_{z,j} - c*z_j \\
 	r_s &= \alpha_{s,0} + c*\alpha_{s,1} + c^2*x_s 
 	\end{align*}
-	\item Publish the proof $(c, \boldsymbol{r}, C^{s,0}_{\alpha}, C^{s,1}_{\alpha})$.
+	\item 公开证明 $(c, \boldsymbol{r}, C^{s,0}_{\alpha}, C^{s,1}_{\alpha})$。
 \end{enumerate}
 
-\subsubsection*{Verification}
+\subsubsection*{验证 (Verification)}
 
 \begin{enumerate}
-	\item Calculate the challenge:
+	\item 计算挑战：
 	\[c' = \mathcal{H}(...,[(r_{v,0},\boldsymbol{r_v}) \bullet (G,\textbf{H}) + c*C_v],[(r_{z,0},\boldsymbol{r_z}) \bullet (G,\textbf{H}) + c*C_z],[C^{s,0}_{\alpha}],[C^{s,1}_{\alpha}])\]
-	\item Compute\footnote{Since $C^{s,0}_{\alpha}$ and $C^{s,1}_{\alpha}$ are tied together, it isn't possible (within our knowledge) to move $R_s$ into the challenge computation.}
+	\item 计算\footnote{由于 $C^{s,0}_{\alpha}$ 和 $C^{s,1}_{\alpha}$ 是关联的，据我们所知无法将 $R_s$ 移入挑战的计算中。}
 	\begin{align*}
 	%R_v &= (r_{v,0},\boldsymbol{r_v}) \bullet \textbf{H} \\
 	%R'_v &= C_{\alpha}^{v} + c'*C_v \\
@@ -95,10 +95,10 @@ Basically, we do two vector knowledge proofs (Section \ref{sec:vectorzkproof}) f
 	R_s &= r_s*G + (\boldsymbol{r_v} \bullet \boldsymbol{r_z})*H_1 \\
 	R'_s &= C_{\alpha}^{s,0} + c'*C_{\alpha}^{s,1} + c'^2*C_s
 	\end{align*}
-	\item If $c = c'$, and $R_s = R'_s$, then the prover must know $\boldsymbol{v}, \boldsymbol{z}$, and $s$, and the inner product $s = \boldsymbol{v} \bullet \boldsymbol{z}$ must hold (except with negligible probability).
+	\item 若 $c = c'$ 且 $R_s = R'_s$，则证明者必然知道 $\boldsymbol{v}, \boldsymbol{z}$ 和 $s$，且内积 $s = \boldsymbol{v} \bullet \boldsymbol{z}$ 成立（概率可忽略不计的情况除外）。
 \end{enumerate}
 
-\subsubsection*{Why it works (inner product component)}
+\subsubsection*{原理（内积部分）(Why it works (inner product component))}
 
 \begin{align*}
 r_s*G + (\boldsymbol{r_v} \bullet \boldsymbol{r_z})*H_1 &= C_{\alpha}^{s,0} + c*C_{\alpha}^{s,1} + c^2*C_s \\
@@ -108,22 +108,22 @@ c^2 (x_s*G + [\boldsymbol{v} \bullet \boldsymbol{z}]*H_1) &= c^2(x_s*G + s*H_1) 
 \boldsymbol{v} \bullet \boldsymbol{z} &= s
 \end{align*}
 
-Responses $\boldsymbol{r_v}$ and $\boldsymbol{r_z}$ prove knowledge of vectors $\boldsymbol{v}$ and $\boldsymbol{z}$, so using them in $R_s \stackrel{?}{=} R'_s$ proves the inner product holds. Readers can explore the algebraic logic to confirm this for themselves.
+响应 $\boldsymbol{r_v}$ 和 $\boldsymbol{r_z}$ 证明了对向量 $\boldsymbol{v}$ 和 $\boldsymbol{z}$ 的知识，因此在 $R_s \stackrel{?}{=} R'_s$ 中使用它们即可证明内积成立。读者可以自行探索代数逻辑来确认这一点。
 
 
-\section{Condensed Vector Knowledge Proof}
+\section{压缩向量知识证明 (Condensed Vector Knowledge Proof)}
 \label{sec:condensedvectorproof}
 
-Our original vector knowledge proof was $(c, \boldsymbol{r})$, where the proof size was linear with vector dimension. Given $N = 500$ (and $m = 1$), the proof will take up $(1 + 500)*32 = 16032$ bytes. We can condense the proof size with an approach exposed by Bootle et. al. \cite{bootle-efficient-zkcircuits}. It will be logarithmic with vector dimension (proof size $\approx 6*log_2(N)$, so for N = 500 proof size around 54*32 = 1728 bytes).
+我们最初的向量知识证明为 $(c, \boldsymbol{r})$，其证明大小与向量维度呈线性关系。若 $N = 500$（且 $m = 1$），证明将占用 $(1 + 500)*32 = 16032$ 字节。我们可以使用 Bootle 等人提出的方法 \cite{bootle-efficient-zkcircuits} 来压缩证明大小。它与向量维度呈对数关系（证明大小 $\approx 6*log_2(N)$，因此对于 N = 500，证明大小约为 54*32 = 1728 字节）。
 
 
-\subsection*{Non-interactive proof}
+\subsection*{非交互式证明 (Non-interactive proof)}
 
 \begin{enumerate}
-    \item With the intent of minimizing proof size (optimizing verification time is more complex), factor $N$ into $q$ prime numbers ordered largest to smallest. If $N = 500$, $\boldsymbol{f} = \langle 500, 5, 5, 5, 2, 2 \rangle $ and indexed $0$ to $q = 5$ (0\nth term is the original N).
-    \item For $i = 1$ to $q$ (index 0 corresponds to original vectors),
+    \item 以最小化证明大小为目标（优化验证时间更为复杂），将 $N$ 分解为 $q$ 个素数因子，按从大到小排列。若 $N = 500$，则 $\boldsymbol{f} = \langle 500, 5, 5, 5, 2, 2 \rangle$，索引从 $0$ 到 $q = 5$（第 0 项为原始 N）。
+    \item 对 $i = 1$ 到 $q$（索引 0 对应原始向量），
     \begin{enumerate}
-        \item Chunk $\boldsymbol{v}^{i-1}$ and $\boldsymbol{G}^{i-1}$ into smaller vectors size $f[i]$
+        \item 将 $\boldsymbol{v}^{i-1}$ 和 $\boldsymbol{G}^{i-1}$ 按大小 $f[i]$ 分块为更小的向量
         \[ \langle v^{i-1}[1], ..., v^{i-1}[f[i-1]] \rangle \xrightarrow{} \langle \langle v^{i-1}[1],...,v^{i-1}[f[i] \rangle,\langle \rangle,...,\langle v^{i-1}[f[i-1] - f[i] ],..., v^{i-1}[f[i-1]\rangle \rangle \]
     \end{enumerate}
     \[\begin{pmatrix}
@@ -133,4 +133,4 @@ Our original vector knowledge proof was $(c, \boldsymbol{r})$, where the proof s
 \end{enumerate}
 
 
-\subsection*{Verification}
+\subsection*{验证 (Verification)}

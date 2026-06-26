@@ -1,286 +1,292 @@
-\chapter{The Monero Blockchain}
+\chapter{门罗币区块链 (The Monero Blockchain)}
 \label{chapter:blockchain}
 
-The Internet Age has brought a new dimension to the human experience. We can correspond with people on every corner of the planet, and an unimaginable wealth of information is at our fingertips. Exchanging goods and services is fundamental to a peaceful and prosperous society \cite{human-action}, and in the digital realm we can offer our productivity to the whole world.
+互联网时代为人类体验带来了新的维度。我们可以与地球上每一个角落的人通信，难以想象的信息财富就在我们指尖。交换商品和服务是和平繁荣社会的基础 \cite{human-action}，在数字领域我们可以向全世界提供我们的生产力。
 
-Media of exchange (moneys) are essential, giving us a point of reference to an immense diversity of economic goods that would otherwise be impossible to evaluate, and enabling mutually beneficial interactions between people with nothing in common \cite{human-action}. Throughout history there have been many kinds of money, from seashells to paper to gold. Those were exchanged by hand, and now money can be exchanged electronically.
+交换媒介（货币）是必不可少的，它为我们提供了衡量极其多样的经济商品的参照点，否则这些商品将不可能被评估，并使拥有共同点的人之间实现互利互动 \cite{human-action}。纵观历史，有许多种货币，从贝壳到纸张到黄金。那些是当面交换的，现在货币可以电子交换了。
 
-In the current, by far most pervasive, model, electronic transactions are handled by third-party financial institutions. These institutions are given custody of money and trusted to transfer it upon request. Such institutions must mediate disputes, their payments are reversible, and they can be censored or controlled by powerful organizations. \cite{Nakamoto_bitcoin}
+在当前最为普遍的模式中，电子交易由第三方金融机构处理。这些机构被赋予货币托管权，并被信任在被要求时进行转移。此类机构必须调解争议，其支付是可逆的，并且它们可以被强大的组织审查或控制。\cite{Nakamoto_bitcoin}
 
-To alleviate these drawbacks decentralized digital currencies have been engineered.\footnote{This chapter includes more implementation details than previous chapters, as a blockchain's nature depends heavily on its specific structure.}
+为了缓解这些缺点，人们设计了去中心化数字货币。\footnote{本章比前面的章节包含更多实现细节，因为区块链的性质在很大程度上取决于其具体结构。}
 
 
 
-\section{Digital currency}
+\section{数字货币 (Digital currency)}
 \label{sec:digital-currency}
 
-Designing a digital currency is non-trivial. There are three types: personal, centralized, or distributed. Keep in mind that a digital currency is just a collection of messages, and the `amounts' recorded in those messages are interpreted as monetary quantities.
+设计一种数字货币并非易事。有三种类型：个人型、中心化型或分布式型。请记住，数字货币只是一组消息的集合，这些消息中记录的"金额"被解释为货币数量。
 
-In the \textbf{email model} anyone can make coins (e.g. a message saying `I own 5 coins'), and anyone can send their coins over and over to whoever has an email address. It does not have a limited supply, nor does it prevent spending the same coins over and over (double spending).
+在\textbf{电子邮件模型}中，任何人都可以制造硬币（例如一条消息说"我拥有 5 个硬币"），任何人都可以将他们的硬币一遍又一遍地发送给任何有电子邮件地址的人。它没有有限的供应量，也不防止重复花费同一硬币（双花）。
 
-In the \textbf{video game model}, where the entire currency is stored/recorded on one central database, users rely on the custodian to be honest. The currency's supply is unverifiable for observers, and the custodian can change the rules at any time, or be censored by powerful outsiders.
+在\textbf{电子游戏模型}中，整个货币存储/记录在一个中央数据库上，用户依赖于托管人是诚实的。货币的供应对观察者来说是不可验证的，托管人可以随时更改规则，或者被强大的外部力量审查。
 
 
-\subsection{Distributed/shared version of events}
+\subsection{分布式/共享版本的事件 (Distributed/shared version of events)}
 \label{subsec:shared-version-events}
 
-In digital `shared' money, many computers each have a record of every currency transaction. When a new transaction is made on one computer it is broadcast to the other computers, and accepted if it follows predefined rules.
+在数字"共享"货币中，许多计算机各自拥有每笔货币交易的记录。当一台计算机上进行新交易时，它会被广播给其他计算机，如果符合预定义的规则则被接受。
 
-Users only benefit from coins when other users accept them in exchange, and users only accept coins they feel are legitimate. To maximize the utility of their coins, users are naturally inclined to settle on one commonly accepted rule-set, without the presence of a central authority.\footnote{In political science this is called a Schelling Point \cite{friedman-schelling}, social minima, or social contract.}
+只有当其他用户接受硬币进行交换时，用户才能从硬币中获益，而用户只接受他们认为合法的硬币。为了最大化硬币的效用，用户自然倾向于在一个没有中央权威的情况下，达成一个被共同接受的规则集。\footnote{在政治学中，这被称为谢林点 \cite{friedman-schelling}、社会最小值或社会契约。}
 \begin{itemize}
-    \item[] \textbf{Rule 1}: Money can only be created in clearly defined scenarios.
-    \item[] \textbf{Rule 2}: Transactions spend money that already exists.
-    \item[] \textbf{Rule 3}: A person can only spend a piece of money once.
-    \item[] \textbf{Rule 4}: Only the person who owns a piece of money can spend it.
-    \item[] \textbf{Rule 5}: Transactions output money equal to the money spent.
-    \item[] \textbf{Rule 6}:  Transactions are formatted correctly.
+    \item[] \textbf{规则 1}：货币只能在明确定义的场景中创造。
+    \item[] \textbf{规则 2}：交易花费的是已经存在的货币。
+    \item[] \textbf{规则 3}：一个人只能花费一笔钱一次。
+    \item[] \textbf{规则 4}：只有拥有一笔钱的人才能花费它。
+    \item[] \textbf{规则 5}：交易输出的金额等于花费的金额。
+    \item[] \textbf{规则 6}：交易格式正确。
 \end{itemize}
 
-Rules 2-6 are covered by the transaction scheme discussed in Chapter \ref{chapter:transactions}, which adds the fungibility and privacy-related benefits of ambiguous signing, anonymous receipt of funds, and unreadable amount transfers. We explain Rule 1 later in this chapter.\footnote{In commodity money like gold these rules are met by physical reality.} Transactions use cryptography, so we call their content a {\em cryptocurrency}.
+规则 2-6 由第 \ref{chapter:transactions} 章讨论的交易方案涵盖，该方案增加了可替代性和隐私相关的好处：模糊签名、匿名接收资金和不可读的金额转移。我们将在本章后面解释规则 1。\footnote{在像黄金这样的商品货币中，这些规则由物理现实来满足。}交易使用密码学，因此我们称其内容为{加密货币 (cryptocurrency)}。
 
-If two computers receive different legitimate transactions spending the same money before they have a chance to send the information to each other, how do they decide which is correct? There is a `fork' in the currency, because two different copies that follow the same rules exist.
+如果两台计算机在有机会互相发送信息之前收到了花费同一笔钱的不同合法交易，它们如何决定哪个是正确的？货币中出现了"分叉 (fork)"，因为存在遵循相同规则的两个不同副本。
 
-Clearly the earliest legitimate transaction spending a piece of money should be canonical. This is easier said than done. As we will see, obtaining consensus for transaction histories constitutes the raison d'\^{e}tre of blockchain technology.
+显然，花费一笔钱的最早合法交易应该是规范的。说起来容易做起来难。正如我们将看到的，获得交易历史的共识构成了区块链技术存在的理由。
 
 
-\subsection{Simple blockchain}
+\subsection{简单区块链 (Simple blockchain)}
 \label{subsec:simple-blockchain}
 
-First we need all computers, henceforth referred to as {\em nodes}, to agree on the order of transactions.
+首先我们需要所有计算机（此后称为{节点 (nodes)}）就交易顺序达成一致。
 
-Let's say a currency started with a `genesis' declaration: ``Let the SampleCoin begin!". We call this message a `block', and its block hash is \vspace{.175cm}
-\[\mathit{BH}_G = \mathcal{H}(\textrm{``Let the SampleCoin begin!"})\]
+假设一种货币以一个"创世 (genesis)"声明开始："让 SampleCoin 开始吧！"。我们称这条消息为一个"区块 (block)"，它的区块 hash 为\vspace{.175cm}
+\[\mathit{BH}_G = \mathcal{H}(\textrm{"Let the SampleCoin begin!"})\]
 
-Every time a node receives some transactions, they use hashes of those transactions, $\mathit{TH}$, like messages, along with the previous block's hash, and compute new block hashes\vspace{.175cm}
+每当一个节点收到一些交易，它使用这些交易的 hash $\mathit{TH}$ 作为消息，连同前一个区块的 hash，计算新的区块 hash\vspace{.175cm}
 \[\mathit{BH}_1 = \mathcal{H}(\mathit{BH}_G, \mathit{TH}_1, \mathit{TH}_2,...)\]
 \[\mathit{BH}_2 = \mathcal{H}(\mathit{BH}_1, \mathit{TH}_3, \mathit{TH}_4,...)\]
 
-And so on, publishing each new block of messages as it's made. Each new block references the previous, most recently published block. In this way a clear order of events extends/chains all the way back to the genesis message. We have a very simple `blockchain'.\footnote{A blockchain is technically a `directed acyclic graph' (DAG), with Bitcoin-style blockchains a one-dimensional variant. DAGs contain a finite number of nodes and one-directional edges (vectors) connecting nodes. If you start at one node, you will never loop back to it no matter what path you take. \cite{DAG-wikipedia}}
+依此类推，每产生一个新的消息区块就发布它。每个新区块引用前一个最近发布的区块。这样，一个清晰的事件顺序一直延伸/链接到创世消息。我们就有了一个非常简单的"区块链"。\footnote{区块链在技术上是一个"有向无环图"（DAG），比特币风格的区块链是一维变体。DAG 包含有限数量的节点和连接节点的单向边（向量）。如果你从一个节点开始，无论走什么路径都不会循环回原节点。\cite{DAG-wikipedia}}
 
-Nodes can include a timestamp in their blocks to aid record keeping. If most nodes are honest with timestamps then the blockchain provides a decent picture of when each transaction was recorded.
+节点可以在其区块中包含时间戳以辅助记录。如果大多数节点的时间戳是诚实的，那么区块链提供了每笔交易何时被记录的相当清晰的图景。
 
-If different blocks referencing the same previous block are published at the same time, then the network of nodes will fork as each node receives one of the new blocks before the other (for simplicity, imagine about half the nodes end up with each side of the fork).
+如果引用同一前一个区块的不同区块同时发布，那么节点网络将分叉，因为每个节点在收到另一个新区块之前先收到其中一个（为简单起见，想象大约一半节点最终拥有分叉的每一侧）。
 
 
 
-\section{Difficulty}
+\section{难度 (Difficulty)}
 \label{sec:difficulty}
 
-If nodes can publish new blocks whenever they want, the network might fracture and diverge into many different, equally legitimate, chains. Say it takes 30 seconds to make sure everyone in the network gets a new block. What if new blocks are sent out every 31, 15 seconds, 10 seconds, etc?
+如果节点可以随时发布新区块，网络可能会分裂并分化为许多不同的、同样合法的链。假设需要 30 秒来确保网络中的每个人都能收到一个新区块。如果每隔 31 秒、15 秒、10 秒等发送新区块呢？
 
-We can control how fast the entire network makes new blocks. If the time it takes to make a new block is much higher than the time for the previous block to reach most nodes, the network will tend to remain intact.
-
-
-\subsection{Mining a block}
-
-The output of a cryptographic hash function is uniformly distributed and apparently independent of the input. This means, given a potential input, its hash is equally likely to be every single possible output. Furthermore, it takes a certain amount of time to compute a single hash.
-
-Let's imagine a hash function $\mathcal{H}_i(x)$ which outputs a number from 1 to 100: $\mathcal{H}_i(x) \in^D_R \{1,...,100\}$.\footnote{We use $\in^D_R$ to say the output is deterministically random.} Given some $x$, $\mathcal{H}_i(x)$ selects the same `random' number from \{$1,...,100$\} every time you calculate it. It takes 1 minute to calculate $\mathcal{H}_i(x)$.
-
-Say we are given a message $\mathfrak{m}$, and told to find a `nonce' $n$ (some integer) such that $\mathcal{H}_i(\mathfrak{m},n)$ outputs a number less than or equal to the {\em target} $t = 5$ (i.e. $\mathcal{H}_i(\mathfrak{m},n) \in \{1,...,5\}$). 
-
-Since only $1/20$\nth of outputs from $\mathcal{H}_i(x)$ will meet the target, it should take around 20 guesses of $n$ to find one that works (and hence 20 minutes of computing time).
-
-Searching for a useful nonce is called {\em mining}, and publishing the message with its nonce is a {\em proof of work} because it proves we found a useful nonce (even if we were lucky and found it with just one hash, or even blindly published a good nonce), which anyone can verify by computing $\mathcal{H}_i(\mathfrak{m},n)$.
-
-Now say we have a hash function for generating proofs of work, $\mathcal{H}_{PoW} \in^D_R \{0,...,m\}$, where $m$ is its maximum possible output. Given a message $\mathfrak{m}$ (a block of information), a nonce $n$ to mine, and a target $t$, we can define the expected average number of hashes, the {\em difficulty} $d$, like this: $d = m/t$. If\marginnote{src/crypto- note\_basic/ difficulty.cpp {\tt check\_ hash()}} $\mathcal{H}_{PoW}(\mathfrak{m},n)*d \leq m$, then $\mathcal{H}_{PoW}(\mathfrak{m},n) \leq t$ and $n$ is acceptable.\footnote{In Monero only difficulties are recorded/computed since $\mathcal{H}_{PoW}(\mathfrak{m},n)*d \leq m$ doesn't need $t$.}
-
-With smaller targets the difficulty rises and it takes a computer more and more hashes, and therefore longer and longer periods of time, to find useful nonces.\footnote{Mining and verifying are asymmetric since it takes the same time to verify a proof of work (one computation of the proof of work algorithm) no matter what the difficulty is.}
+我们可以控制整个网络产生新区块的速度。如果产生一个新区块的时间远高于前一个区块到达大多数节点的时间，网络将趋于保持完整。
 
 
-\subsection{Mining speed}
+\subsection{挖掘区块 (Mining a block)}
 
-Assume all nodes are mining at the same time, but quit on their `current' block when they receive a new one from the network. They immediately start mining a fresh block that references the new one.
+密码学 hash 函数的输出是均匀分布的，且显然独立于输入。这意味着，给定一个潜在输入，其 hash 等可能地是每一个可能的输出。此外，计算一个 hash 需要一定的时间。
 
-Suppose we collect a bunch $b$ of recent blocks from the blockchain (say, with index $u \in \{1,...,b\}$) which each had a difficulty $d_u$. For now, assume the nodes who mined them were honest, so each block timestamp ${TS}_u$ is accurate.\footnote{Timestamps are determined when a miner {\em starts} mining a block, so they are likely to lag behind the actual publication moment. The next block starts mining right away, so the timestamp that appears {\em after} a given block indicates how long miners spent on it.} The total time between the earliest block and most recent block is $\mathit{totalTime} = {TS}_b - {TS}_1$. The approximate number of hashes it took to mine all the blocks is $\mathit{totalDifficulty} = \sum_u d_u$.
+让我们想象一个 hash 函数 $\mathcal{H}_i(x)$，它输出 1 到 100 之间的数字：$\mathcal{H}_i(x) \in^D_R \{1,...,100\}$。\footnote{我们用 $\in^D_R$ 表示输出是确定性随机的。}给定某个 $x$，$\mathcal{H}_i(x)$ 每次计算时都选择相同的"随机"数字，从 \{$1,...,100$\} 中选取。计算 $\mathcal{H}_i(x)$ 需要 1 分钟。
 
-Now we can guess how fast the network, with all its nodes, can compute hashes. If the actual speed didn't change much while the bunch of blocks was being produced, it should be effectively\footnote{If node 1 tries nonce $n = 23$ and later node 2 also tries $n = 23$, node 2's effort is wasted because the network already `knows' $n = 23$ doesn't work (otherwise node 1 would have published that block). The network's {\em effective} hash rate depends on how fast it hashes {\em unique} nonces for a given block of messages. As we will see, since miners include a miner transaction with one-time address $K^o \in_{ER} \mathbb{Z}_l$ (ER = effectively random) in their blocks, blocks are always unique between miners except with negligible probability, so trying the same nonces doesn't matter.}%\vspace{.175cm}
+假设我们被给定一条消息 $\mathfrak{m}$，并要求找到一个"nonce" $n$（某个整数），使得 $\mathcal{H}_i(\mathfrak{m},n)$ 输出一个小于或等于{目标 (target)} $t = 5$ 的数字（即 $\mathcal{H}_i(\mathfrak{m},n) \in \{1,...,5\}$）。 
+
+由于只有 $\mathcal{H}_i(x)$ 输出的 1/20 会满足目标，大约需要 20 次对 $n$ 的猜测才能找到一个有效的（因此需要 20 分钟的计算时间）。
+
+搜索有用的 nonce 被称为{挖矿 (mining)}，发布带 nonce 的消息是一种{工作量证明 (proof of work)}，因为它证明我们找到了一个有用的 nonce（即使我们很幸运只用一次 hash 就找到了，或者甚至盲目地发布了一个好的 nonce），任何人都可以通过计算 $\mathcal{H}_i(\mathfrak{m},n)$ 来验证。
+
+现在假设我们有一个用于生成工作量证明的 hash 函数 $\mathcal{H}_{PoW} \in^D_R \{0,...,m\}$，其中 $m$ 是其最大可能输出。给定一条消息 $\mathfrak{m}$（一个信息区块），一个待挖的 nonce $n$，以及一个目标 $t$，我们可以定义预期的平均 hash 次数——{难度 (difficulty)} $d$——如下：$d = m/t$。如果\marginnote{src/crypto- note\_basic/ difficulty.cpp {\tt check\_ hash()}} $\mathcal{H}_{PoW}(\mathfrak{m},n)*d \leq m$，则 $\mathcal{H}_{PoW}(\mathfrak{m},n) \leq t$ 且 $n$ 是可接受的。\footnote{在门罗币中只记录/计算难度，因为 $\mathcal{H}_{PoW}(\mathfrak{m},n)*d \leq m$ 不需要 $t$。}
+
+目标越小，难度越大，计算机需要越来越多的 hash，因此需要越来越长的时间来找到有用的 nonce。\footnote{挖矿和验证是不对称的，因为无论难度如何，验证工作量证明（工作量证明算法的一次计算）都需要相同的时间。}
+
+
+\subsection{挖矿速度 (Mining speed)}
+
+假设所有节点同时挖矿，但当它们从网络收到新区块时就放弃"当前"区块。它们立即开始挖掘引用新区块的新区块。
+
+假设我们从区块链中收集一组 $b$ 个最近的区块（比如说，索引为 $u \in \{1,...,b\}$），每个区块都有难度 $d_u$。现在假设挖掘它们的节点是诚实的，所以每个区块时间戳 ${TS}_u$ 是准确的。\footnote{时间戳在矿工{开始}挖矿时确定，因此它们可能滞后于实际发布时刻。下一个区块立即开始挖矿，因此出现在给定区块{之后}的时间戳表明矿工花了多长时间在上面。}最早区块和最近区块之间的总时间为 $\mathit{totalTime} = {TS}_b - {TS}_1$。挖掘所有区块大约需要的 hash 次数为 $\mathit{totalDifficulty} = \sum_u d_u$。
+
+现在我们可以猜测网络及其所有节点计算 hash 的速度有多快。如果在区块组产生期间实际速度没有变化多少，它应该是有效的\footnote{如果节点 1 尝试 nonce $n = 23$，后来节点 2 也尝试 $n = 23$，节点 2 的努力是浪费的，因为网络已经"知道" $n = 23$ 不行（否则节点 1 就会发布那个区块了）。网络的{有效} hash 速率取决于它为给定消息区块 hash {唯一} nonce 的速度。正如我们将看到的，由于矿工在其区块中包含一个具有一次性地址 $K^o \in_{ER} \mathbb{Z}_l$（ER = 有效随机）的矿工交易，除了可忽略不计的概率外，矿工之间的区块总是唯一的，所以尝试相同的 nonce 无关紧要。}%\vspace{.175cm}
 \[\mathit{hashSpeed} \approx \mathit{totalDifficulty}/\mathit{totalTime}\]
 
-If we want to set the target time to mine new blocks so blocks are produced at a rate\\ \(\textrm{(one block)/(target time)}\), then we calculate how many hashes it should take for the network to spend that amount of time mining. Note: we round up so the difficulty never equals zero.%\vspace{.175cm}
+如果我们想设置挖掘新区块的目标时间，使区块以\\\\ \(\textrm{(一个区块)/(目标时间)}\) 的速率产生，那么我们计算网络应该花多少 hash 来完成那个时间的挖掘。注意：我们向上取整，使难度永远不会为零。%\vspace{.175cm}
 \[\mathit{newDifficulty} = \mathit{hashSpeed}*\mathit{targetTime}\]
 
-There is no guarantee the next block will take $\mathit{newDifficulty}$ amount of total network hashes to mine, but over time and many blocks and constantly re-calibrating, the difficulty will track with the network's real hash speed and blocks will tend to take $\mathit{targetTime}$.\footnote{If we assume network hash rate is constantly, gradually, increasing, then since new difficulties depend on {\em past} hashes (i.e. before the hash rate increased a tiny bit) we should expect actual block times to, on average, be slightly less than $\mathit{targetTime}$. The effect of this on the emission schedule (Section \ref{subsec:block-reward}) could be canceled out by penalties from increasing block weights, which we explore in Section \ref{subsec:penalty}.}
+不能保证下一个区块需要 $\mathit{newDifficulty}$ 数量的总网络 hash 来挖掘，但随着时间推移，经过许多区块和不断的重新校准，难度将与网络的实际 hash 速度保持一致，区块将趋于花费 $\mathit{targetTime}$。\footnote{如果我们假设网络 hash 速率在持续、逐渐地增加，那么由于新难度依赖于{过去的} hash（即在 hash 速率微增之前），我们应该预期实际区块时间平均略低于 $\mathit{targetTime}$。这对排放计划（第 \ref{subsec:block-reward} 节）的影响可能被增加区块权重的惩罚所抵消，我们在第 \ref{subsec:penalty} 节中探讨。}
 
 
-\subsection{Consensus: largest cumulative difficulty}
+\subsection{共识：最大累积难度 (Consensus: largest cumulative difficulty)}
 
-Now we can resolve conflicts between chain forks.
+现在我们可以解决链分叉之间的冲突。
 
-By convention, the chain with highest cumulative difficulty (from all blocks in the chain), and therefore with most work (network hashes) spent constructing, is considered the real, legitimate version. If a chain splits and each fork has the same cumulative difficulty, nodes continue mining on the branch they received first. When one branch gets ahead of the other they discard (`orphan') the weaker branch.%source?
+按照惯例，具有最高累积难度（来自链中所有区块）的链，因此也是花费最多工作量（网络 hash）构建的链，被认为是真实的、合法的版本。如果链分裂且每个分叉具有相同的累积难度，节点继续在它们先收到的分支上挖掘。当一个分支领先于另一个时，它们放弃（"孤立"）较弱的分支。%source?
 
-If nodes wish to change or upgrade the basic protocol, i.e. the set of rules a node considers when deciding if a blockchain copy or new block is legitimate, they may easily do so by forking the chain. Whether the new branch has any impact on users depends on how many nodes switch and how much software infrastructure is modified.\footnote{Monero developers have successfully changed\marginnote{src/hardforks/ hardforks.cpp {\tt mainnet\_hard\_ forks[]}} its protocol 11 times, with nearly all users and miners adopting each fork: v1 April 18, 2014 (genesis version) \cite{bitmonero-launched}; v2 March 2016; v3 September 2016; v4 January 2017; v5 April 2017; v6 September 2017; v7 April 2018; v8 and v9 October 2018; v10 and v11 March 2019; v12 November 2019. The core git repository's README contains a summary of protocol changes in each version.}
+如果节点希望更改或升级基本协议——即节点在决定区块链副本或新区块是否合法时考虑的规则集——它们可以轻松地通过分叉链来做到这一点。新分支是否对用户有影响取决于有多少节点切换以及多少软件基础设施被修改。\footnote{门罗币开发者已成功更改\marginnote{src/hardforks/ hardforks.cpp {\tt mainnet\_hard\_ forks[]}}其协议 11 次，几乎所有用户和矿工都采用了每个分叉：v1 2014 年 4 月 18 日（创世版本）\cite{bitmonero-launched}；v2 2016 年 3 月；v3 2016 年 9 月；v4 2017 年 1 月；v5 2017 年 4 月；v6 2017 年 9 月；v7 2018 年 4 月；v8 和 v9 2018 年 10 月；v10 和 v11 2019 年 3 月；v12 2019 年 11 月。核心 git 仓库的 README 包含每个版本协议更改的摘要。}
 
-For an attacker to convince honest nodes to alter the transaction history, perhaps in order to respend/unspend funds, he must create a chain fork (on the current protocol) with higher total difficulty than the main chain (which meanwhile continues to grow). This is very hard to do unless you control over 50\% of the network hash speed and can outwork other miners. \cite{Nakamoto_bitcoin}
+对于攻击者来说，要让诚实节点改变交易历史——也许是为了重新花费/取消花费资金——他必须创建一个在当前协议上具有比主链（与此同时继续增长）更高总难度的链分叉。这非常困难，除非你控制超过 50\% 的网络 hash 速度并能超越其他矿工。\cite{Nakamoto_bitcoin}
 
 
-\subsection{Mining in Monero} %get_difficulty_for_next_block, next_difficulty
+\subsection{门罗币中的挖矿 (Mining in Monero)} %get_difficulty_for_next_block, next_difficulty
 
-To make sure chain forks are on an even footing, we don't sample the most recent blocks (for calculating new difficulties), instead lagging our bunch $b$ by $l$. For example, if there are 29 blocks in the chain (blocks $1,...,29$), $b = 10$, and $l = 5$, we sample blocks 15-24 in order to compute block 30's difficulty.
+为了确保链分叉在公平的基础上竞争，我们不采样最近的区块（用于计算新难度），而是将我们的区块组 $b$ 滞后 $l$。例如，如果链中有 29 个区块（区块 $1,...,29$），$b = 10$，$l = 5$，我们采样区块 15-24 来计算区块 30 的难度。
 
-If mining nodes are dishonest they can manipulate timestamps so new difficulties don't match the network's real hash speed. We get around this by sorting timestamps chronologically, then chopping off the first $o$ outliers and last $o$ outliers. Now we have a `window' of blocks $w = b-2*o$. From the previous example, if $o = 3$ and timestamps are honest then we would chop blocks 15-17 and 22-24, leaving blocks 18-21 to compute block 30's difficulty from.
+如果挖矿节点不诚实，它们可以操纵时间戳使新难度与网络的实际 hash 速度不匹配。我们通过按时间顺序排列时间戳，然后截掉前 $o$ 个异常值和后 $o$ 个异常值来解决这个问题。现在我们有一个区块"窗口" $w = b-2*o$。从前面的例子，如果 $o = 3$ 且时间戳是诚实的，那么我们将截掉区块 15-17 和 22-24，留下区块 18-21 来计算区块 30 的难度。
 
-Before chopping outliers we sorted timestamps, but {\em only} timestamps. Block difficulties are left unsorted. We use the cumulative difficulty for each block, which is that block's difficulty plus the difficulty of all previous blocks in the chain.
+在截掉异常值之前，我们对时间戳进行了排序，但{只}是时间戳。区块难度保持不排序。我们使用每个区块的累积难度，即该区块的难度加上链中所有先前区块的难度。
 
-Using\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt get\_diff- iculty\_for\_ next\_ block()}}[-1.8cm] the chopped arrays of $w$ sorted timestamps and unsorted cumulative difficulties (indexed from $1,...,w$), we define
+使用\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt get\_diff- iculty\_for\_ next\_ block()}}[-1.8cm]截断后的 $w$ 个已排序时间戳和未排序累积难度的数组（索引从 $1,...,w$），我们定义
 \[ \mathit{totalTime} = \mathit{choppedSortedTimestamps}[w] - \mathit{choppedSortedTimestamps}[1]\]
 \[ \mathit{totalDifficulty} = \mathit{choppedCumulativeDifficulties}[w] - \mathit{choppedCumulativeDifficulties}[1]\]
 
-In\marginnote{src/crypto- note\_config.h} Monero the target time is 120 seconds (2 minutes), $l = 15$ (30 mins), $b = 720$ (one day), and $o = 60$ (2 hours).\footnote{In March 2016 (v2 of the protocol), Monero changed from 1 minute target block times to 2 minute target block times \cite{monero-0.9.3}. Other difficulty parameters have always been the same.}\footnote{Monero's difficulty algorithm may be suboptimal compared to state of the art algorithms \cite{difficuly-algorithm-summary}. Fortunately it is `fairly resilient to selfish mining' \cite{selfish-miner-profitability-algorithm-analysis}, an essential feature.}
+在\marginnote{src/crypto- note\_config.h}门罗币中，目标时间是 120 秒（2 分钟），$l = 15$（30 分钟），$b = 720$（一天），$o = 60$（2 小时）。\footnote{在 2016 年 3 月（协议 v2），门罗币从 1 分钟目标出块时间改为 2 分钟目标出块时间 \cite{monero-0.9.3}。其他难度参数一直相同。}\footnote{门罗币的难度算法与最先进的算法相比可能是次优的 \cite{difficuly-algorithm-summary}。幸运的是它"对自私挖矿有相当强的抵抗力" \cite{selfish-miner-profitability-algorithm-analysis}，这是一个必要的特性。}
 
-Block difficulties are not stored in the blockchain, so someone downloading a copy of the blockchain and verifying all blocks are legitimate needs to recalculate difficulties from recorded timestamps. There\marginnote{src/crypto- note\_basic/ difficulty.cpp {\tt next\_diff- iculty()}} are a few rules to consider for the first $b+l = 735$ blocks.
+区块难度不存储在区块链中，因此下载区块链副本并验证所有区块合法性的人需要从记录的时间戳重新计算难度。前 $b+l = 735$ 个区块需要考虑一些规则。\marginnote{src/crypto- note\_basic/ difficulty.cpp {\tt next\_diff- iculty()}}
 
 \begin{itemize}
-    \item[] \textbf{Rule 1}: Ignore the genesis block (block 0, with $d = 1$) completely. Blocks 1 and 2 have $d = 1$.
-    \item[] \textbf{Rule 2}: Before chopping off outliers, try to get the window $w$ to compute totals from.
-    \item[] \textbf{Rule 3}: After $w$ blocks, chop off high and low outliers, scaling the amount chopped until $b$ blocks. If the amount of previous blocks (minus $w$) is odd, remove one more low outlier than high.
-    \item[] \textbf{Rule 4}: After $b$ blocks, sample the earliest $b$ blocks until $b+l$ blocks, after which everything proceeds normally - lagging by $l$.
+    \item[] \textbf{规则 1}：完全忽略创世区块（区块 0，$d = 1$）。区块 1 和 2 的 $d = 1$。
+    \item[] \textbf{规则 2}：在截掉异常值之前，尝试获得窗口 $w$ 来计算总计。
+    \item[] \textbf{规则 3}：$w$ 个区块之后，截掉高和低异常值，按比例调整截掉的数量直到 $b$ 个区块。如果先前区块的数量（减去 $w$）是奇数，比高异常值多截掉一个低异常值。
+    \item[] \textbf{规则 4}：$b$ 个区块之后，采样最早的 $b$ 个区块直到 $b+l$ 个区块，此后一切正常进行——滞后 $l$。
 \end{itemize}
 
 
-\subsection*{Monero proof of work (PoW)}
+\subsubsection*{门罗币工作量证明 (PoW) (Monero proof of work (PoW))}
 
-Monero\marginnote{src/crypto- note\_basic/ cryptonote\_ tx\_utils.cpp {\tt get\_block\_ longhash()}} has used a few different proof of work hash algorithms (with 32 byte outputs) in different protocol versions. The original, known as Cryptonight, was designed to be relatively inefficient on GPU, FPGA, and ASIC architectures \cite{CryptoNight} compared to standard hash functions like SHA256. In April 2018 (v7 of the protocol), new blocks were required to begin using a slightly modified variant that countered the advent of Cryptonight ASICs \cite{cryptonight7}. Another slight variant, named Cryptonight V2, was implemented in October 2018 (v8) \cite{berylliumbullet-v8}, and Cryptonight-R (based on Cryptonight but with more substantial changes than just a tweak) started being used for new blocks in March 2019 (v10) \cite{boronbutterfly-v10}. A\marginnote{src/crypto/ rx-slow-hash.c} radical new proof of work called RandomX \cite{randomx-pr-5549} was designed and made mandatory for new blocks in November 2019 (v12) with the intention of long-term ASIC resistance \cite{randomx}.
+门罗币\marginnote{src/crypto- note\_basic/ cryptonote\_ tx\_utils.cpp {\tt get\_block\_ longhash()}}在不同的协议版本中使用了几种不同的工作量证明 hash 算法（输出为 32 字节）。最初的算法称为 Cryptonight，被设计为在 GPU、FPGA 和 ASIC 架构上相对低效 \cite{CryptoNight}，与 SHA256 等标准 hash 函数相比。在 2018 年 4 月（协议 v7），新区块被要求开始使用一种略微修改的变体，以对抗 Cryptonight ASIC 的出现 \cite{cryptonight7}。另一种略作修改的变体，名为 Cryptonight V2，在 2018 年 10 月（v8）实现 \cite{berylliumbullet-v8}，Cryptonight-R（基于 Cryptonight 但比简单调整有更实质性变化）从 2019 年 3 月（v10）开始用于新区块 \cite{boronbutterfly-v10}。一个\marginnote{src/crypto/ rx-slow-hash.c}全新的工作量证明称为 RandomX \cite{randomx-pr-5549} 被设计并在 2019 年 11 月（v12）强制用于新区块，旨在长期抵抗 ASIC \cite{randomx}。
 
 
 
-\section{Money supply}
+\section{货币供应 (Money supply)}
 \label{sec:money-supply}
 
-There are two basic mechanisms for creating money in a blockchain-based cryptocurrency.
+在基于区块链的加密货币中，创造货币有两种基本机制。
 
-First, the currency's creators can conjure coins and distribute them to people in the genesis message. This is often called an `airdrop'. Sometimes creators give themselves a large amount in a so-called `pre-mine'. \cite{premine-description}
+第一，货币的创造者可以在创世消息中凭空创造硬币并分发给人们。这通常被称为"空投 (airdrop)"。有时创造者在所谓的"预挖 (pre-mine)"中给自己大量硬币。\cite{premine-description}
 
-Second, the currency can be automatically distributed as reward for mining a block, much like mining for gold. There are two types here. In the Bitcoin model the total possible supply is capped. Block rewards slowly decline to zero, after which no more money is ever made. In the inflation model supply increases indefinitely. 
+第二，货币可以作为挖掘区块的奖励自动分发，很像挖掘黄金。这里有两种类型。在比特币模型中，总可能供应量是有上限的。区块奖励缓慢下降到零，之后不再创造更多货币。在通货膨胀模型中，供应量无限增加。
 
-Monero is based on a currency known as Bytecoin that had a sizeable pre-mine, followed by block rewards \cite{monero-history}. Monero had no pre-mine, and as we will see, its block rewards slowly decline to a small amount after which all new blocks reward that same amount, making Monero inflationary.
+门罗币基于一种名为 Bytecoin 的货币，该货币有相当大的预挖，之后是区块奖励 \cite{monero-history}。门罗币没有预挖，正如我们将看到的，其区块奖励缓慢下降到一个较小的金额，之后所有新区块都奖励相同的金额，使门罗币成为通货膨胀型货币。
 
 
-\subsection{Block reward}
+\subsection{区块奖励 (Block reward)}
 \label{subsec:block-reward} %get_block_reward
 
-Block miners, before mining for a nonce, make a `miner transaction' with no inputs and at least one output.\footnote{A miner transaction can have any number of outputs, although currently the core implementation is only able to make one. Moreover, unlike normal transactions there are no explicit restrictions on miner transaction weight. They are functionally limited by the maximum block weight.} The total output amount is equal to the block reward, plus transaction fees from all transactions to be included in the block, and is communicated in clear text. Nodes who receive a mined block must verify\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt validate\_ miner\_ trans- action()}} the block reward is correct, and can calculate the current money supply by summing all past block rewards together.
+区块矿工在挖掘 nonce 之前，制作一笔没有 input 且至少有一个 output 的"矿工交易"。\footnote{矿工交易可以有任何数量的 output，但目前核心实现只能创建一个。此外，与普通交易不同，对矿工交易的权重没有明确限制。它们受最大区块权重的功能性限制。}总 output 金额等于区块奖励加上将被纳入区块的所有交易的手续费，并以明文传达。收到已挖掘区块的节点必须验证\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt validate\_ miner\_ trans- action()}}区块奖励是否正确，并且可以通过将所有过去的区块奖励加起来计算当前的货币供应量。
 
-Besides distributing money, block rewards incentivize mining. If there were no block rewards (and no other mechanism), why would anyone mine new blocks? Perhaps altruism or curiosity. However, few miners makes it easy for a malicious actor to assemble $>$50\% of the network's hash rate and easily rewrite recent chain history.\footnote{As an attacker gets higher shares of the hash rate (beyond 50\%), it takes less time to rewrite older and older blocks. Given a block $x$ days old, owned hash speed $v$, and honest hash speed $v_h$ ($v > v_h$), it will take $y = x*(v_h/(v-v_h))$ days to rewrite.} This is also why in Monero block rewards do not fall all the way to zero.
+除了分发货币，区块奖励还激励挖矿。如果没有区块奖励（也没有其他机制），为什么有人会挖新区块？也许是利他主义或好奇心。然而，矿工太少使得恶意行为者容易聚集超过 50\% 的网络 hash 速率并轻松重写最近的链历史。\footnote{随着攻击者获得越来越高的 hash 速率份额（超过 50\%），重写越来越旧的区块所需的时间就越少。给定一个 $x$ 天前的区块，拥有 hash 速率 $v$，诚实 hash 速率 $v_h$（$v > v_h$），重写需要 $y = x*(v_h/(v-v_h))$ 天。}这也是为什么在门罗币中区块奖励不会降到零。
 
-With block rewards, competition between miners drives total hash rate up until the marginal cost of adding more hash rate is higher than the marginal reward of obtaining that proportion of mined blocks (which appear at a constant rate) (plus some premiums like risk and opportunity cost). This means as a cryptocurrency becomes more valuable, its total hash rate will increase and it becomes progressively more difficult and expensive to gather $>$50\%.
+有了区块奖励，矿工之间的竞争推动总 hash 速率上升，直到增加更多 hash 速率的边际成本高于获得相应比例挖掘区块的边际收益（区块以恒定速率出现）（加上一些溢价，如风险和机会成本）。这意味着随着加密货币变得更有价值，其总 hash 速率将增加，聚集超过 50\% 会变得越来越困难和昂贵。
 
-\subsubsection*{Bit shifting}
 
-Bit shifting is used for calculating the base block reward (as we will see in Section \ref{subsec:penalty}, the actual block reward can sometimes be reduced below the base amount). 
+\subsubsection*{位移 (Bit shifting)}
 
-Suppose we have an integer A = 13 with bit representation [1101]. If we shift the bits of A down by 2 using the bitwise shift right operator, denoted A $>>$ 2, we get [0011].01, which equals 3.25. In reality that last part gets thrown away - `shifted' into oblivion, leaving us with [0011] = 3.\footnote{Bitwise shift right by $n$ bits is equivalent to integer division by $2^n$.}
+位移用于计算基础区块奖励（正如我们将在第 \ref{subsec:penalty} 节中看到的，实际区块奖励有时可以低于基础金额）。 
 
-\subsubsection*{Calculating base block reward for Monero}
+假设我们有一个整数 A = 13，位表示为 [1101]。如果我们使用位右移运算符将 A 的位向下移动 2 位，记为 A $>>$ 2，我们得到 [0011].01，等于 3.25。实际上最后一部分被丢弃了——"移入"了虚无，留下 [0011] = 3。\footnote{位右移 $n$ 位等同于整数除以 $2^n$。}
 
-Let's call the current total money supply M, and the `limit' of the money supply L = $2^{64} - 1$ (in binary it is [11....11], with 64 bits).\footnote{Perhaps now it is clear why range proofs (Section \ref{sec:range_proofs}) limit transaction amounts to 64 bits.} In the beginning of Monero the base block reward was \(\textrm{B = (L-M) $>>$ 20}\). If M = 0, then, in decimal format,\vspace{.175cm}
+
+\subsubsection*{计算门罗币的基础区块奖励 (Calculating base block reward for Monero)}
+
+让我们称当前总货币供应为 M，货币供应的"上限"为 L = $2^{64} - 1$（二进制为 [11....11]，64 位）。\footnote{也许现在清楚了为什么范围证明（第 \ref{sec:range_proofs} 节）将交易金额限制为 64 位。}在门罗币开始时，基础区块奖励为 \(\\textrm{B = (L-M) $>>$ 20}\)。如果 M = 0，那么，以十进制格式，\vspace{.175cm}
 \[\textrm{L} = 18,446,744,073,709,551,615\]
 \[\textrm{B}_0 = (L-0) >> 20 = 17,592,186,044,415\]
 
-These numbers are in `atomic units' - 1 atomic unit of Monero can't be divided. Clearly atomic units are ridiculous - L is over 18 quintillion! We can divide everything by $10^{12}$ to move the decimal point over, giving us the standard units of Monero (a.k.a. XMR, Monero's so-called `stock ticker').\vspace{.15cm}
+这些数字以"原子单位"表示——1 原子单位的门罗币不可分割。显然原子单位是荒谬的——L 超过 18 万亿亿！我们可以将所有数字除以 $10^{12}$ 来移动小数点，得到门罗币的标准单位（又名 XMR，门罗币的所谓"股票代码"）。\vspace{.15cm}
 \[\frac{\textrm{L}}{10^{12}} = 18,446,744.073709551615\]
 \[\textrm{B}_0 = \frac{(L-0) >> 20}{10^{12}} = 17.592186044415\]
 
-And there it is, the very first block reward, dispersed to pseudonymous thankful\_for\_today (who was responsible for starting the Monero project) in Monero's genesis block \cite{bitmonero-launched}, was about 17.6 Moneroj! See Appendix \ref{appendix:genesis-block} to confirm this for yourself.\footnote{Monero amounts are stored in atomic-unit format in the blockchain.}
+就这样，第一个区块奖励——分发给化名 thankful\_for\_today（负责启动门罗币项目的人）——大约是 17.6 个门罗币！参见附录 \ref{appendix:genesis-block} 自行确认。\footnote{门罗币金额在区块链中以原子单位格式存储。}
 
-As blocks are mined M grows, lowering subsequent block rewards. Initially (since the genesis block in April 2014) Monero blocks were mined once per minute, but in March 2016, it became two minutes per block \cite{monero-0.9.3}. To keep the rate of money creation, i.e. the `emission schedule',\footnote{For an interesting comparison of Monero and Bitcoin's emission schedules see \cite{monero-coin-emission}.} the same, block rewards were doubled. This just means, after the change, we use (L-M) $>>$ 19 instead of $>>$ 20 for new blocks. Currently the base block reward is\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_ impl.cpp {\tt get\_block\_ reward()}}\vspace{.175cm}
+随着区块被挖掘，M 增长，后续区块奖励降低。最初（自 2014 年 4 月的创世区块起）门罗币区块每分钟挖掘一次，但在 2016 年 3 月变为每两分钟一个区块 \cite{monero-0.9.3}。为了保持货币创造速率——即"排放计划"\footnote{关于门罗币和比特币排放计划的有趣比较，请参见 \cite{monero-coin-emission}。}——不变，区块奖励翻倍。这只意味着更改后，我们对新区块使用 (L-M) $>>$ 19 而不是 $>>$ 20。目前基础区块奖励为\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_ impl.cpp {\tt get\_block\_ reward()}}\vspace{.175cm}
 \[\textrm{B} = \frac{(L-M) >> 19}{10^{12}}\]
 
 
-\subsection{Dynamic block weight}
+\subsection{动态区块权重 (Dynamic block weight)}
 \label{subsec:dynamic-block-weight}
 
-It would be nice to mine every new transaction into a block right away. What if someone submits a lot of transactions maliciously? The blockchain, storing every transaction, would quickly grow enormous. 
+如果能立即将每笔新交易都挖入区块就好了。但如果有人恶意提交大量交易怎么办？存储每笔交易的区块链将迅速变得庞大。
 
-One mitigation is a fixed block size (in bytes), so the number of transactions per block is limited. What if honest transaction volume rises? Each transaction author would bid for a spot in new blocks by offering fees to miners. Miners would focus on mining transactions with the highest fees. As transaction volume increases, fees would become prohibitively large for transactions of small amounts (such as Alice buying an apple from Bob). Only people willing to outbid everyone else would get their transactions into the blockchain.\footnote{Bitcoin has a history of overloaded transaction volume. This website (\url{https://bitcoinfees.info/}) charts the ridiculous fee levels encountered (up to the equivalent of 35\$ per transaction at one point).}\\
+一种缓解措施是固定的区块大小（字节数），这样每个区块的交易数量受到限制。如果诚实的交易量上升怎么办？每位交易作者会通过向矿工提供手续费来竞标新区块中的位置。矿工会专注于挖掘手续费最高的交易。随着交易量增加，小额交易（如 Alice 从 Bob 那里买苹果）的手续费将变得令人望而却步。只有愿意出价高于其他所有人的才能将他们的交易纳入区块链。\footnote{比特币有交易量过载的历史。这个网站（\url{https://bitcoinfees.info/}）记录了遇到的荒谬手续费水平（最高时每笔交易相当于 35 美元）。}\\
 
-Monero avoids those extremes (unlimited vs fixed) with a dynamic block weight.
+门罗币通过动态区块权重避免了这些极端（无限 vs 固定）。
 
-\subsubsection*{Size vs Weight}
 
-Since\marginnote{src/crypto- note\_basic/ cryptonote\_ format\_ utils.cpp {\tt get\_trans- action\_ weight()}} Bulletproofs were added (v8), transaction and block sizes are no longer considered strictly. The term used now is {\em transaction weight}. Transaction weight for a miner transaction (see Section \ref{subsec:miner-transaction}), or a normal transaction with two outputs, is equal to the size in bytes. When a normal transaction has more than two outputs the weight is somewhat higher than the size.
+\subsubsection*{大小 vs 权重 (Size vs Weight)}
 
-Recalling Section \ref{sec:range_proofs}, a Bulletproof occupies $(2 \cdot \lceil \textrm{log}_2(64 \cdot p) \rceil + 9) \cdot 32$ bytes, so as more outputs are added the additional storage for range proofs is sub-linear. However, Bulletproof verification is linear, so artificially increasing transaction weights `prices in' that extra verification time (it's called a `clawback').%see get_transaction_weight_clawback() and n_bulletproof_max_amounts() for exact details
+由于\marginnote{src/crypto- note\_basic/ cryptonote\_ format\_ utils.cpp {\tt get\_trans- action\_ weight()}} Bulletproofs 的添加（v8），交易和区块大小不再被严格考虑。现在使用的术语是{交易权重 (transaction weight)}。矿工交易（见第 \ref{subsec:miner-transaction} 节）或具有两个 output 的普通交易的交易权重等于字节大小。当普通交易有两个以上的 output 时，权重略高于大小。
 
-Suppose\marginnote{src/crypto- note\_basic/ cryptonote\_ format\_ utils.cpp {\tt get\_trans- action\_ weight\_ clawback()}} we have a transaction with $p$ outputs, and imagine that if $p$ isn't a power of 2 we create enough dummy outputs to fill the gap. We find the difference between the actual Bulletproof size, and the size of all the Bulletproofs if those $p$ + `dummy outputs' had been in 2-out transactions (it's 0 if $p = 2$). We only claw back 80\% of the difference.\footnote{Note that $\textrm{log}_2(64 \cdot 2) = 7$, and $2*7 + 9 = 23$.}\vspace{.175cm}
+回顾第 \ref{sec:range_proofs} 节，一个 Bulletproof 占用 $(2 \cdot \lceil \textrm{log}_2(64 \cdot p) \rceil + 9) \cdot 32$ 字节，因此随着更多 output 被添加，范围证明的额外存储是次线性的。然而，Bulletproof 验证是线性的，所以人为增加交易权重将"定价"额外的验证时间（称为"clawback"）。%see get_transaction_weight_clawback() and n_bulletproof_max_amounts() for exact details
+
+假设\marginnote{src/crypto- note\_basic/ cryptonote\_ format\_ utils.cpp {\tt get\_trans- action\_ weight\_ clawback()}}我们有一笔包含 $p$ 个 output 的交易，如果 $p$ 不是 2 的幂，我们创建足够的虚拟 output 来填补差距。我们计算实际 Bulletproof 大小与所有 Bulletproof 大小（如果那些 $p$ + "虚拟 output" 在 2-output 交易中）之间的差异（如果 $p = 2$ 则为 0）。我们只 claw back 差异的 80\%。\footnote{注意 $\\textrm{log}_2(64 \cdot 2) = 7$，$2*7 + 9 = 23$。}\vspace{.175cm}
 \[\textrm{transaction\_clawback} = 0.8*[(23*(p + \textrm{num\_dummy\_outs})/2) \cdot 32 - (2 \cdot \lceil \textrm{log}_2(64 \cdot p) \rceil + 9) \cdot 32]\]
 
-Therefore the transaction weight is\vspace{.175cm}
+因此交易权重为\vspace{.175cm}
 \[\textrm{transaction\_weight} = \textrm{transaction\_size} + \textrm{transaction\_clawback}\]
 
-A block's weight\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt create\_ block\_ template()}} is equal to the sum of its component transactions' weights plus the miner transaction's weight.
+区块的权重\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt create\_ block\_ template()}}等于其组成交易的权重之和加上矿工交易的权重。
 
-\subsubsection*{Long term block weight}
 
-If dynamic blocks are allowed to grow at a rapid pace the blockchain can quickly become unmanageable \cite{big-bang-github}. To mitigate this, maximum block weights are tethered by {\em long term block weights}. Each block has, in addition to its normal weight, a `long term weight' calculated based on the previous block's effective median long term weight.\footnote{Similar to block difficulties, block weights and long term block weights are calculated and stored by blockchain verifiers rather than being included in blockchain data.} A block's effective median long term weight is related to the median of the most recent 100000 blocks' long term weights (including its own).\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt update\_ next\_cumu- lative\_ weight\_ limit()}}\footnote{Blocks made before long term weights were implemented have long term weights equal to their normal weights, so there is no concern for us about details surrounding the genesis block or early blocks. A brand new chain could easily make sensible choices.}\footnote{In the beginning\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_ impl.cpp {\tt get\_min\_ block\_ weight()}} of Monero the `300kB' term was 20kB, then increased to 60kB in March 2016, (v2 of the protocol) \cite{monero-0.9.3}, and has been 300kB since April 2017 (v5 of the protocol) \cite{monero-v5}. This non-zero `floor' within the dynamic block weight medians helps transient transaction volume changes when the absolute volume is low, especially in the early stages of Monero adoption.}%Blockchain::get_next_long_term_block_weight()
+\subsubsection*{长期区块权重 (Long term block weight)}
+
+如果允许动态区块快速增长，区块链可能很快变得不可管理 \cite{big-bang-github}。为了缓解这一点，最大区块权重受到{长期区块权重 (long term block weights)}的约束。每个区块除了其正常权重外，还有一个基于前一个区块有效中位数长期权重计算的"长期权重"。\footnote{与区块难度类似，区块权重和长期区块权重由区块链验证者计算和存储，而不是包含在区块链数据中。}一个区块的有效中位数长期权重与最近 100,000 个区块的长期权重中位数（包括其自身）相关。\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt update\_ next\_cumu- lative\_ weight\_ limit()}}\footnote{在长期权重被实现之前创建的区块的长期权重等于其正常权重，因此我们无需担心创世区块或早期区块的细节。一个全新的链可以轻松做出明智的选择。}\footnote{在\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_ impl.cpp {\tt get\_min\_ block\_ weight()}}门罗币开始时，"300kB"项是 20kB，然后在 2016 年 3 月（协议 v2）增加到 60kB \cite{monero-0.9.3}，自 2017 年 4 月（协议 v5）起一直是 300kB \cite{monero-v5}。动态区块权重中位数中的这个非零"底价"在绝对交易量低时有助于应对瞬时交易量变化，特别是在门罗币采用的早期阶段。}%Blockchain::get_next_long_term_block_weight()
 
 \begin{align*}
     \textrm{longterm\_block\_weight} &= min\{\textrm{block\_weight}, 1.4*\textrm{previous\_effective\_longterm\_median}\}\\
     \textrm{effective\_longterm\_median} &= max\{\textrm{300kB}, \textrm{median\_100000blocks\_longterm\_weights}\}%m_long_term_effective_median_block_weight
 \end{align*}{}
 
-If normal block weights stay large for a long time, then it will take at least 50,000 blocks (about 69 days) for the effective long term median to rise by 40\% (that's how long it takes a given long term weight to become the median).
+如果正常区块权重长期保持较大，那么有效中位数长期权重至少需要 50,000 个区块（约 69 天）才能上升 40\%（那是给定长期权重成为中位数所需的时间）。
 
-\subsubsection*{Cumulative median weight}
 
-Transaction volume can change dramatically in a short period of time, especially around holidays \cite{visa-seasonality}. To accommodate this, Monero allows short term flexibility in block weights. To smooth\marginnote{{\tt CRYPTONOTE\_ REWARD\_ BLOCKS\_ WINDOW}} out transient variability, a block's cumulative median uses the median of the last 100 blocks' normal block weights (including its own).\vspace{.1cm}
+\subsubsection*{累积中位数权重 (Cumulative median weight)}
+
+交易量可以在短时间内剧烈变化，特别是在节假日前后 \cite{visa-seasonality}。为适应这一点，门罗币允许区块权重的短期灵活性。为了平滑\marginnote{{\tt CRYPTONOTE\_ REWARD\_ BLOCKS\_ WINDOW}}瞬时变异性，区块的累积中位数使用最近 100 个区块的正常区块权重中位数（包括其自身）。\vspace{.1cm}
 \begin{align*}
     \textrm{cumulative\_weights\_median} = max\{\textrm{300kB}, min\{&max\{\textrm{300kB}, \textrm{median\_100blocks\_weights}\},\\
     &50*\textrm{effective\_longterm\_median}\}\}%HF_VERSION_EFFECTIVE_SHORT_TERM_MEDIAN_IN_PENALTY %update_next_cumulative_weight_limit() %m_current_block_cumul_weight_median %CRYPTONOTE_SHORT_TERM_BLOCK_WEIGHT_SURGE_FACTOR = 50
 \end{align*}{}
 
-The next block to be added to the blockchain is constrained in this way:\footnote{The cumulative median replaced `M100' (a similar median term) in protocol v8. Penalties and fees described in the first edition of this report \cite{ztm-1} used M100.}\vspace{.1cm}
+将要添加到区块链的下一个区块以此方式受限：\footnote{累积中位数在协议 v8 中替代了 "M100"（类似的中位数项）。本报告第一版 \cite{ztm-1} 中描述的惩罚和手续费使用了 M100。}\vspace{.1cm}
 \[\textrm{max\_next\_block\_weight}\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_ impl.cpp {\tt get\_block\_ reward()}} = 2*\textrm{cumulative\_weights\_median}\]% handle_block_to_main_chain() -> validate_miner_transaction() ->  get_block_reward()
 
-While the maximum block weight can rise up to 100 times the effective median long term weight after a few hundred blocks, it cannot rise more than 40\% beyond that over the next 50,000 blocks. Therefore long-term block weight growth is tethered by the long term weights, and in the short term weights may surge above their steady-state values.
+虽然最大区块权重在几百个区块后可以升至有效中位数长期权重的 100 倍，但在接下来的 50,000 个区块中不能超过其 40\% 以上。因此，长期区块权重增长受长期权重约束，短期权重可能会激增至超过其稳态值。
 
 
-\subsection{Block reward penalty}
+\subsection{区块奖励惩罚 (Block reward penalty)}
 \label{subsec:penalty}
 
-To mine blocks bigger than the cumulative median, miners have to pay a price, or penalty, in the form of reduced block reward. This means there are functionally two zones within the maximum block weight: the penalty-free zone, and the penalty zone. The median can slowly rise, allowing progressively larger blocks with no penalty.
+要挖掘大于累积中位数的区块，矿工必须以减少区块奖励的形式付出代价或惩罚。这意味着最大区块权重内实际上有两个区域：无惩罚区和惩罚区。中位数可以缓慢上升，允许逐渐增大的区块无需惩罚。
 
-If the intended block weight is greater than the cumulative median, then, given base block reward B, the block reward penalty is\vspace{.1cm}
+如果预期区块权重大于累积中位数，那么，给定基础区块奖励 B，区块奖励惩罚为\vspace{.1cm}
 \[\textrm{P} = \textrm{B}*((\textrm{block\_weight}/\textrm{cumulative\_weights\_median}) - 1)^2\]
 
-The actual block reward\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_ impl.cpp {\tt get\_block\_ reward()}} is therefore\footnote{Before confidential transactions (RingCT) were implemented (v4), all amounts were communicated in clear text and in some early protocol versions split into chunks (e.g. 1244 $\rightarrow$ 1000 + 200 + 40 + 4). To reduce miner tx size, the core implementation chopped off the lowest significant digits of block rewards (anything less than 0.0001 Moneroj; see {\tt BASE\_REWARD\_CLAMP\_THRESHOLD}) in v2-v3. The extra little bit was not lost, just made available for future block rewards. More generally, since v2\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt validate\_ miner\_trans- action()}} the block reward calculation here is just an upper limit on the real block reward that can be dispersed in a miner tx's outputs. Also of note, very early transactions' outputs with cleartext amounts {\em not} split into chunks can't be used in ring signatures in the current implementation, so to spend them they are migrated into chunked, `mixable', outputs, which can then be spent in normal RingCT transactions by creating rings out of other chunks with the same amount. Exact modern protocol rules around these ancient pre-RingCT outputs are not clear.}\vspace{.3cm}
+实际区块奖励\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_ impl.cpp {\tt get\_block\_ reward()}}因此为\footnote{在机密交易（RingCT）实现之前（v4），所有金额以明文传达，在某些早期协议版本中分成多个面额（例如 1244 $\rightarrow$ 1000 + 200 + 40 + 4）。为了减小矿工交易大小，核心实现在 v2-v3 中截掉了区块奖励的最低有效数字（低于 0.0001 门罗币的任何金额；见 {\tt BASE\_REWARD\_CLAMP\_THRESHOLD}）。多余的小额没有丢失，只是留给了未来的区块奖励。更一般地说，自 v2 起\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt validate\_ miner\_trans- action()}}，此处的区块奖励计算只是矿工交易 output 中可以分发的实际区块奖励的上限。还值得注意的是，非常早期交易中明文金额{未}分面额的 output 不能在当前实现中用于环签名，因此要花费它们，它们被迁移到分面额的"可混合"output 中，然后可以通过使用相同金额的其他面额创建环，在普通 RingCT 交易中花费。关于这些古老 pre-RingCT output 的确切现代协议规则尚不清楚。}\vspace{.3cm}
 \begin{align*}
     \textrm{B}^{\textrm{actual}} &= \textrm{B} - \textrm{P} \\
     \textrm{B}^{\textrm{actual}} &= \textrm{B}*(1-((\textrm{block\_weight}/\textrm{cumulative\_weights\_median}) - 1)^2)
 \end{align*}
 
-Using the \^{}2 operation means penalties are sub-proportional to block weight. A block weight 10\% larger than the previous cumulative\_weights\_median has just a 1\% penalty, 50\% larger is 25\% penalty, 90\% larger is 81\% penalty, and so on. \cite{monero-coin-emission}\\
+使用 \^{}2 操作意味着惩罚是次比例于区块权重的。区块权重大于先前 cumulative\_weights\_median 10\% 只有 1\% 的惩罚，大 50\% 是 25\% 惩罚，大 90\% 是 81\% 惩罚，依此类推。\cite{monero-coin-emission}\\
 
-We can expect miners to create blocks larger than the cumulative median when the fee from adding another transaction is bigger than the penalty incurred.
+我们可以预期，当添加另一笔交易的手续费大于产生的惩罚时，矿工会创建大于累积中位数的区块。
 
 
-\subsection{Dynamic minimum fee}
+\subsection{动态最低手续费 (Dynamic minimum fee)}
 \label{subsec:dynamic-minimum-fee} %get_dynamic_per_kb_fee
 
-To prevent malicious actors from flooding the blockchain with transactions that could be used to pollute ring signatures, and generally bloat it unnecessarily, Monero has a minimum fee\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt check\_fee()}} per byte of transaction data.\footnote{This minimum is enforced by the node consensus protocol, not the blockchain protocol. Most nodes won't relay a transaction to other nodes if it has a fee below the minimum\marginnote{src/crypto- note\_core/ tx\_pool.cpp {\tt add\_tx()}} (at least in part so only transactions likely to be mined by someone are passed along \cite{articmine-36c3-dynamics}), but they {\em will} accept a new block containing that transaction. In particular, this means there is no need to maintain backward compatibility with fee algorithms.} Originally this was 0.01 XMR/KiB (added early during protocol v1) \cite{fee-old-stackexchange}, then it became 0.002 XMR/KiB in September 2016 (v3).\footnote{The unit KiB (kibibyte, 1 KiB = 1024 bytes) is different from kB (kilobyte, 1 kB = 1000 bytes).}%HF_VERSION_PER_BYTE_FEE
+为了防止恶意行为者用可能用于污染环签名的交易充斥区块链，以及一般性地不必要地膨胀它，门罗币有一个每字节交易数据的最低手续费\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt check\_fee()}}。\footnote{这个最低值由节点共识协议而不是区块链协议强制执行。如果交易的手续费低于最低值\marginnote{src/crypto- note\_core/ tx\_pool.cpp {\tt add\_tx()}}，大多数节点不会将交易转发给其他节点（至少部分原因是只有可能被某人挖掘的交易才会被传递 \cite{articmine-36c3-dynamics}），但它们{会}接受包含该交易的新区块。特别是，这意味着不需要维护与手续费算法的向后兼容性。}最初这是 0.01 XMR/KiB（在协议 v1 早期添加）\cite{fee-old-stackexchange}，然后在 2016 年 9 月（v3）变为 0.002 XMR/KiB。\footnote{单位 KiB（kibibyte，1 KiB = 1024 字节）与 kB（kilobyte，1 kB = 1000 字节）不同。}%HF_VERSION_PER_BYTE_FEE
 
-In January 2017 (v4), a dynamic fee per KiB algorithm \cite{articmine-fee-video, articmine-36c3-dynamics, articmine-defcon27-video, jollymore-old-analysis} was added,\footnote{The base fee was changed from 0.002 XMR/KiB to 0.0004 XMR/KiB in April 2017 (v5 of the protocol) \cite{monero-v5}. The first edition of this report described the original dynamic fee algorithm \cite{ztm-1}.} and then along with transaction weight reductions due to Bulletproofs (v8) it changed from per KiB to per byte. The most important feature of the algorithm is that it prevents minimum possible total fees from exceeding the block reward (even with small block rewards and large block weights), which is thought to cause instability \cite{fee-reward-instability, no-reward-instability, selfish-miner}.\footnote{Credit for the concepts in this section largely belongs to Francisco Caba$\tilde{\textrm{n}}$as (a.k.a. `ArticMine'), the architect of Monero's dynamic block and fee system. See \cite{articmine-fee-video, articmine-36c3-dynamics, articmine-defcon27-video}.}%, by scaling with both the base block reward and the median.%\cite{dynamic-per-kb-fee}
+在 2017 年 1 月（v4），添加了一个动态每 KiB 手续费算法 \cite{articmine-fee-video, articmine-36c3-dynamics, articmine-defcon27-video, jollymore-old-analysis}，\footnote{基础手续费在 2017 年 4 月（协议 v5）从 0.002 XMR/KiB 变为 0.0004 XMR/KiB \cite{monero-v5}。本报告第一版描述了原始的动态手续费算法 \cite{ztm-1}。}然后随着 Bulletproofs（v8）带来的交易权重减少，它从每 KiB 变为每字节。该算法最重要的特性是它防止最低可能总手续费超过区块奖励（即使在小区块奖励和大区块权重的情况下），据信这会导致不稳定 \cite{fee-reward-instability, no-reward-instability, selfish-miner}。\footnote{本节概念主要归功于 Francisco Caba$\tilde{\textrm{n}}$as（又名 "ArticMine"），门罗币动态区块和手续费系统的架构师。参见 \cite{articmine-fee-video, articmine-36c3-dynamics, articmine-defcon27-video}。}%, by scaling with both the base block reward and the median.%\cite{dynamic-per-kb-fee}
 
-\subsubsection*{The fee algorithm}
 
-We base our fee algorithm around a reference transaction \cite{jollymore-old-analysis} of weight 3000 bytes (similar to a basic {\tt RCTTypeBulletproof2} 2-input, 2-output transaction, which is usually about 2600 bytes)\footnote{A basic 1-input, 2-output Bitcoin transaction is 250 bytes \cite{bitcoin-txsizes-2015}, or 430 bytes for 2-in/2-out.}, and the fees it would take to offset the penalty when the median is at its minimum (the smallest penalty-free zone, 300kB) \cite{articmine-36c3-dynamics}. In other words, the penalty induced by a 303kB block weight.% Doing this ensures fees required for common transactions to push up the median directly scale off the default fee, rather than requiring a disjointed multiplier compared to sub-median fees.
+\subsubsection*{手续费算法 (The fee algorithm)}
 
-Firstly, the fee F to balance the marginal penalty MP from adding a transaction with weight TW to a block with weight BW, is\vspace{.175cm}
+我们围绕一个参考交易 \cite{jollymore-old-analysis}来构建手续费算法，该交易权重为 3000 字节（类似于基本的 {\tt RCTTypeBulletproof2} 2-input、2-output 交易，通常约 2600 字节）\footnote{一个基本的 1-input、2-output 比特币交易是 250 字节 \cite{bitcoin-txsizes-2015}，2-input/2-output 为 430 字节。}，以及在中位数处于最小值（最小的无惩罚区，300kB）时抵消惩罚所需的手续费 \cite{articmine-36c3-dynamics}。换句话说，303kB 区块权重引起的惩罚。%这样做确保常见交易推高中位数所需的手续费直接按默认手续费缩放，而不是需要与低于中位数的手续费不相关的乘数。
+
+首先，将权重为 TW 的交易添加到权重为 BW 的区块时，平衡边际惩罚 MP 的手续费 F 为\vspace{.175cm}
 \begin{align*}
     \textrm{F} = \textrm{MP} = \textrm{B}&*(([\textrm{BW} + \textrm{TW}]/\textrm{cumulative\_median} - 1)^2 -\\ \textrm{B}&*((\textrm{BW}/\textrm{cumulative\_median} - 1)^2
 \end{align*}{}
 
-Defining the block weight factor $\textrm{WF}_b = (\textrm{BW}/\textrm{cumulative\_median} - 1)$, and transaction weight factor $\textrm{WF}_t = (\textrm{TW}/\textrm{cumulative\_median})$, lets us simplify\vspace{.175cm}
+定义区块权重因子 $\textrm{WF}_b = (\textrm{BW}/\textrm{cumulative\_median} - 1)$，交易权重因子 $\textrm{WF}_t = (\textrm{TW}/\textrm{cumulative\_median})$，使我们能够简化\vspace{.175cm}
 \[\textrm{F} = \textrm{B}*(2*\textrm{WF}_b*\textrm{WF}_t + \textrm{WF}_t^2)\]
 
-Using a block weighing 300kB (with a cumulative median at the default 300kB) and our reference transaction with 3000 bytes,
+使用一个 300kB 的区块（累积中位数在默认值 300kB）和我们的 3000 字节参考交易，
 \begin{align*}
     \textrm{F}_{\textrm{ref}} &= \textrm{B}*(2*0*\textrm{WF}_t + \textrm{WF}_t^2)\\
     \textrm{F}_{\textrm{ref}} &= \textrm{B}*\textrm{WF}_t^2\\
     \textrm{F}_{\textrm{ref}} &= \textrm{B}*(\frac{\textrm{TW}_{\textrm{ref}}}{\textrm{cumulative\_median}_{\textrm{ref}}})^2
 \end{align*}{}
 
-This fee is spread out over 1\% of the penalty zone (3000 out of 300000). We can spread the same fee over 1\% of any penalty zone with a generalized reference transaction.\vspace{.175cm}
+这个手续费分摊在惩罚区的 1\%（300000 中的 3000）。我们可以用广义参考交易将相同的手续费分摊在任何惩罚区的 1\% 中。\vspace{.175cm}
 \begin{align*}
     \frac{\textrm{TW}_{\textrm{ref}}}{\textrm{cumulative\_median}_{\textrm{ref}}} &= \frac{\textrm{TW}_{\textrm{general-ref}}}{\textrm{cumulative\_median}_{\textrm{general}}}\\
     1 &= (\frac{\textrm{TW}_{\textrm{general-ref}}}{\textrm{cumulative\_median}_{\textrm{general}}}) * (\frac{\textrm{cumulative\_median}_{\textrm{ref}}}{\textrm{TW}_{\textrm{ref}}})\\
@@ -289,56 +295,58 @@ This fee is spread out over 1\% of the penalty zone (3000 out of 300000). We can
     \textrm{F}_{\textrm{general-ref}} &= \textrm{B}*(\frac{\textrm{TW}_{\textrm{general-ref}}}{\textrm{cumulative\_median}_{\textrm{general}}}) * (\frac{\textrm{TW}_{\textrm{ref}}}{\textrm{cumulative\_median}_{\textrm{ref}}})
 \end{align*}{}
 
-Now we can scale the fee based on a real transaction weight at a given median, so e.g. if the transaction is 2\% of the penalty zone the fee gets doubled.\vspace{.175cm}
+现在我们可以根据给定中位数下的实际交易权重来缩放手续费，例如如果交易是惩罚区的 2\%，手续费就翻倍。\vspace{.175cm}
 \begin{align*}
     \textrm{F}_{\textrm{general}} &= \textrm{F}_{\textrm{general-ref}} * \frac{\textrm{TW}_{\textrm{general}}}{\textrm{TW}_{\textrm{general-ref}}}\\
     \textrm{F}_{\textrm{general}} &= \textrm{B}*(\frac{\textrm{TW}_{\textrm{general}}}{\textrm{cumulative\_median}_{\textrm{general}}}) * (\frac{\textrm{TW}_{\textrm{ref}}}{\textrm{cumulative\_median}_{\textrm{ref}}})
 \end{align*}{}
 
-This rearranges to the default fee per byte, which we have been working toward.\vspace{.175cm}
+这重新排列为我们一直在追求的默认每字节手续费。\vspace{.175cm}
 \begin{align*}
     f^{B}_{default} &= \textrm{F}_{\textrm{general}}/\textrm{TW}_{\textrm{general}}\\
     f^{B}_{default} &= \textrm{B}*(\frac{1}{\textrm{cumulative\_median}_{\textrm{general}}}) * (\frac{3000}{300000})
 \end{align*}{}
 
-When transaction volume is below the median there is no real reason for fees to be at the reference level \cite{jollymore-old-analysis}. We set the minimum to be 1/5\nth the default.\vspace{.175cm}
+当交易量低于中位数时，没有真正的理由让手续费处于参考水平 \cite{jollymore-old-analysis}。我们将最低值设为默认值的 1/5。\vspace{.175cm}
 \begin{align*}
     f^{B}_{min} &= \textrm{B}*(\frac{1}{\textrm{cumulative\_weights\_median}}) * (\frac{3000}{300000}) * (\frac{1}{5})\\
     f^{B}_{min} &= \textrm{B}*(\frac{1}{\textrm{cumulative\_weights\_median}}) * 0.002
 \end{align*}{}
 
-\subsubsection*{The fee median}
 
-It turns out using the cumulative median for fees enables a spam attack. By raising the short term median to its highest value (50 x long term median), an attacker can use minimum fees to maintain high block weights (relative to organic transaction volume) with very low cost.
+\subsubsection*{手续费中位数 (The fee median)}
 
-To avoid this we limit fees for transactions to go in the next block with the smallest median available, which favors higher fees in all cases.\footnote{An attacker can spend just enough in fees for the short term median to hit 50*long-term-median. With current (as of this writing) block rewards at 2 XMR, an optimized attacker can increase the short term median by 17\% every 50 blocks, and reach the upper bound after about 1300 blocks (about 43 hours), spending 0.39*2 XMR per block, for a total setup cost of about 1000 XMR (or around 65k USD at current valuations), and then go back to the minimum fee. When the fee median equals the penalty-free zone, then the minimum total fee to fill the penalty-free zone is 0.004 XMR (about 0.26 USD at current valuations). If the fee median equals the long term median, it would in the spam scenario be 1/50th the penalty-free zone. Therefore it would just be 50x the short-median case, for 0.2 XMR per block (13 USD per block). This comes out to 2.88 XMR per day vs 144 XMR per day (for 69 days, until the long term median rises by 40\%) to maintain every block with 50*long-term-median block weight. The 1000 XMR setup cost would be worthwhile in the former case, but not the latter. This will reduce to 300 XMR setup, and 43 XMR maintenance, at the emission tail.}\vspace{.1cm}
+事实证明，对费用使用累积中位数使得垃圾邮件攻击成为可能。通过将短期中位数提升到最高值（50 倍长期中位数），攻击者可以使用最低手续费以极低的成本维持高区块权重（相对于有机交易量）。
+
+为避免这种情况，我们限制交易的费用使用最小可用中位数，这在所有情况下都倾向于更高的费用。\footnote{攻击者可以花费刚好够的费用使短期中位数达到 50*长期中位数。按照当前（撰写本文时）2 XMR 的区块奖励，优化的攻击者可以每 50 个区块增加短期中位数 17\%，约 1300 个区块（约 43 小时）后达到上限，每区块花费 0.39*2 XMR，总设置成本约 1000 XMR（按当前估值约 6.5 万美元），然后恢复到最低手续费。当手续费中位数等于无惩罚区时，填满无惩罚区的最低总手续费为 0.004 XMR（按当前估值约 0.26 美元）。如果手续费中位数等于长期中位数，在垃圾邮件场景中它将是无惩罚区的 1/50。因此只需短期中位数情况的 50 倍，每区块 0.2 XMR（每区块 13 美元）。这折合每天 2.88 XMR 对比每天 144 XMR（持续 69 天，直到长期中位数上升 40\%）来维持每个区块 50*长期中位数的区块权重。1000 XMR 的设置成本在前一种情况下是值得的，但在后一种情况下不是。这在排放尾部将减少到 300 XMR 设置和 43 XMR 维护。}\vspace{.1cm}
 \[\textrm{smallest\_median}\marginnote{src/crypto- note\_core\ block- chain.cpp {\tt check\_fee()}} = max\{\textrm{300kB}, min\{\textrm{median\_100blocks\_weights}, \textrm{effective\_longterm\_median}\}\}\]
 
-Favoring higher fees during rising transaction volume also facilitates adjusting the short term median and ensuring transactions aren't left pending, as miners are more likely to mine into the penalty zone.
+在交易量上升期间倾向于更高的费用也有助于调整短期中位数并确保交易不被搁置，因为矿工更有可能挖掘到惩罚区。
 
-The actual minimum fee is therefore\footnote{To check if a given fee is correct, we allow a 2\% buffer on $f^{B}_{min-actual}$ in case of integer overflow (we must compute fees before tx weights are completely determined). This means the effective minimum fee is 0.98*$f^{B}_{min-actual}$.\marginnote{src/crypto- note\_core\ block- chain.cpp {\tt check\_fee()}}}\footnote{Research to improve minimum fees even further is ongoing. \cite{min-fee-research-issue-70}}%Blockchain::check_fee()
+因此实际最低手续费为\footnote{要检查给定手续费是否正确，我们允许 $f^{B}_{min-actual}$ 有 2\% 的缓冲以防整数溢出（我们必须在交易权重完全确定之前计算费用）。这意味着有效最低手续费为 0.98*$f^{B}_{min-actual$。\marginnote{src/crypto- note\_core\ block- chain.cpp {\tt check\_fee()}}}\footnote{进一步改善最低手续费的研究正在进行中。\cite{min-fee-research-issue-70}}%Blockchain::check_fee()
 
 \[f^{B}_{min-actual}\marginnote{src/crypto- note\_core\ block- chain.cpp {\tt get\_dyna- mic\_base\_ fee()}} = \textrm{B}*(\frac{1}{\textrm{smallest\_median}}) * 0.002\]
 
-\subsubsection*{Transaction fees}
 
-As Caba$\tilde{\textrm{n}}$as said in his insightful presentation on this topic \cite{articmine-36c3-dynamics}, ``[f]ees tell the miner how deep into the penalty [transaction authors are] willing to pay for, in order to get a transaction mined." Miners will fill up their blocks by adding transactions in descending order of fee amount \cite{articmine-36c3-dynamics} (assuming all transactions have the same weight), so to move into the penalty zone there must be numerous transactions with large fees. This means it is likely the block weight cap can only be reached if total fees are at least about 3-4 times the base block reward (at which point the actual block reward is zero).\footnote{\label{penaltyzonecost_footnote}The marginal penalty from the last bytes to fill up a block can be considered a `transaction' comparable to other transactions. In order for a clump of transactions to buy that transaction space from a miner, all its individual transaction fees should be higher than the penalty, since if any one of them is lower then the miner will keep the marginal reward instead. This last marginal reward, assuming a block filled with small transactions, requires at least 4x the base block reward in total fees to be purchased. If transaction weights are maximized (50\% of the minimum penalty-free zone, i.e. 150kB) then if the median is minimized (300kB) the last marginal transaction requires at least 3x in total fees.}
+\subsubsection*{交易手续费 (Transaction fees)}
 
-To calculate fees for a transaction, Monero's core implementation wallet uses `priority'\marginnote{src/wallet/ wallet2.cpp {\tt get\_fee\_ multi- plier()}} multipliers. A `slow' transaction uses the minimum fee directly, `normal' is the default fee (5x), if all transactions use `fast' (25x) they can reach 2.5\% of the penalty zone, and a block with `super urgent' (1000x) transactions can fill 100\% of the penalty zone.%wallet2::get_fee_multiplier()
+正如 Caba$\tilde{\textrm{n}}$as 在他关于这个话题的富有洞察力的演讲 \cite{articmine-36c3-dynamics} 中所说，"[手续费]告诉矿工交易作者愿意为获得交易被挖掘而支付多深的惩罚。"矿工将按手续费金额降序添加交易来填满他们的区块 \cite{articmine-36c3-dynamics}（假设所有交易权重相同），所以要进入惩罚区必须有大量手续费高的交易。这意味着区块权重上限很可能只有在总手续费至少为基础区块奖励的 3-4 倍时才能达到（此时实际区块奖励为零）。\footnote{\label{penaltyzonecost_footnote}填满区块的最后字节的边际惩罚可以被视为一笔与其他交易可比的"交易"。为了让一组交易从矿工那里购买该交易空间，其所有个别交易手续费都应该高于惩罚，因为如果其中任何一个较低，矿工就会保留边际收益。这最后一笔边际收益，假设区块由小交易填满，至少需要 4 倍基础区块奖励的总手续费才能购买。如果交易权重最大化（最小无惩罚区的 50\%，即 150kB），那么如果中位数最小化（300kB），最后一笔边际交易至少需要 3 倍的总手续费。}
 
-One important consequence of dynamic block weights is average total block fees will tend to be of a magnitude lower than, or at least the same as, the block reward (total fees can be expected to equal the base block reward at about 37\% of the penalty zone [68.5\% of the maximum block weight], when the penalty is 13\%). Transactions competing for block space with higher fees leads to a bigger supply of block space, and lower fees.\footnote{As block rewards decline over time, and the median rises due to increased adoption (theoretically), fees should steadily become smaller and smaller. In `real purchasing power' terms, this may be less impactful on transaction costs if the value of Moneroj rises due to adoption and economic deflation.} This feedback mechanism is a strong counter to the renowned `selfish miner' \cite{selfish-miner} threat.
+要计算交易的手续费，门罗币的核心实现钱包使用"优先级"\marginnote{src/wallet/ wallet2.cpp {\tt get\_fee\_ multi- plier()}}乘数。"慢"交易直接使用最低手续费，"正常"是默认手续费（5 倍），如果所有交易使用"快速"（25 倍）可以达到惩罚区的 2.5\%，"超级紧急"（1000 倍）交易可以填满惩罚区的 100\%。%wallet2::get_fee_multiplier()
+
+动态区块权重的一个重要后果是，平均总区块手续费将趋向于低于或至少与区块奖励同一数量级（总手续费可预期在惩罚区约 37\% 时等于基础区块奖励[最大区块权重的 68.5\%]，此时惩罚为 13\%）。用更高手续费竞争区块空间导致更大的区块空间供应和更低的手续费。\footnote{随着区块奖励随时间下降，以及中位数因采用增加而上升（理论上），手续费应稳步变小。从"实际购买力"的角度来看，如果门罗币因采用和经济通缩而升值，这对手续费成本的影响可能较小。}这种反馈机制是对著名的"自私矿工"\cite{selfish-miner}威胁的有力对抗。
 
 
-\subsection{Emission tail}
+\subsection{排放尾部 (Emission tail)}
 \label{subsec:emission-tail}
 
-Let's suppose a cryptocurrency with fixed maximum supply and dynamic block weight. After a while its block rewards fall to zero. With no more penalty on increasing block weight, miners add any transaction with a non-zero fee to their blocks.
+假设一种具有固定最大供应量和动态区块权重的加密货币。过一段时间后，其区块奖励降为零。由于增加区块权重不再有惩罚，矿工将任何手续费非零的交易添加到他们的区块中。
 
-Block weights stabilize around the average rate of transactions submitted to the network, and transaction authors have no compelling reason to use transaction fees above the minimum, which would be zero according to Section \ref{subsec:dynamic-minimum-fee}.
+区块权重稳定在网络提交交易的平均速率左右，交易作者没有令人信服的理由使用高于最低值的手续费，根据第 \ref{subsec:dynamic-minimum-fee} 节，最低值将为零。
 
-This introduces an unstable, insecure situation. Miners have little to no incentive to mine new blocks, leading to a fall in network hash rate as returns on investment decline. Block times remain the same as difficulties adjust, but the cost of performing a double-spend attack may become feasible.\footnote{The case of fixed supply and fixed block weight, as in Bitcoin, is also thought to be unstable. \cite{no-reward-instability}} If minimum fees are forced to be non-zero then the `selfish miner' \cite{selfish-miner} threat becomes realistic  \cite{no-reward-instability}.\\
+这引入了一种不稳定的、不安全的局面。矿工几乎没有动力去挖新区块，随着投资回报率下降，网络 hash 速率随之下降。区块时间随着难度调整保持不变，但执行双花攻击的成本可能变得可行。\footnote{固定供应和固定区块权重的情况，如比特币，也被认为是不稳定的。\cite{no-reward-instability}}如果最低手续费被强制非零，那么"自私矿工"\cite{selfish-miner}威胁就变得现实了 \cite{no-reward-instability}。\\
 
-Monero\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_ impl.cpp {\tt get\_block\_ reward()}} prevents this by not allowing the block reward to fall below 0.6 XMR (0.3 XMR per minute). When the following condition is met,\vspace{.175cm}
+门罗币\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_ impl.cpp {\tt get\_block\_ reward()}}通过不允许区块奖励低于 0.6 XMR（每分钟 0.3 XMR）来防止这一点。当以下条件满足时，\vspace{.175cm}
 \begin{align*}
                0.6 &> ((L-M) >> 19)/10^{12} \\
         \textrm{M} &> \textrm{L} - 0.6*2^{19}*10^{12} \\
@@ -346,52 +354,52 @@ Monero\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_ impl.cpp {\tt ge
 \textrm{M}/10^{12} &> 18,132,171.273709551615
 \end{align*}
 
-the Monero chain will enter a so-called `emission tail', with constant 0.6 XMR (0.3 XMR/minute) block rewards forever after.\footnote{The Monero emission tail's estimated arrival is May 2022 \cite{monero-tail-emission}. The money supply limit L will be reached in May 2024, but since coin emission will no longer depend on the supply it will have no effect. Based on Monero's range proof, it will be impossible to send more money than L in one output, even if someone manages to accumulate more than that (and assuming they have wallet software that can handle that much).} This corresponds with about 0.9\% yearly inflation to begin with, steadily declining thereafter.
+门罗币链将进入所谓的"排放尾部"，此后永远保持 0.6 XMR（0.3 XMR/分钟）的恒定区块奖励。\footnote{门罗币排放尾部的预计到达时间是 2022 年 5 月 \cite{monero-tail-emission}。货币供应上限 L 将在 2024 年 5 月达到，但由于币排放不再依赖于供应量，这将没有影响。根据门罗币的范围证明，在一个 output 中发送超过 L 的资金将是不可能的，即使有人设法积累了超过那么多（并假设他们有能处理那么多的钱包软件）。}这最初对应于约 0.9\% 的年通货膨胀率，此后稳步下降。
 
 
-\subsection{Miner transaction: {\tt RCTTypeNull}}
+\subsection{矿工交易：{\tt RCTTypeNull} (Miner transaction: {\tt RCTTypeNull})}
 \label{subsec:miner-transaction} %-fees -> summed into block reward and spent in the miner tx (construct_miner_tx function)
 
-A block's miner has the right to claim ownership of the fees provided in its transactions, and to mint new money in the form of a block reward. The mechanism is a miner transaction\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ miner\_tx()}} (a.k.a. coinbase transaction), which is similar to a normal transaction.\footnote{Apparently, at one point miner transactions could be constructed using deprecated transaction format versions, and could include some normal transaction (RingCT) components. The issues were fixed in protocol v12 after this hackerone report was published: \cite{miner-tx-checks}.}
+区块的矿工有权索取其交易中提供的手续费，并以区块奖励的形式铸造新货币。机制是矿工交易\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ miner\_tx()}}（又名 coinbase 交易），它类似于普通交易。\footnote{显然，曾经矿工交易可以使用已弃用的交易格式版本构建，并且可以包含一些普通交易（RingCT）组件。这些问题在协议 v12 中在此 hackerone 报告发布后被修复：\cite{miner-tx-checks}。}
 
-The output amount(s) of a miner transaction must be no more than the sum of transaction fees and block reward, and are communicated in clear text.\footnote{In the current version miners may claim less than the calculated block reward. The leftovers are pushed back into the emission schedule for future miners.} In place of an input, the block's height is recorded (i.e. ``I claim the block reward and fees for the n\nth block").
+矿工交易的 output 金额不得超过交易手续费和区块奖励之和，并以明文传达。\footnote{在当前版本中，矿工可以索取少于计算出的区块奖励。剩余部分被推回排放计划供未来的矿工使用。}作为 input 的替代，记录了区块的高度（即"我索取第 n 个区块的区块奖励和手续费"）。
 
-Ownership of the miner output(s) is assigned to a standard one-time address\footnote{The miner transaction output can theoretically be sent to a subaddress and/or use multisig and/or an encoded payment ID. We don't know if any implementations have any of those features.}, with a corresponding transaction public key stored in the extra field. The funds are locked, unspendable, until the 60\nth block after it is published \cite{transaction-lock}.\footnote{The miner tx can't be locked for more or less than 60 blocks. If it is published in the 10\nth block, its unlock height is 70, and it may be spent in the 70\nth block or later.\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt is\_tx\_ spendtime\_ unlocked()}}[.5cm]}%justification? Blockchain::prevalidate_miner_transaction()
+矿工 output 的所有权被分配给标准一次性地址\footnote{矿工交易的 output 理论上可以发送到子地址和/或使用多签和/或编码支付 ID。我们不知道是否有任何实现具备这些功能。}，相应的交易公钥存储在 extra 字段中。资金被锁定，不可花费，直到发布后的第 60 个区块 \cite{transaction-lock}。\footnote{矿工交易不能锁定超过或少于 60 个区块。如果在第 10 个区块发布，其解锁高度为 70，它可以在第 70 个区块或之后被花费。\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt is\_tx\_ spendtime\_ unlocked()}}[.5cm]}%justification? Blockchain::prevalidate_miner_transaction()
 
-Since RingCT was implemented in January 2017 (v4 of the protocol) \cite{ringct-dates}, people downloading a new copy of the blockchain compute a commitment to the miner transaction (a.k.a. tx) amount\marginnote{src/block- chain\_db/ blockchain\_ db.cpp {\tt add\_trans- action()}} $a$, as $C = 1G + aH$, and store it for referral. This allows block miners to spend their miner transaction outputs just like a normal transaction's outputs, putting them in MLSAG rings with other normal and miner tx outputs.\\
+自 2017 年 1 月（协议 v4）\cite{ringct-dates}实现 RingCT 以来，下载新区块链副本的人计算矿工交易（即 tx）金额 $a$ 的承诺\marginnote{src/block- chain\_db/ blockchain\_ db.cpp {\tt add\_trans- action()}}，$C = 1G + aH$，并存储以供参考。这使得区块矿工可以像普通交易的 output 一样花费他们的矿工交易 output，将它们与其他普通和矿工交易 output 放在 MLSAG 环中。\\
 
-Blockchain verifiers store each post-RingCT block's miner tx amount commitment, for 32 bytes each.
+区块链验证者存储每个 post-RingCT 区块的矿工交易金额承诺，每个 32 字节。
 
 
 
-\section{Blockchain structure}
+\section{区块链结构 (Blockchain structure)}
 \label{sec:blockchain-structure}
 
-Monero's blockchain style is simple.
+门罗币的区块链风格很简单。
 
-It starts with a genesis message\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt generate\_ genesis\_ block()}}[-.8cm] of some kind (in our case basically a miner transaction dispersing the first block reward), which constitutes the genesis block (see Appendix \ref{appendix:genesis-block}). The next block contains a reference to the previous block, in the form of block ID.
+它从一个创世消息\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt generate\_ genesis\_ block()}}[-.8cm]开始——某种形式的消息（在我们的情况下基本上是一个分发第一个区块奖励的矿工交易）——构成创世区块（参见附录 \ref{appendix:genesis-block}）。下一个区块包含对前一个区块的引用，以区块 ID 的形式。
 
-A block ID is simply a hash of\marginnote{src/crypto- note\_basic/ cryptonote\_ format\_ utils.cpp {\tt get\_block\_ hashing\_ blob()}}[1.2cm] the block's header (a list of information about a block), a so-called `Merkle root' that attaches all the block's transaction IDs (which are hashes of each transaction), and the number of transactions (including the miner transaction).\marginnote{src/crypto- note\_basic/ cryptonote\_ format\_ utils.cpp {\tt calculate\_ block\_ hash()}}[4.5cm]\footnote{+1 accounts for the miner tx.}\vspace{.175cm}
+区块 ID 简单地是\marginnote{src/crypto- note\_basic/ cryptonote\_ format\_ utils.cpp {\tt get\_block\_ hashing\_ blob()}}[1.2cm]区块头（关于区块的信息列表）的 hash，一个所谓的"Merkle root"（连接该区块的所有交易 ID（每笔交易的 hash）），以及交易数量（包括矿工交易）。\marginnote{src/crypto- note\_basic/ cryptonote\_ format\_ utils.cpp {\tt calculate\_ block\_ hash()}}[4.5cm]\footnote{+1 用于矿工交易。}\vspace{.175cm}
 %calculate_block_hash, which ultimately uses cn_fast_hash(get_block_hashing_blob)
 \[\textrm{Block ID} = \mathcal{H}_n(\textrm{Block header}, \textrm{Merkle root}, \# \textrm{transactions} + 1)\]\vspace{.05cm}
 
-To produce a new block, one must do proof of work hashes by changing a nonce value stored in the block header until the difficulty target condition is met.\footnote{In Monero a typical miner (from \url{https://monerobenchmarks.info/} as of this writing) can do less than 50,000 hashes per second, so less than 6 million hashes per block. This means the nonce variable doesn't need to be that big. Monero's nonce is 4 bytes (max 4.3 billion), and it would be strange for any miner to require all the bits.} The proof of work and block ID hash the same information, except use different hash functions. Blocks are mined\marginnote{{\tt get\_block\_ longhash()}}[5.55cm] by, while $({PoW}_{output} * {difficulty}) > 2^{256}-1$, repeatedly changing the nonce and recalculating\vspace{.175cm}
+要产生一个新区块，必须通过更改区块头中存储的 nonce 值来进行工作量证明 hash，直到满足难度目标条件。\footnote{在门罗币中，典型的矿工（来自 \url{https://monerobenchmarks.info/}，截至撰写时）每秒可以做少于 50,000 次 hash，因此每区块少于 600 万次 hash。这意味着 nonce 变量不需要那么大。门罗币的 nonce 是 4 字节（最大 43 亿），任何矿工需要所有位将是奇怪的。}工作量证明和区块 ID hash 相同的信息，但使用不同的 hash 函数。区块被挖掘\marginnote{{\tt get\_block\_ longhash()}}[5.55cm]的方法是，当 $({PoW}_{output} * {difficulty}) > 2^{256}-1$ 时，反复更改 nonce 并重新计算\vspace{.175cm}
 \[{PoW}_{output} = \mathcal{H}_{PoW}(\textrm{Block header}, \textrm{Merkle root}, \# \textrm{transactions} + 1)\]
 
 
-\subsection{Transaction ID}
+\subsection{交易 ID (Transaction ID)}
 \label{subsec:transaction-id} %calculate_transaction_hash
         %each arrow is a hash
-Transaction IDs are similar to the message signed by input MLSAG signatures (Section \ref{full-signature}), but include the MLSAG signatures too.
+交易 ID 类似于 input MLSAG 签名的消息（第 \ref{full-signature} 节），但也包括 MLSAG 签名。
 
-The following information is hashed:
+以下信息被 hash：
 \begin{itemize}
-    \item TX Prefix\marginnote{src/crypto- note\_basic/ cryptonote\_ format\_ utils.cpp {\tt calculate\_ transa- ction\_ hash()}}  = \{transaction era version (e.g. ringCT = 2), inputs \{key offsets, key images\}, outputs \{one-time addresses\}, extra \{transaction public key, encoded payment ID, misc.\}\}
-    \item TX Stuff   = \{signature type ({\tt RCTTypeNull} or {\tt RCTTypeBulletproof2}), transaction fee, pseudo output commitments for inputs, ecdhInfo (encrypted or cleartext amounts), output commitments\}
-    \item Signatures = \{MLSAGs, range proofs\}
+    \item TX 前缀 (TX Prefix)\marginnote{src/crypto- note\_basic/ cryptonote\_ format\_ utils.cpp {\tt calculate\_ transa- ction\_ hash()}}  = \{交易时代版本（如 ringCT = 2），input \{key 偏移，key image\}，output \{一次性地址\}，extra \{交易公钥，编码支付 ID，杂项。\}\}
+    \item TX 内容 (TX Stuff)   = \{签名类型（{\tt RCTTypeNull} 或 {\tt RCTTypeBulletproof2}），交易手续费，input 的伪 output 承诺，ecdhInfo（加密或明文金额），output 承诺\}
+    \item 签名 (Signatures) = \{MLSAG，范围证明\}
 \end{itemize}
 
-In this tree diagram the black arrow indicates a hash of inputs.
+在此树形图中，黑色箭头表示 input 的 hash。
         
 \begin{center}
     \begin{forest}
@@ -411,17 +419,17 @@ In this tree diagram the black arrow indicates a hash of inputs.
     \end{forest}    
 \end{center}
 
-In place of an `input', a miner transaction records the block height of its block. This ensures the miner transaction's ID, which is simply a normal transaction ID except with $\mathcal{H}_n$(Signatures) $\rightarrow$ 0, is always unique, for simpler ID-searching.
+作为"input"的替代，矿工交易记录其区块的区块高度。这确保矿工交易的 ID（简单地是一个普通交易 ID，但 $\mathcal{H}_n$(Signatures) $\rightarrow$ 0）总是唯一的，便于更简单的 ID 搜索。
 
 
-\subsection{Merkle tree}
+\subsection{Merkle 树 (Merkle tree)}
 \label{subsec:merkle-tree} %tree_hash
 
-Some users may want to discard data from their copy of the blockchain. For example, once you verify a transaction's range proofs and input signatures, the only reason to keep that signature information is so users who obtain it from you can verify it for themselves.
+某些用户可能希望从其区块链副本中丢弃数据。例如，一旦你验证了交易的范围证明和 input 签名，保留该签名信息的唯一原因是让从你那里获得它的用户可以自行验证。
 
-To\marginnote{src/crypto/ tree-hash.c {\tt tree\_hash()}} facilitate `pruning' transaction data, and to more generally organize it within a block, we use a Merkle tree \cite{merkle-tree}, which is just a binary hash tree. Any branch in a Merkle tree can be pruned if you keep its root hash.\footnote{The first known pruning method was added in v0.14.1 of the core Monero implementation (March 2019, coinciding with protocol v10). After verifying a transaction, full nodes can delete all its signature data (including Bulletproofs, MLSAGS, and pseudo output commitments) while keeping $\mathcal{H}_n$(Signatures) for computing the transaction ID. They only do this with 7/8\nths of all transactions, so every transaction is fully stored by at least 1/8\nth of the network's full nodes. This reduces blockchain storage by about 2/3\rds. \cite{monero-pruning-1/8}}\\
+为了\marginnote{src/crypto/ tree-hash.c {\tt tree\_hash()}}促进"修剪 (pruning)"交易数据，并更一般地在区块内组织它，我们使用 Merkle 树 \cite{merkle-tree}，它只是一个二进制 hash 树。Merkle 树中的任何分支都可以被修剪，只要你保留其根 hash。\footnote{第一种已知的修剪方法在核心门罗币实现的 v0.14.1 中添加（2019 年 3 月，与协议 v10 同时）。验证交易后，完整节点可以删除其所有签名数据（包括 Bulletproofs、MLSAG 和伪 output 承诺），同时保留 $\mathcal{H}_n$(Signatures) 以计算交易 ID。它们只对 7/8 的交易这样做，因此每笔交易至少由网络 1/8 的完整节点完整存储。这将区块链存储减少约 2/3。\cite{monero-pruning-1/8}}\\
 
-An example Merkle tree based on four transactions and a miner transaction is diagrammed in Figure \ref*{chapter:blockchain}.1.\footnote{A bug in Monero's Merkle tree code led to a serious, though apparently non-critical, real-world attack on September 4\nth, 2014 \cite{MRL-0002-merkle-problem}.}
+基于四笔交易和一笔矿工交易的 Merkle 树示例如图 \ref*{chapter:blockchain}.1 所示。\footnote{门罗币 Merkle 树代码中的一个 bug 导致了 2014 年 9 月 4 日一次严重的但显然非关键的实际攻击 \cite{MRL-0002-merkle-problem}。}
 
 \begin{center}
     \begin{forest}
@@ -449,39 +457,39 @@ An example Merkle tree based on four transactions and a miner transaction is dia
         ]
         \node at (current bounding box.south)
         [below=3ex,thick,draw,rectangle]
-        {\emph{Figure \ref*{chapter:blockchain}.1: Merkle Tree}};
+        {\emph{Figure \ref*{chapter:blockchain}.1: Merkle 树}};
     \end{forest}
 \end{center}
 
-A Merkle root is inherently a reference to all its included transactions.
+Merkle root 本质上是对其包含的所有交易的引用。
 
 
 
 \newpage
-\subsection{Blocks}
+\subsection{区块 (Blocks)}
 \label{subsec:blocks} %https://monero.stackexchange.com/questions/3958/what-is-the-format-of-a-block-in-the-monero-blockchain/6461#6461
 
-A block is basically a block header and some transactions. Block headers record important information about each block. A block's transactions can be referenced with their Merkle root. We present here the outline of a block's content. Our readers can find a real block example in Appendix \ref{appendix:block-content}.
+区块基本上是一个区块头和一些交易。区块头记录关于每个区块的重要信息。一个区块的交易可以通过其 Merkle root 引用。我们在此呈现区块内容的大纲。我们的读者可以在附录 \ref{appendix:block-content} 中找到真实的区块示例。
 \begin{itemize}
-    \item \underline{Block header}:
+    \item \underline{区块头 (Block header)}：
     \begin{itemize}
-        \item \textbf{Major version}: Used to track hard forks (changes to the protocol).
-        \item \textbf{Minor version}: Once used for voting, now it just displays the major version again.
-        \item \textbf{Timestamp}:\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt check\_ block\_ timestamp()}} UTC (Coordinated Universal Time) time of the block. Added by miners, timestamps are unverified but they won't be accepted if lower than the median timestamp of the previous 60 blocks. %check_block_timestamp
-        \item \textbf{Previous block's ID}: Referencing the previous block, this is the essential feature of a blockchain.
-        \item \textbf{Nonce}: A 4-byte integer that miners change over and over until the PoW hash meets the difficulty target. Block verifiers can easily recalculate the PoW hash.
+        \item \textbf{主版本 (Major version)}：用于跟踪硬分叉（协议更改）。
+        \item \textbf{次版本 (Minor version)}：曾经用于投票，现在只是再次显示主版本。
+        \item \textbf{时间戳 (Timestamp)}：\marginnote{src/crypto- note\_core/ block- chain.cpp {\tt check\_ block\_ timestamp()}}区块的 UTC（协调世界时）时间。由矿工添加，时间戳未经验证，但如果低于前 60 个区块的中位数时间戳则不会被接受。%check_block_timestamp
+        \item \textbf{前一区块的 ID (Previous block's ID)}：引用前一个区块，这是区块链的基本特征。
+        \item \textbf{Nonce}：一个 4 字节整数，矿工反复更改直到 PoW hash 满足难度目标。区块验证者可以轻松重新计算 PoW hash。
     \end{itemize}
-    \item \underline{Miner transaction}: Disperses the block reward and transaction fees to the block's miner.
-    \item \underline{Transaction IDs}: References to non-miner transactions added to the blockchain by this block. Tx IDs can, in combination with the miner tx ID, be used to calculate the Merkle root, and to find the actual transactions wherever they are stored.\\
+    \item \underline{矿工交易 (Miner transaction)}：将区块奖励和交易手续费分发给区块的矿工。
+    \item \underline{交易 ID (Transaction IDs)}：对此区块添加到区块链的非矿工交易的引用。交易 ID 可以与矿工交易 ID 一起用于计算 Merkle root，以及找到存储在任何位置的实际交易。\\
 \end{itemize}\vspace{.05cm}
 
-In addition to the data in each transaction (Section \ref{sec:transaction_summary}), we store the following information:
+除了每笔交易中的数据（第 \ref{sec:transaction_summary} 节），我们还存储以下信息：
 \begin{itemize}
     \setlength\itemsep{\listspace}
-    \item Major and minor versions: variable integers $\leq 9$ bytes
-    \item Timestamp: variable integer $\leq 9$ bytes
-    \item Previous block's ID: 32 bytes
-    \item Nonce: 4 bytes, can extend its effective size with the miner tx extra field's extra nonce\footnote{Within each transaction is an `extra' field which can contain more-or-less arbitrary data. If a miner needs a wider range of nonces than just 4 bytes, they can add or alter data in their miner tx's extra field to `extend' the nonce size. \cite{extra-field-stackexchange}}
-    \item Miner transaction: 32 bytes for a one-time address, 32 bytes for a transaction public key (+1 byte for its `extra' tag), and variable integers for the unlock time, corresponding block's height, and amount. After downloading the blockchain, we also need 32 bytes to store an amount commitment $C = 1G + a H$ (only for post-RingCT miner tx amounts).
-    \item Transaction IDs: 32 bytes each
+    \item 主版本和次版本：可变整数 $\leq 9$ 字节
+    \item 时间戳：可变整数 $\leq 9$ 字节
+    \item 前一区块的 ID：32 字节
+    \item Nonce：4 字节，可以通过矿工交易 extra 字段的 extra nonce 扩展其有效大小\footnote{每笔交易内部有一个"extra"字段，可以包含或多或少任意的数据。如果矿工需要比 4 字节更宽范围的 nonce，他们可以在矿工交易的 extra 字段中添加或更改数据来"扩展"nonce 大小。\cite{extra-field-stackexchange}}
+    \item 矿工交易：一次性地址 32 字节，交易公钥 32 字节（+1 字节 "extra" 标签），以及解锁时间、对应区块高度和金额的可变整数。下载区块链后，我们还需要 32 字节来存储金额承诺 $C = 1G + a H$（仅用于 post-RingCT 矿工交易金额）。
+    \item 交易 ID：每个 32 字节
 \end{itemize}

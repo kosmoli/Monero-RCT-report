@@ -1,76 +1,75 @@
-\chapter{Monero Addresses}
+\chapter{门罗币地址 (Monero Addresses)}
 \label{chapter:addresses}
 
-The ownership of digital currency stored in a blockchain is controlled by so-called `addresses'. Addresses are sent money which only the address-holder can spend.\footnote{Except with negligible probability.}
+存储在区块链中的数字货币的所有权由所谓的"地址"控制。地址是用来接收资金的，只有地址的持有者才能花费这些资金。\footnote{概率可忽略不计。}
 
-More specifically, an address owns the `outputs' from some transactions, which are like notes giving the address-holder spending rights to an `amount' of money. Such a note might say ``Address C now owns 5.3 XMR".
+更具体地说，一个地址拥有某些交易的"output"，这些output类似于票据，赋予地址持有者花费一定"金额"资金的权利。这样的一张票据可能写着"地址 C 现在拥有 5.3 XMR"。
 
-To spend an owned output, the address-holder references it as the input to a new transaction. This new transaction has outputs owned by other addresses (or by the sender's address, if the sender wants). A transaction's total input amount equals its total output amount, and once spent an owned output can't be respent. Carol, who has Address C, could reference that old output in a new transaction (e.g. ``In this transaction I'd like to spend that old output.") and add a note saying ``Address B now owns 5.3 XMR".
+要花费一个已拥有的 output，地址持有者将它作为新交易的 input 引用。这个新交易的 output 由其他地址拥有（或者如果发送者愿意，也可以由发送者自己的地址拥有）。交易的 input 总金额等于其 output 总金额，而且一旦被花费，已拥有的 output 就不能被再次花费。拥有地址 C 的 Carol 可以在新交易中引用那个旧的 output（例如"在这个交易中，我想花费那个旧的 output"），并添加一张票据说"地址 B 现在拥有 5.3 XMR"。
 
-An address's balance is the sum of amounts contained in its unspent outputs.\footnote{Computer applications known as `wallets' are used to find and organize the outputs owned by an address, to maintain custody of its private keys for authoring new transactions, and to submit those transactions to the network for verification and inclusion in the blockchain.}
+一个地址的余额是其未花费 output 中所含金额的总和。\footnote{被称为"钱包"的计算机应用程序用于查找和组织地址拥有的 output，保管其私钥以授权新交易，并将这些交易提交给网络进行验证和纳入区块链。}
 
-We discuss hiding the amount from observers in Chapter \ref{chapter:pedersen-commitments}, the structure of transactions in Chapter \ref{chapter:transactions} (which includes how to prove you are spending an owned and previously unspent output, without even revealing which output is being spent), and the money creation process and role of observers in Chapter \ref{chapter:blockchain}.
+我们将在第 \ref{chapter:pedersen-commitments} 章讨论如何对观察者隐藏金额，在第 \ref{chapter:transactions} 章讨论交易的结构（包括如何证明你正在花费一个已拥有的、之前未花费的 output，而不暴露具体花费的是哪个 output），在第 \ref{chapter:blockchain} 章讨论货币创造过程和观察者的角色。
 
 
 
-\section{User keys}
+\section{用户密钥 (User keys)}
 \label{sec:user-keys}
 
-Unlike Bitcoin, Monero users have two sets of private/public keys, \((k^v, K^v)\) and \( (k^s, K^s) \), generated as described in Section \ref{ec:keys}.
+与比特币不同，门罗币用户有两组私钥/公钥，\((k^v, K^v)\) 和 \( (k^s, K^s) \)，生成方式如第 \ref{ec:keys} 节所述。
 
-The {\em address}\marginnote{src/ common/ base58.cpp {\tt encode\_ addr()}} of a user is the pair of public keys \((K^v, K^s)\). Her private keys will be the corresponding pair \( (k^v, k^s) \).\footnote{To communicate an address to other users, it is extremely common to encode it in base-58, a binary-to-text encoding scheme first created for Bitcoin \cite{base-58-encoding}. See \cite{luigi-address} for more details.}
-\\
+用户的{地址}\marginnote{src/ common/ base58.cpp {\tt encode\_ addr()}}就是公钥对 \((K^v, K^s)\)。她的私钥就是对应的私钥对 \( (k^v, k^s) \)。\footnote{为了将地址传达给其他用户，最常见的方式是将其编码为 base-58，这是一种最初为比特币创建的二进制到文本编码方案 \cite{base-58-encoding}。更多详情请参见 \cite{luigi-address}。}\\
 
-Using two sets of keys allows function segregation. The rationale will become clear later in this chapter, but for the moment let us call private key $k^v$ the {\em view key}, and $k^s$ the {\em spend key}. A person can use their view key to determine if their address owns an output, and their spend key will allow them to spend that output in a transaction (and retroactively figure out it has been spent).\footnote{It\marginnote{src/wallet/ api/wallet.cpp {\tt create()} wallet2.cpp {\tt generate()} {\tt get\_seed()}} is currently most common for the view key $k^v$ to equal $\mathcal{H}_n(k^s)$. This means a person only needs to save their spend key $k^s$ in order to access (view and spend) all of the outputs they own (spent and unspent). The spend key is typically represented as a series of 25 words (where the 25th word is a checksum). Other, less popular methods include: generating $k^v$ and $k^s$ as separate random numbers, or generating a random 12-word mnemonic $a$, where $k^s = {\tt sc\textunderscore reduce32}(\mathit{Keccak}(a))$ and $k^v = {\tt sc\textunderscore reduce32}(\mathit{Keccak}(\mathit{Keccak}(a)))$. \cite{luigi-address}}
-
+使用两组密钥可以实现功能隔离。其原理将在本章后面变得清晰，但现在让我们称私钥 $k^v$ 为{查看密钥 (view key)}，称 $k^s$ 为{花费密钥 (spend key)}。一个人可以使用他们的查看密钥来判断自己的地址是否拥有某个 output，而花费密钥则允许他们在交易中花费该 output（并追溯地确定它已被花费）。\footnote{它\marginnote{src/wallet/ api/wallet.cpp {\tt create()} wallet2.cpp {\tt generate()} {\tt get\_seed()}}目前最常见的做法是让查看密钥 $k^v$ 等于 $\mathcal{H}_n(k^s)$。这意味着一个人只需要保存他们的花费密钥 $k^s$，就可以访问（查看和花费）他们拥有的所有 output（已花费和未花费的）。花费密钥通常表示为 25 个单词的序列（其中第 25 个单词是校验和）。其他不太流行的方法包括：将 $k^v$ 和 $k^s$ 作为独立的随机数生成，或者生成一个随机的 12 助记词 $a$，其中 $k^s = {\tt sc\textunderscore reduce32}(\mathit{Keccak}(a))$，$k^v = {\tt sc\textunderscore reduce32}(\mathit{Keccak}(\mathit{Keccak}(a)))$。\cite{luigi-address}}
 
 
-\section{One-time addresses}
+
+\section{一次性地址 (One-time addresses)}
 \label{sec:one-time-addresses}
 
-To receive money, a Monero user may distribute their address to other users, who can then send it money via transaction outputs.
+要接收资金，门罗币用户可以将自己的地址分发给其他用户，然后其他用户就可以通过交易的 output 向该地址发送资金。
 
-The address is never used directly.\footnote{The method described here is not enforced by the protocol, just by wallet implementation standards. This means an alternate wallet could follow the style of Bitcoin where recipients' addresses are included directly in transaction data. Such a non-compliant wallet would produce transaction outputs unusable by other wallets, and each Bitcoin-esque address could only be used once due to key image uniqueness.} Instead, a Diffie-Hellman-like exchange is applied to it, creating a unique {\em one-time address} for each transaction output to be paid to the user. In this way, even external observers who know all users’ addresses cannot use them to identify which user owns any given transaction output.\footnote{Except with negligible probability.}
+地址永远不会被直接使用。\footnote{此处描述的方法不是由协议强制执行的，而是由钱包实现标准强制执行的。这意味着另一个钱包可以遵循比特币的风格，将接收者的地址直接包含在交易数据中。这样一个不合规的钱包将产生其他钱包无法使用的交易 output，而且由于 key image 的唯一性，每个类比特币风格的地址只能使用一次。}取而代之的是，对其应用类似于 Diffie-Hellman 的交换，为将要支付给用户的每个交易 output 创建一个唯一的{一次性地址 (one-time address)}。这样一来，即使知道所有用户地址的外部观察者也无法用它们来识别哪个用户拥有任何给定的交易 output。\footnote{概率可忽略不计。}
 
-%A recipient can spend their received outputs by signing a message with the one-time addresses, thereby proving they know the private keys and therefore own what they are spending. We will gradually flesh out this concept.
+%接收者可以通过使用一次性地址签名消息来花费他们收到的output，从而证明他们知道私钥，因此拥有他们所花费的内容。我们将逐步充实这个概念。
 %\\
 
-Let’s start with a very simple mock transaction, containing exactly one output --- a payment of `0' amount from Alice to Bob.
+让我们从一个非常简单的模拟交易开始，它只包含一个 output——一笔从 Alice 到 Bob 的"0"金额支付。
 
-Bob has private/public keys $(k_B^v, k_B^s)$ and $(K_B^v, K_B^s)$, and Alice knows his public keys (his address). The mock transaction could proceed as follows \cite{cryptoNoteWhitePaper}:
+Bob 拥有私钥/公钥 $(k_B^v, k_B^s)$ 和 $(K_B^v, K_B^s)$，Alice 知道他的公钥（他的地址）。模拟交易可以如下进行 \cite{cryptoNoteWhitePaper}：
 
 \begin{enumerate}
-	\item Alice generates a random number $r \in_R \mathbb{Z}_l$, and calculates the one-time address\footnote{In\marginnote{src/crypto/ crypto.cpp {\tt generate\_ key\_deri- vation()}} Monero, every instance (including when it's used for other parts of the transaction) of $r k^v G$ is multiplied by the cofactor 8, so in this case Alice computes $8*r K^v_B$ and Bob computes $8*k^v_B r G$. As far as we can tell this serves no purpose (but it {\em is} a rule that users must follow). Multiplying by the cofactor ensures the resulting point is in $G$'s subgroup, but if $R$ and $K^v$ don't share a subgroup to begin with, then the discrete logs $r$ and $k^v$ can't be used to make a shared secret regardless.}\vspace{.175cm}
+	\item Alice 生成一个随机数 $r \in_R \mathbb{Z}_l$，并计算一次性地址\footnote{在\marginnote{src/crypto/ crypto.cpp {\tt generate\_ key\_deri- vation()}}门罗币中，$r k^v G$ 的每个实例（包括当它用于交易的其他部分时）都乘以辅因子 8，所以在这种情况下 Alice 计算 $8*r K^v_B$，Bob 计算 $8*k^v_B r G$。据我们所知，这并没有什么实际用途（但它{确实}是用户必须遵守的规则）。乘以辅因子确保结果点在 $G$ 的子群中，但如果 $R$ 和 $K^v$ 本身就不共享子群，那么无论怎样，离散对数 $r$ 和 $k^v$ 都不能用来生成共享密钥。}\vspace{.175cm}
 	\[K^o  = \mathcal{H}_n(r K_B^v)G + K_B^s\marginnote{src/crypto/ crypto.cpp {\tt derive\_pu- blic\_key()}}\]
 
-	\item Alice sets $K^o$ as the addressee of the payment, adds the output amount `0' and the value $r G$ to the transaction data, and submits it to the network.
+	\item Alice 将 $K^o$ 设为收款地址，将 output 金额"0"和值 $r G$ 添加到交易数据中，并提交给网络。
 
-	\item Bob\marginnote{src/crypto/ crypto.cpp {\tt derive\_ subaddress\_ public\_ key()}} receives the data and sees the values $r G$ and $K^o$. He can calculate $k_B^v r G = r K_B^v$. He can then calculate $K'^s_B = K^o - \mathcal{H}_n(r K_B^v)G$. When he sees that $K'^s_B = K_B^s$, he knows the output is addressed to him.\footnote{$K'^s_B $ is computed with {\tt derive\_subaddress\_public\_key()} because normal address spend keys are stored at index 0 in the spend key lookup table, while subaddresses are at indices 1,2... This will make sense soon: see Section \ref{sec:subaddresses}.}
+	\item Bob\marginnote{src/crypto/ crypto.cpp {\tt derive\_ subaddress\_ public\_ key()}}接收到数据，看到值 $r G$ 和 $K^o$。他可以计算 $k_B^v r G = r K_B^v$。然后他可以计算 $K'^s_B = K^o - \mathcal{H}_n(r K_B^v)G$。当他看到 $K'^s_B = K_B^s$ 时，他就知道这个 output 是发给他的。\footnote{$K'^s_B $ 是通过 {\tt derive\_subaddress\_public\_key()} 计算的，因为普通地址的花费密钥存储在花费密钥查找表的索引 0 处，而子地址存储在索引 1、2……处。这很快就会有意义：见第 \ref{sec:subaddresses} 节。}
 
-	The private key $k_B^v$ is called the `view key' because anyone who has it (and Bob’s public spend key $K_B^s$) can calculate $K'^s_B$ for every transaction output in the blockchain (record of transactions), and ‘view’ which ones belong to Bob.
+	私钥 $k_B^v$ 被称为"查看密钥"，因为任何拥有它（以及 Bob 的公钥花费密钥 $K_B^s$）的人都可以为区块链（交易记录）中的每个交易 output 计算 $K'^s_B$，并"查看"哪些属于 Bob。
 
-	\item The one-time keys for the output are:\vspace{.175cm}
+	\item 该 output 的一次性密钥为：\vspace{.175cm}
 	\begin{align*}
 		K^o &= \mathcal{H}_n(r K_B^v)G + K_B^s = (\mathcal{H}_n(r K_B^v) + k_B^s)G  \\ 
 		k^o &= \mathcal{H}_n(r K_B^v) + k_B^s
 	\end{align*}
 \end{enumerate}
 
-To spend his `0' amount output [sic] in a new transaction, all Bob needs to do is prove ownership by signing a message with the one-time key $K^o$. The private key $k_B^s$ is the `spend key' since it is required for proving output ownership, while $k_B^v$ is the `view key' since it can be used to find outputs spendable by Bob.
+要在新交易中花费他的"0"金额 output [原文如此]，Bob 所需要做的就是通过使用一次性密钥 $K^o$ 签名消息来证明所有权。私钥 $k_B^s$ 是"花费密钥"，因为证明 output 所有权需要它；而 $k_B^v$ 是"查看密钥"，因为它可以用来找到 Bob 可花费的 output。
 
-As will become clear in Chapter \ref{chapter:transactions}, without $k^o$ Alice can't compute the output's key image, so she can never know for sure if Bob spends the output she sent him.\footnote{Imagine Alice produces two transactions, each containing the same one-time output address $K^o$ that Bob can spend. Since $K^o$ only depends on $r$ and $K_B^v$, there is no reason she can't do it. Bob can only spend one of those outputs because each one-time address only has one key image, so if he isn't careful Alice might trick him. She could make transaction 1 with a lot of money for Bob, and later transaction 2 with a small amount for Bob. If he spends the money in 2, he can never spend the money in 1. In fact, no one could spend the money in 1, effectively `burning' it. Monero wallets have been designed to ignore the smaller amount in this scenario.}
+正如将在第 \ref{chapter:transactions} 章中变得清楚的那样，没有 $k^o$ Alice 无法计算该 output 的 key image，因此她永远无法确定 Bob 是否花费了她发送给他的 output。\footnote{想象 Alice 产生了两个交易，每个都包含 Bob 可以花费的同一个一次性 output 地址 $K^o$。由于 $K^o$ 仅依赖于 $r$ 和 $K_B^v$，她没有理由不能这样做。Bob 只能花费其中一个 output，因为每个一次性地址只有一个 key image，所以如果不小心的话 Alice 可能会欺骗他。她可以创建一个给 Bob 大量资金的交易 1，然后创建一个给 Bob 少量资金的交易 2。如果他花费了交易 2 中的资金，他就永远无法花费交易 1 中的资金。事实上，没有人能花费交易 1 中的资金，实际上就"烧毁"了它。门罗币钱包已被设计为在此场景中忽略较小金额。}
 
-Bob may give a third party his view key. Such a third party could be a trusted custodian, an auditor, a tax authority, etc. Somebody who could be allowed read access to the user’s transaction history, without any further rights. This third party would also be able to decrypt the output's amount (to be explained in Section \ref{sec:pedersen_monero}). See Chapter \ref{chapter:tx-knowledge-proofs} for other ways Bob could provide information about his transaction history.
+Bob 可以将他的查看密钥交给第三方。这样的第三方可以是受信任的托管人、审计员、税务机关等。可以被允许读取用户交易历史而没有其他权限的人。这个第三方也将能够解密 output 的金额（将在第 \ref{sec:pedersen_monero} 节中解释）。有关 Bob 提供其交易历史信息的其他方式，请参见第 \ref{chapter:tx-knowledge-proofs} 章。
 
 
-\subsection{Multi-output transactions}
+\subsection{多 output 交易 (Multi-output transactions)}
 \label{sec:multi_out_transactions}
 
-Most transactions will contain more than one output. If nothing else, to transfer `change’ back to the sender.\footnote{Actually, as of protocol v12 two outputs are {\em required} from each (non-miner) transaction, even if it means one output has 0 amount ({\tt HF\_VERSION\_MIN\_2\_OUTPUTS}). This improves transaction indistinguishability by mixing 1-output cases with the much more common 2-output transactions. Previous to v12 the core wallet software was already creating 0-value outputs. The core implementation sends 0-amount outputs to a random address.\marginnote{src/wallet/ wallet2.cpp {\tt transfer\_ selected\_ rct()}}}\footnote{After Bulletproofs were implemented in protocol v8, each transaction became limited to no more than 16 outputs ({\tt BULLETPROOF\_MAX\_OUTPUTS}). Previously there was no limit, aside from a restraint on transaction size (in bytes).}%BULLETPROOF_MAX_OUTPUTS; wallet2::transfer_selected_rct() for random address 0-amount
+大多数交易将包含多个 output。至少，要将"找零"转回给发送者。\footnote{实际上，从协议 v12 起，每笔（非矿工）交易{必须}有两个 output，即使这意味着一个 output 的金额为 0（{\tt HF\_VERSION\_MIN\_2\_OUTPUTS}）。这通过将 1-output 情况与更常见的 2-output 交易混合来提高交易的不可区分性。在 v12 之前，核心钱包软件已经在创建 0 值的 output。核心实现将 0 金额的 output 发送到随机地址。\marginnote{src/wallet/ wallet2.cpp {\tt transfer\_ selected\_ rct()}}}\footnote{在 Bulletproofs 于协议 v8 中实现后，每笔交易被限制为不超过 16 个 output（{\tt BULLETPROOF\_MAX\_OUTPUTS}）。此前没有限制，只是对交易大小（字节数）有限制。}%BULLETPROOF_MAX_OUTPUTS; wallet2::transfer_selected_rct() for random address 0-amount
 
-Monero senders usually generate only one random value $r$. The curve point $r G$ is typically known as the {\em transaction public key} and is published alongside other transaction data in the blockchain.\\
+门罗币发送者通常只生成一个随机值 $r$。曲线点 $r G$ 通常被称为{交易公钥 (transaction public key)}，与其他交易数据一起发布在区块链中。\\
 
-To\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ tx\_with\_ tx\_key()}}[-.8cm] ensure that all one-time addresses in a transaction with $p$ outputs are different even in cases where the same addressee is used twice, Monero uses an output index. Every output from a transaction has an index $t \in \{0, ..., p-1\}$. By appending this value to the shared secret before hashing it, one can ensure the resulting one-time addresses are unique:\marginnote{src/crypto/ crypto.cpp {\tt derive\_pu- blic\_key()}}[1.2cm]\vspace{.175cm}%construct_tx_with_tx_key() indexes 0 to p-1
+为了\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ tx\_with\_ tx\_key()}}[-.8cm]确保具有 $p$ 个 output 的交易中所有一次性地址都不同，即使同一收款地址被使用两次，门罗币使用了输出索引。交易的每个 output 都有一个索引 $t \in \{0, ..., p-1\}$。通过在 hash 之前将此值附加到共享密钥中，可以确保生成的一次性地址是唯一的：\marginnote{src/crypto/ crypto.cpp {\tt derive\_pu- blic\_key()}}[1.2cm]\vspace{.175cm}%construct_tx_with_tx_key() indexes 0 to p-1
 \begin{align*}
   K_t^o &= \mathcal{H}_n(r K_t^v, t)G + K_t^s = (\mathcal{H}_n(r K_t^v, t) + k_t^s)G  \\ 
   k_t^o &= \mathcal{H}_n(r K_t^v, t) + k_t^s
@@ -78,88 +77,84 @@ To\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\
 
 
 
-\section{Subaddresses}
+\section{子地址 (Subaddresses)}
 \label{sec:subaddresses}
 
-Monero users can generate subaddresses from each address \cite{MRL-0006-subaddresses}. Funds sent to a subaddress can be viewed and spent using its main address’s view and spend keys. By analogy: an online bank account may have multiple balances corresponding to credit cards and deposits, yet they are all accessible and spendable from the same point of view – the account holder.\\
+门罗币用户可以从每个地址生成子地址 \cite{MRL-0006-subaddresses}。发送到子地址的资金可以使用其主地址的查看密钥和花费密钥来查看和花费。打个比方：一个在线银行账户可能有多个对应于信用卡和存款的余额，但它们都可以从同一个视角——账户持有人——访问和花费。\\
 
-Subaddresses are convenient for receiving funds to the same place when a user doesn't want to link his activities together by publishing/using the same address. As we will see, most observers would have to solve the DLP to determine a given subaddress is derived from any particular address \cite{MRL-0006-subaddresses}.\footnote{Prior to subaddresses (added in the software update corresponding with protocol v7 \cite{subaddress-pull-request}), Monero users could simply generate many normal addresses. To view each address's balance, you needed to do a separate scan of the blockchain record. This was very inefficient. With subaddresses, users maintain a look-up table of (hashed) spend keys, so one scan of the blockchain takes the same amount of time for 1 subaddress, or 10,000 subaddresses.}
+子地址对于在用户不想通过发布/使用同一地址来关联其活动时，将资金接收到同一地点非常方便。正如我们将看到的，大多数观察者将不得不解决离散对数问题才能确定一个给定的子地址是从任何特定地址派生的 \cite{MRL-0006-subaddresses}。\footnote{在子地址之前（在与协议 v7 对应的软件更新中添加 \cite{subaddress-pull-request}），门罗币用户可以简单地生成许多普通地址。要查看每个地址的余额，你需要对区块链记录进行单独扫描。这非常低效。有了子地址，用户维护一个（已 hash 的）花费密钥查找表，因此对 1 个子地址或 10,000 个子地址，扫描区块链所需的时间是相同的。}
 
-They are also useful for differentiating between received outputs. For example, if Alice wants to buy an apple from Bob on a Tuesday, Bob could write a receipt describing the purchase and make a subaddress for that receipt, then ask Alice to use that subaddress when she sends him the money. This way Bob can associate the money he receives with the apple he sold. We explore another way to distinguish between received outputs in the next section.%\footnote{Before subaddresses were implemented in April 2018, the Monero developers supported a method called payment IDs, which allowed receivers to differentiate between owned outputs. Payment IDs were text strings included in a transaction's `extra', miscellaneous, data. Recipients could ask senders to include the payment IDs when writing a transaction. Payment IDs could also be encoded in conjunction with so-called integrated addresses. Payment IDs and integrated addresses do not affect transaction verification, so they can still be implemented by anyone, but since they are currently deprecated in the most popular wallets we have chosen not to explain them here.}
+它们对于区分接收到的 output 也很有用。例如，如果 Alice 想在周二从 Bob 那里买一个苹果，Bob 可以写一张描述购买的收据并为该收据创建一个子地址，然后让 Alice 在向他发送资金时使用该子地址。这样 Bob 就可以将他收到的钱与他卖出的苹果关联起来。我们将在下一节中探索另一种区分接收到的 output 的方法。%在子地址于2018年4月实现之前，门罗币开发者支持一种叫做支付ID的方法，它允许接收者区分拥有的output。支付ID是包含在交易'extra'、杂项数据中的文本字符串。接收者可以让发送者在写入交易时包含支付ID。支付ID也可以与所谓的集成地址一起编码。支付ID和集成地址不影响交易验证，所以任何人都可以实现它们，但由于它们目前在最流行的钱包中已被弃用，我们选择不在这里解释它们。}
 
-%\footnote{Note that the index $i$ could just as easily be some password-generated hash $\mathcal{H}_n(x)$. This would allow an address owner to view his subaddress funds from his main address view key, but only be able to spend those funds by inputting a password. There are currently no wallet implementations password protecting subaddresses, nor any known plans to develop a wallet with that feature.}
-Bob\marginnote{src/device/ device\_de- fault.cpp {\tt get\_sub- address\_ secret\_ key()}} generates his $i^\nth$ subaddress $(i = 1, 2, ...)$ from his address as a pair of public keys $(K^{v,i}, K^{s,i})$:\footnote{It turns out the subaddress hash is domain separated, so it's really $\mathcal{H}_n(T_{sub},k^v,i)$ where $T_{sub} = $``SubAddr". We omit $T_{sub}$ throughout this document for brevity.}\vspace{.175cm}
+Bob\marginnote{src/device/ device\_de- fault.cpp {\tt get\_sub- address\_ secret\_ key()}}从他的地址生成第 $i$ 个子地址 $(i = 1, 2, ...)$ 作为公钥对 $(K^{v,i}, K^{s,i})$：\footnote{实际上子地址的 hash 是域分离的，所以实际上是 $\mathcal{H}_n(T_{sub},k^v,i)$，其中 $T_{sub} = $"SubAddr"。为了简洁起见，我们在本文档中省略 $T_{sub}$。}\vspace{.175cm}
 \begin{align*}
     K^{s,i} &= K^s + \mathcal{H}_n(k^v, i) G\\
     K^{v,i} &= k^v K^{s,i}
 \end{align*}
-\quad So,
+\quad 所以，
 \begin{alignat*}{2}
     K^{v,i} &= k^v&&(k^s + \mathcal{H}_n(k^v, i))G\\
     K^{s,i} &= &&(k^s + \mathcal{H}_n(k^v, i))G
 \end{alignat*}
     
 
-\subsection{Sending to a subaddress}
+\subsection{向子地址发送 (Sending to a subaddress)}
     
-Let's say Alice is going to send Bob `0' amount again, this time via his subaddress $(K_B^{v,1}, K_B^{s,1})$.
+假设 Alice 再次向 Bob 发送"0"金额，这次是通过他的子地址 $(K_B^{v,1}, K_B^{s,1})$。
 \begin{enumerate}
-	\item Alice generates a random number $r \in_R \mathbb{Z}_l$, and calculates the one-time address\vspace{.175cm}
+	\item Alice 生成一个随机数 $r \in_R \mathbb{Z}_l$，并计算一次性地址\vspace{.175cm}
 	\[ K^o  = \mathcal{H}_n(r K_B^{v,1},0)G + K_B^{s,1} \]
 
-	\item Alice sets $K^o$ as the addressee of the payment, adds the output amount `0' and the value $r K_B^{s,1}$ to the transaction data, and submits it to the network.
+	\item Alice 将 $K^o$ 设为收款地址，将 output 金额"0"和值 $r K_B^{s,1}$ 添加到交易数据中，并提交给网络。
 	
-	\item Bob\marginnote{src/crypto/ crypto.cpp {\tt derive\_ subaddress\_ public\_ key()}} receives the data and sees the values $r K_B^{s,1}$ and $K^o$. He can calculate $k_B^v r K_B^{s,1} = r K_B^{v,1}$. He can then calculate $K'^{s}_B = K^o - \mathcal{H}_n(r K_B^{v,1},0)G$. When he sees that $K'^{s}_B = K^{s,1}_B$, he knows the transaction is addressed to him.\footnote{An advanced attacker may be able to link subaddresses \cite{janus-attack} (a.k.a. the Janus attack). With subaddresses (one of which can be a normal address) $K_B^1$ $\&$ $K_B^2$ the attacker thinks may be related, he makes a transaction output with $K^o = \mathcal{H}_n(r K_B^{v,2},0)G + K_B^{s,1}$ and includes transaction public key $r K_B^{s,2}$. Bob calculates $r K_B^{v,2}$ to find $K'^{s,1}_B$ but has no way of knowing it was his {\em other} (sub)address's key used! If he tells the attacker that he received funds to $K_B^1$, the attacker will know $K_B^2$ is a related subaddress (or normal address). Since subaddresses are outside the protocol's scope, mitigations are up to wallet implementers. No known wallets have done so, and any mitigation would only work for compliant wallets. Potential mitigations include: not informing attackers of received funds, including encrypted transaction private key $r$ in transaction data, a Schnorr signature on the shared secret using $K^{s,1}$ as the base point instead of $G$, and including $rG$ in transaction data and verifying the shared secret with $rK^{s,1} \stackrel{?}{=} (k^s + \mathcal{H}_n(k^v, 1))*rG$ (requires the private spend key). Outputs received by a normal address should also be verified. See \cite{janus-mitigation-issue-62} for a discussion of the last mitigation listed.}
+	\item Bob\marginnote{src/crypto/ crypto.cpp {\tt derive\_ subaddress\_ public\_ key()}}接收到数据，看到值 $r K_B^{s,1}$ 和 $K^o$。他可以计算 $k_B^v r K_B^{s,1} = r K_B^{v,1}$。然后他可以计算 $K'^{s}_B = K^o - \mathcal{H}_n(r K_B^{v,1},0)G$。当他看到 $K'^{s}_B = K^{s,1}_B$ 时，他就知道该交易是发给他的。\footnote{高级攻击者可能能够关联子地址 \cite{janus-attack}（即 Janus 攻击）。攻击者认为可能相关的子地址 $K_B^1$ $和$ $K_B^2$（其中一个可以是普通地址），他创建一个交易 output，其中 $K^o = \mathcal{H}_n(r K_B^{v,2},0)G + K_B^{s,1}$，并包含交易公钥 $r K_B^{s,2}$。Bob 计算 $r K_B^{v,2}$ 来找到 $K'^{s,1}_B$，但无法知道使用的是他的{另一个}（子）地址的密钥！如果他告诉攻击者他收到了发往 $K_B^1$ 的资金，攻击者就会知道 $K_B^2$ 是一个相关的子地址（或普通地址）。由于子地址不在协议范围内，缓解措施取决于钱包实现者。目前没有已知的钱包这样做过，而且任何缓解措施只对合规钱包有效。潜在的缓解措施包括：不向攻击者通报收到的资金、在交易数据中包含加密的交易私钥 $r$、使用 $K^{s,1}$ 而不是 $G$ 作为基点对共享密钥进行 Schnorr 签名、在交易数据中包含 $rG$ 并使用 $rK^{s,1} \stackrel{?}{=} (k^s + \mathcal{H}_n(k^v, 1))*rG$ 验证共享密钥（需要私有花费密钥）。普通地址收到的 output 也应该被验证。有关最后一种缓解措施的讨论，请参见 \cite{janus-mitigation-issue-62}。}
 	
-	Bob only needs his private view key $k_B^v$ and subaddress public spend key $K^{s,1}_B$ to find transaction outputs sent to his subaddress.
+	Bob 只需要他的私有查看密钥 $k_B^v$ 和子地址的公钥花费密钥 $K^{s,1}_B$ 就可以找到发送到他子地址的交易 output。
 	
-	\item The one-time keys for the output are:\vspace{.175cm}
+	\item 该 output 的一次性密钥为：\vspace{.175cm}
 	\begin{align*}
 		K^o &= \mathcal{H}_n(r K_B^{v,1},0)G + K_B^{s,1} = (\mathcal{H}_n(r K_B^{v,1},0) + k_B^{s,1})G  \\ 
 		k^o &= \mathcal{H}_n(r K_B^{v,1},0) + k_B^{s,1}
 	\end{align*}
 \end{enumerate}
 
-Now,\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ tx\_with\_ tx\_key()}} Alice's transaction public key is particular to Bob ($r K_B^{s,1}$ instead of $r G$). If she creates a $p$-output transaction with at least one output intended for a subaddress, Alice needs to make a unique transaction public key for each output $t \in \{0,...,p-1\}$. In other words, if Alice is sending to Bob's subaddress $(K_B^{v,1}, K_B^{s,1})$ and Carol's address $(K_C^v, K_C^s)$, she will put two transaction public keys \{$r_1 K_B^{s,1},r_2 G$\} in the transaction data.\footnote{In\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_impl.cpp {\tt get\_account\_ address\_as\_ str()}} Monero subaddresses are prefixed with an ‘8’, separating them from addresses, which are prefixed with ‘4’. This helps senders choose the correct procedure when constructing transactions.}\footnote{There is some intricacy to when additional transaction public keys are used (see the code path {\tt transfer\_selected\_rct()} $\rightarrow$ {\tt construct\_tx\_and\_get\_tx\_key()} $\rightarrow$ {\tt construct\_tx\_with\_tx\_key()} $\rightarrow$ {\tt generate\_output\_ephemeral\_keys()} and {\tt classify\_addresses()}) surrounding change outputs where the transaction author knows the recipient's view key (since it's himself; also the case for dummy change outputs, which are created when a 0-amount output is necessary, since authors generate those addresses). Whenever there are at least two non-change outputs, and at least one of their recipients is a subaddress, proceed in the normal way explained above (a current bug in the core implementation adds an extra transaction public key to transaction data even beyond the additional keys, which is not used for anything). If either just the change output is to a subaddress, or there is just one non-change output and it's to a subaddress, then only one transaction public key is created. In the former case, the transaction public key is $rG$ and the change's one-time key is (subaddress index 1, using $c$ subscript to denote the change's keys) $K^o = \mathcal{H}_n(k^v_c r G,t)G + K_c^{s,1}$ using the normal view key and subaddress's spend key. In the latter case the transaction public key $r K^{v,1}$ is based off the subaddress's view key, and the change's one time key is $K^o = \mathcal{H}_n(k^v_c*r K^{v,1},t)G + K_c^s$. These details help mingle a portion of subaddress transactions amongst the more common normal address transactions, and 2-output transactions which compose around 95\% of transaction volume as of this writing.}
+现在，\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ tx\_with\_ tx\_key()}}Alice 的交易公钥是 Bob 特有的（$r K_B^{s,1}$ 而不是 $r G$）。如果她创建一个包含 $p$ 个 output 的交易，且至少有一个 output 是发往子地址的，Alice 需要为每个 output $t \in \{0,...,p-1\}$ 创建一个唯一的交易公钥。换句话说，如果 Alice 向 Bob 的子地址 $(K_B^{v,1}, K_B^{s,1})$ 和 Carol 的地址 $(K_C^v, K_C^s)$ 发送，她将在交易数据中放置两个交易公钥 \{$r_1 K_B^{s,1},r_2 G$\}。\footnote{在\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_impl.cpp {\tt get\_account\_ address\_as\_ str()}}门罗币中，子地址以"8"为前缀，与以"4"为前缀的地址区分开来。这有助于发送者在构建交易时选择正确的过程。}\footnote{关于何时使用额外交易公钥有一些复杂性（参见代码路径 {\tt transfer\_selected\_rct()} $\rightarrow$ {\tt construct\_tx\_and\_get\_tx\_key()} $\rightarrow$ {\tt construct\_tx\_with\_tx\_key()} $\rightarrow$ {\tt generate\_output\_ephemeral\_keys()} 和 {\tt classify\_addresses()}）围绕找零 output，交易作者知道接收者的查看密钥（因为是他自己；当需要 0 金额 output 时创建的虚拟找零 output 也是如此，因为作者生成这些地址）。只要至少有两个非找零 output，并且其中至少一个的接收者是子地址，就按照上面解释的正常方式进行（核心实现中的一个当前 bug 会在额外密钥之外再向交易数据添加一个额外的交易公钥，但该公钥不用于任何目的）。如果只有找零 output 是发往子地址的，或者只有一个非找零 output 且它是发往子地址的，那么只创建一个交易公钥。在前一种情况下，交易公钥是 $...
 
-
-
-\section{Integrated addresses}
+\section{集成地址 (Integrated addresses)}
 \label{sec:integrated-addresses}
 
-To differentiate between the outputs they receive, a recipient can request senders include a {\em payment ID} in transaction data.\footnote{Currently, Monero implementations only support one payment ID per transaction regardless of how many outputs it has.} For example, if Alice wants to buy an apple from Bob on a Tuesday, Bob could write a receipt describing the purchase and ask Alice to include the receipt's ID number when she sends him the money. This way Bob can associate the money he receives with the apple he sold.
+为了区分接收到的 output，接收者可以请求发送者在交易数据中包含一个{支付 ID (payment ID)}。\footnote{目前，门罗币实现每笔交易只支持一个支付 ID，无论它有多少个 output。}例如，如果 Alice 想在周二从 Bob 那里买一个苹果，Bob 可以写一张描述购买的收据，并让 Alice 在向他发送资金时包含收据的 ID 号。这样 Bob 就可以将他收到的钱与他卖出的苹果关联起来。
 
-At one point senders could communicate payment IDs in clear text, but manually including the IDs in transactions is inconvenient, and cleartext is a privacy hazard for recipients, who might inadvertently expose their activities.\footnote{These long-form (256 bit) cleartext payment IDs were deprecated in v0.15 of the core software implementation (coincident with protocol v12 in November 2019). While other wallets may still support them and allow their inclusion in transaction data, the core wallet will ignore them.} In\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_ impl.cpp {\tt get\_ account\_ integrated\_ address\_as\_ str()}} Monero, recipients can integrate payment IDs into their addresses, and provide those {\em integrated addresses}, containing ($K^v$, $K^s$, payment ID), to senders. Payment IDs can technically be integrated into any kind of address, including normal addresses, subaddresses, and multisignature addresses.\footnote{Within the authors' knowledge, integrated addresses have only ever been implemented for normal addresses.}
+曾经发送者可以明文传送支付 ID，但在交易中手动包含 ID 不太方便，而且明文对接收者来说是隐私隐患，可能会无意中暴露他们的活动。\footnote{这些长格式（256 位）明文支付 ID 在核心软件实现的 v0.15 中已被弃用（与 2019 年 11 月的协议 v12 同时）。虽然其他钱包可能仍然支持它们并允许它们包含在交易数据中，但核心钱包将忽略它们。}在\marginnote{src/crypto- note\_basic/ cryptonote\_ basic\_ impl.cpp {\tt get\_ account\_ integrated\_ address\_as\_ str()}}门罗币中，接收者可以将支付 ID 集成到他们的地址中，并将这些{集成地址}（包含 $K^v$、$K^s$、支付 ID）提供给发送者。支付 ID 在技术上可以集成到任何类型的地址中，包括普通地址、子地址和多签地址。\footnote{据作者所知，集成地址只对普通地址实现过。}
 
-Senders addressing outputs to integrated addresses can encode payment IDs using the shared secret $r K_t^v$ and an XOR operation (recall Section \ref{sec:XOR_section}), which recipients can then decode with the appropriate transaction public key and another XOR operation \cite{integrated-addresses}. Encoding payment IDs in this way also allows senders to prove they made particular transaction outputs (e.g. for audits, refunds, etc.).\footnote{Since an observer can recognize the difference between transactions with and without payment IDs, using them is thought to make the Monero transaction history less uniform. Because of this, since protocol v10 the core implementation adds a dummy\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ tx\_with\_ tx\_key()}} encrypted payment ID to all 2-output transactions. Decoding one will reveal all 0s (this is not required by the protocol, just best practice).}
+发送者向集成地址发送 output 时，可以使用共享密钥 $r K_t^v$ 和 XOR 操作（回顾第 \ref{sec:XOR_section} 节）对支付 ID 进行编码，然后接收者可以使用相应的交易公钥和另一次 XOR 操作进行解码 \cite{integrated-addresses}。以这种方式编码支付 ID 还允许发送者证明他们制作了特定的交易 output（例如用于审计、退款等）。\footnote{由于观察者可以识别有支付 ID 和没有支付 ID 的交易之间的差异，使用它们被认为会使门罗币交易历史不那么统一。因此，从协议 v10 起，核心实现向所有 2-output 交易添加一个虚拟的\marginnote{src/crypto- note\_core/ cryptonote\_ tx\_utils.cpp {\tt construct\_ tx\_with\_ tx\_key()}}加密支付 ID。解码一个会显示全是 0（这不是协议要求的，只是最佳实践）。}
 
 
-\subsubsection*{Encoding}
+\subsubsection*{编码 (Encoding)}
 
-The\marginnote{src/device/ device\_de- fault.cpp {\tt encrypt\_ payment\_ id()}} sender encodes the payment ID for inclusion in transaction data\footnote{In Monero payment IDs for integrated addresses are conventionally 64 bits long.}\vspace{.175cm}
+发送者\marginnote{src/device/ device\_de- fault.cpp {\tt encrypt\_ payment\_ id()}}编码支付 ID 以包含在交易数据中\footnote{在门罗币中，集成地址的支付 ID 通常为 64 位长。}\vspace{.175cm}
 \begin{align*}
          k_{\textrm{mask}} &= \mathcal{H}_n(r K_t^v,\textrm{pid\_tag}) \\
       k_{\textrm{payment ID}} &= k_{\textrm{mask}} \rightarrow \textrm{reduced to bit length of payment ID}\\
   \textrm{encoded payment ID} &= \textrm{XOR}(k_{\textrm{payment ID}}, \textrm{payment ID})
 \end{align*}
 
-We include pid\_tag to ensure $k_{\textrm{mask}}$ is different from the component $\mathcal{H}_n(r K_t^v, t)$ in one-time output addresses.\footnote{In Monero, pid\_tag = {\tt ENCRYPTED\_PAYMENT\_ID\_TAIL} = 141. In, for example, multi-input transactions we compute $\mathcal{H}_n(r K_t^v, t) \pmod l$ to ensure we are using a scalar less than the EC subgroup order, but since $l$ is 253 bits and payment IDs are only 64 bits, taking the modulus for encoding payment IDs would be meaningless, so we don't.}
+我们包含 pid\_tag 以确保 $k_{\textrm{mask}}$ 与一次性 output 地址中的分量 $\mathcal{H}_n(r K_t^v, t)$ 不同。\footnote{在门罗币中，pid\_tag = {\tt ENCRYPTED\_PAYMENT\_ID\_TAIL} = 141。在例如多 input 交易中，我们计算 $\mathcal{H}_n(r K_t^v, t) \pmod l$ 以确保我们使用的是小于 EC 子群阶的标量，但由于 $l$ 是 253 位而支付 ID 只有 64 位，对编码支付 ID 取模将没有意义，所以我们不这样做。}
 
 
-\subsubsection*{Decoding}
+\subsubsection*{解码 (Decoding)}
 
-Whichever\marginnote{src/device/ device.hpp {\tt decrypt\_ payment\_ id()}} recipient the payment ID was created for can find it using his view key and the transaction public key $r G$:\footnote{Transaction data does not indicate which output a payment ID `belongs' to. Recipients have to identify their own payment IDs.}\vspace{.175cm}
+支付 ID 是为哪个接收者创建的，该接收者\marginnote{src/device/ device.hpp {\tt decrypt\_ payment\_ id()}}可以使用他的查看密钥和交易公钥 $r G$ 来找到它：\footnote{交易数据不指示支付 ID"属于"哪个 output。接收者必须识别自己的支付 ID。}\vspace{.175cm}
 \begin{align*}
          k_{\textrm{mask}} &= \mathcal{H}_n(k_t^v r G,\textrm{pid\_tag}) \\
       k_{\textrm{payment ID}} &= k_{\textrm{mask}} \rightarrow \textrm{reduced to bit length of payment ID}\\
           \textrm{payment ID} &= \textrm{XOR}(k_{\textrm{payment ID}}, \textrm{encoded payment ID})
 \end{align*}
 
-Similarly, senders can decode payment IDs they had previously encoded by recalculating the shared secret.%remove this line?
+同样，发送者可以通过重新计算共享密钥来解码他们之前编码的支付 ID。%删掉这行？
 
 
-
-\section{Multisignature addresses}
+\section{多签地址 (Multisignature addresses)}
 \label{sec:multisignature-addresses}
 
-Sometimes it is useful to share ownership of funds between different people/addresses. We dedicate Chapter \ref{chapter:multisignatures} to elaborating this topic.
+有时在不同的人/地址之间共享资金的所有权是有用的。我们将在第 \ref{chapter:multisignatures} 章详细讨论这个话题。

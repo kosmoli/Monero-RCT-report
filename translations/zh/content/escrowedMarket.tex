@@ -1,86 +1,86 @@
-\chapter{Monero in an Escrowed Marketplace}
+\chapter{托管市场中的 Monero}
 \label{chapter:escrowed-market}
 
-Most of the time purchasing from an online retailer goes smoothly. A buyer sends money to a vendor, and the expected product arrives at their doorstep. If the product has a defect, or in some cases if the buyer changes their mind, they can return it and get a refund.
+大多数时候，在线购物的体验都很顺利。买家把钱付给卖家，期望的商品就会送到家门口。如果商品有缺陷，或者在某些情况下买家改变了主意，可以退货并获得退款。
 
-It's difficult to trust a person or organization you have never met, and many shoppers can feel safe in their purchases knowing their credit card company will reverse a payment on request \cite{credit-card-reversals}.
+要信任一个从未见过面的人或机构并不容易，但很多消费者在购物时感到安心，因为他们知道信用卡公司可以应要求撤销付款 \cite{credit-card-reversals}。
 
-Cryptocurrency transactions are not reversible, and there is limited legal recourse a buyer or seller can take when something goes wrong, especially for Monero which is not open to easy chain analysis \cite{chainalysis-2020-report}. The cornerstone of robust online shopping with cryptocurrencies is 2-of-3 multisignature-based escrowed exchanges, which enable third parties to mediate disputes. By trusting those third parties, even completely anonymous vendors and shoppers can interact without formality.
+Cryptocurrency transaction 不可逆转，当出现问题时，买卖双方能够采取的法律手段非常有限，尤其是 Monero 这种不容易进行链上分析的加密货币 \cite{chainalysis-2020-report}。利用加密货币进行稳健在线购物的基石，是基于 2-of-3 multisig 的 escrow 交易，它允许第三方调解纠纷。通过信任这些第三方，即使是完全匿名的卖家和买家也能在无需繁文缛节的情况下进行交易。
 
-Since Monero multisig interactions can be rather complex (recall Section \ref{sec:simplified-communication}), we dedicate this chapter to describing a maximally efficient escrowed shopping environment.\footnote{Ren\'e ``rbrunner7" Brunner, a Monero contributor who created the MMS \cite{mms-project-proposal, mms-manual}, investigated integrating Monero multisig into the decentralized cryptocurrency-based digital marketplace OpenBazaar \url{https://openbazaar.org/}. The concepts laid out here are inspired by the hurdles Ren\'e encountered \cite{openbazaar-rbrunner-investigation} (his `earlier analysis').}\footnote{Our initial impression is Monero's current implementation of multisig already has a similar transaction creation flow to what we need for an escrowed shopping environment, which is good news for potential implementation efforts. Readers should note that Monero multisig requires some security updates before it can see heavy use \cite{multisig-research-issue-67}.}
+由于 Monero multisig 的交互可能相当复杂（回忆第 \ref{sec:simplified-communication} 节），我们专辟本章来描述一种尽可能高效的 escrow 购物环境。\footnote{Monero 贡献者 Ren\'e ``rbrunner7'' Brunner 创建了 MMS \cite{mms-project-proposal, mms-manual}，他曾研究将 Monero multisig 集成到基于去中心化加密货币的数字市场 OpenBazaar \url{https://openbazaar.org/} 中。本文所阐述的概念受到了 Ren\'e 在这一过程中遇到的困难的启发 \cite{openbazaar-rbrunner-investigation}（他的"早期分析"）。}\footnote{我们的初步印象是，Monero 当前的 multisig 实现已经具备了与 escrow 购物环境所需类似的交易创建流程，这对潜在的实现工作来说是个好消息。读者应注意，Monero multisig 在大量使用之前还需要一些安全更新 \cite{multisig-research-issue-67}。}
 
 
 
-\section{Essential features}
+\section{基本特性}
 \label{sec:escrowed-marketplace-essential-features}
 
-There are several basic requirements and features for streamlined interactions between buyers and sellers online. We take these points from Ren\'e's OpenBazaar investigation  \cite{openbazaar-rbrunner-investigation}, as they are quite sensible and extensible.
+在线买卖双方之间实现流畅交互，有若干基本要求和特性。这些要点取自 Ren\'e 的 OpenBazaar 研究 \cite{openbazaar-rbrunner-investigation}，因为它们既合理又具有扩展性。
 \begin{itemize}
-    \item {\em Offline selling}: A buyer should be able to access a vendor's online shop and place an order while the vendor is offline. Obviously, the vendor must actually go online to receive the order and fulfill it.\footnote{Fulfilling a purchase order means sending the product out to be delivered to the purchaser.}
-    \item {\em Purchase order-based payments}: Vendor addresses for receipt of funds are unique for each purchase order, in order to match orders and payments.
-    \item {\em High-trust purchasing}: A buyer may, if they trust a vendor, pay for a product even before it has been fulfilled or delivered.
+    \item {\em 离线销售}：买家应能在卖家离线时访问其在线店铺并下单。当然，卖家必须实际上线才能接收订单并完成履约。\footnote{完成购买订单意味着将商品发出交付给购买者。}
+    \item {\em 基于购买订单的支付}：用于接收资金的卖家地址对每份购买订单都是唯一的，以便匹配订单和付款。
+    \item {\em 高信任度购买}：如果买家信任卖家，可以在商品尚未履约或交付之前就付款。
     \begin{itemize}
-        \item {\em Online direct payment}: After confirming the vendor is online, and that their product listing is available, the purchaser sends money in a single transaction to the vendor via a vendor-provided address, who then signals the order is being fulfilled.
-        \item {\em Offline payment}: If a vendor is offline, the buyer creates and funds a 1-of-2 multisig address with enough money to cover their intended purchase. When the vendor comes online, they may take money out of the multisig address (sending change back to the buyer), and fulfill the order. If the vendor never comes back online (or e.g. after some reasonable waiting period), or if the buyer changes their mind before he comes back, the buyer may empty the 1-of-2 address back into her personal wallet.
+        \item {\em 在线直接支付}：在确认卖家在线且商品仍可购买后，买家通过卖家提供的地址将资金在单笔 transaction 中发送给卖家，卖家随即确认订单正在履约。
+        \item {\em 离线支付}：如果卖家离线，买家创建并为一个 1-of-2 multisig 地址注入足够的资金以覆盖预期购买。当卖家上线时，可以从 multisig 地址中提取资金（将找零退还给买家），并完成订单。如果卖家再也没有上线（或在合理的等待期之后），或者买家在卖家上线前改变了主意，买家可以将 1-of-2 地址中的资金全部转回自己的钱包。
     \end{itemize}{}
-    \item {\em Moderated purchasing}: A 2-of-3 multisig address is constructed between the buyer, vendor, and a moderator agreed on by both buyer and vendor. The buyer funds this address before vendor fulfillment, and then once the product is delivered two of the parties cooperate to release the funds. If the vendor and buyer can't reach an agreement, they may enlist the moderator's judgement.
+    \item {\em 调解购买}：在买家、卖家和双方共同认可的调解人之间构建一个 2-of-3 multisig 地址。买家在卖家履约前向该地址注入资金，商品交付后由其中两方合作释放资金。如果卖家和买家无法达成一致，可以请调解人裁决。
 \end{itemize}
 
-We will not cover high-trust purchasing, as, without any complex communication required, the features are fairly trivial.\footnote{1-of-2 multisig can take advantage of some concepts useful for 2-of-3 multisig, in particular constructing the address in the first place.}
+我们将不涉及高信任度购买，因为无需任何复杂的通信，这些功能相当简单。\footnote{1-of-2 multisig 可以借鉴一些对 2-of-3 multisig 有用的概念，特别是地址的初始构建。}
 
 
-\subsection{Purchasing workflow}
-\label{subsec:escrowed-marketplace-purchasing-workflow}
+\subsection{购买工作流}
+\label{subsec:escrowed-marketplace-purchasing-work-flow}
 
-All purchases should fit within the same set of steps, assuming all parties do their due diligence. A number of steps are related to what a moderator should expect when stepping in, e.g. ``did you request a refund, before getting me involved?".
+假设各方都尽到了应尽的义务，所有购买都应遵循同一套步骤。其中若干步骤涉及调解人介入时应有的判断，例如"你在找我之前是否已申请退款？"。
 \begin{enumerate}
-    \item A buyer accesses the vendor's online shop, identifies a purchase to make, selects `I want to purchase it', makes funding available for that purchase, then submits the purchase order to the vendor.
-    \item The vendor receives the purchase order, verifies the product is in stock and the available funding is enough, and either returns money to the buyer or fulfills the order by shipping out the product and notifying the buyer with a receipt.
+    \item 买家访问卖家的在线店铺，确定要购买的商品，选择"我要购买"，为该笔购买准备资金，然后向卖家提交购买订单。
+    \item 卖家收到购买订单，核实商品有库存且可用资金充足，然后要么退还资金给买家，要么发货并附上收据通知买家。
     \begin{itemize}
-        \item For a 2-of-3 multisig, the buyer can optionally authorize payment when receiving notification of fulfillment.
+        \item 对于 2-of-3 multisig，买家可以在收到履约通知时选择性地授权付款。
     \end{itemize}{}
-    \item The buyer either receives the product as expected, or doesn't receive the product on time or receives a defective product.
+    \item 买家要么如预期收到商品，要么未按时收到或收到有缺陷的商品。
     \begin{itemize}
-        \item {\em Good product}: The buyer either gives feedback to the vendor, or does nothing.
+        \item {\em 商品正常}：买家要么给卖家反馈，要么不作反应。
         \begin{itemize}
-            \item {\em Buyer sends feedback}: The buyer can leave either positive, or negative feedback.
+            \item {\em 买家发送反馈}：买家可以留下好评或差评。
             \begin{itemize}
-                \item {\em Positive feedback}: If this is a 2-of-3 multisig that hasn't been paid yet, then this is the step where the buyer confirms payment to the vendor. Otherwise it's just a positive review. [END OF WORKFLOW]
-                \item {\em Negative feedback}: If this is a 2-of-3 multisig, then this step leads into the `bad product' workflow. Otherwise it's just a negative review.
+                \item {\em 好评}：如果这是尚未付款的 2-of-3 multisig，则此步骤为买家确认向卖家付款。否则仅是一条好评。[工作流结束]
+                \item {\em 差评}：如果这是 2-of-3 multisig，则此步骤将进入"问题商品"工作流。否则仅是一条差评。
             \end{itemize}{}
-            \item {\em Buyer does nothing}: Either the vendor has already been paid, or it's a 2-of-3 multisig and he needs to cooperate with someone to receive funds.
+            \item {\em 买家不作反应}：要么卖家已收到付款，要么是 2-of-3 multisig 且卖家需要与某人合作才能收到资金。
             \begin{itemize}
-                \item {\em Vendor has been paid}: [END OF WORKFLOW]
-                \item {\em Vendor has not been paid}: The vendor pursues payment.
+                \item {\em 卖家已收款}：[工作流结束]
+                \item {\em 卖家未收款}：卖家追讨付款。
                 \begin{enumerate}
-                    \item The vendor contacts the buyer requesting payment (or sends out a reminder).
-                    \item The buyer either responds, or does not respond.
+                    \item 卖家联系买家要求付款（或发送提醒）。
+                    \item 买家作出回应或不回应。
                     \begin{itemize}
-                        \item {\em Buyer responds}: The buyer's response can be to make a payment, or pursue a refund.\\
-                        $>$ {\em Buyer makes payment}: [END OF WORKFLOW]\\
-                        $>$ {\em Buyer pursues refund}: Go to the `bad product' workflow.
-                        \item {\em Buyer does not respond}: The vendor enlists the moderator's help to release funds. [END OF WORKFLOW]
+                        \item {\em 买家回应}：买家的回应可以是付款，也可以是要求退款。\\
+                        $>$ {\em 买家付款}：[工作流结束]\\
+                        $>$ {\em 买家要求退款}：进入"问题商品"工作流。
+                        \item {\em 买家不回应}：卖家请求调解人帮助释放资金。[工作流结束]
                     \end{itemize}{}
                 \end{enumerate}{}
-            \end{itemize}
+            \end{itemize}{}
         \end{itemize}{}
-        \item {\em No product or bad product}: The buyer pursues a refund.
+        \item {\em 未收到商品或商品有问题}：买家要求退款。
         \begin{enumerate}
-            \item The buyer contacts the vendor requesting a refund, perhaps with an explanation.
-            \item The vendor complies with the refund request, or contests it (or ignores it).
+            \item 买家联系卖家要求退款，并可能附上说明。
+            \item 卖家同意退款或拒绝退款（或置之不理）。
             \begin{itemize}
-                \item {\em Vendor complies}: Money is refunded to the buyer. [END OF WORKFLOW]
-                \item {\em Vendor contests}: Either it's not a 2-of-3 multisig, or it is.
+                \item {\em 卖家同意}：资金退还给买家。[工作流结束]
+                \item {\em 卖家拒绝}：要么不是 2-of-3 multisig，要么是。
                 \begin{itemize}
-                    \item {\em It's not a 2-of-3}: [END OF WORKFLOW]
-                    \item {\em It's a 2-of-3}: Either the buyer gives up on the refund request (literally, or by failing to respond in a timely manner), or the buyer is adamant.
+                    \item {\em 不是 2-of-3}：[工作流结束]
+                    \item {\em 是 2-of-3}：买家要么放弃退款要求（明确放弃，或未在合理时间内回应），要么态度坚决。
                     \begin{itemize}
-                        \item {\em Buyer gives up}: Either the buyer authorized the vendor's payment, or not.\\
-                        $>$ {\em Buyer authorized payment}: [END OF WORKFLOW]\\
-                        $>$ {\em Buyer didn't authorize}: The vendor contacts the moderator, who authorizes the payment. [END OF WORKFLOW]
-                        \item {\em Buyer is adamant}: The vendor or buyer contacts the moderator, who cooperates with the participants to pass judgement. [END OF WORKFLOW]
+                        \item {\em 买家放弃}：买家是否已授权卖家的付款。\\
+                        $>$ {\em 买家已授权付款}：[工作流结束]\\
+                        $>$ {\em 买家未授权}：卖家联系调解人，由调解人授权付款。[工作流结束]
+                        \item {\em 买家态度坚决}：卖家或买家联系调解人，调解人与各方合作作出裁决。[工作流结束]
                     \end{itemize}{}
-                \end{itemize}
+                \end{itemize}{}
             \end{itemize}{}
         \end{enumerate}{}
     \end{itemize}{}
@@ -88,118 +88,118 @@ All purchases should fit within the same set of steps, assuming all parties do t
 
 
 
-\section{Seamless Monero multisig}
+\section{无缝 Monero multisig}
 \label{sec:escrowed-marketplace-seamless-multisig}
 
-We can take advantage of the natural purchase order workflow to squeeze in nearly all parts of a Monero 2-of-3 multisignature interaction without the participants even noticing. There is an extra small step for the vendor at the end, where he must sign and submit the final transaction to receive payment, analogous to `emptying the cash register'.\footnote{Extending this beyond (N-1)-of-N is likely infeasible without more steps, due to the additional rounds necessary for setting up a lower threshold multisig address.}
+我们可以利用自然的购买订单工作流，在参与者甚至没有察觉的情况下，将 Monero 2-of-3 multisig 交互的几乎所有部分都嵌入其中。卖家在最后还有一个额外的小步骤——他必须签名并提交最终的 transaction 以收到付款，类似于"清空收银台"。\footnote{将此扩展到 (N-1)-of-N 以上很可能不可行，除非增加更多步骤，因为设置更低阈值的 multisig 地址需要额外的通信轮次。}
 
 
-\subsection{Basics of a multisig interaction}
+\subsection{multisig 交互基础}
 \label{subsec:escrowed-marketplace-multisig-interaction-basics}
 
-All 2-of-3 multisig interactions contain the same set of communication rounds, involving address setup and transaction building. In order to comply with the normal workflow we use a reorganized transaction construction process compared to our multisig chapter (recall Sections \ref{sec:simplified-communication} and \ref{sec:n-1-of-n}).\footnote{This procedure is actually quite similar to how Monero currently organizes multisig transactions.}
+所有 2-of-3 multisig 交互都包含相同的通信轮次集合，涉及地址设置和交易构建。为了符合正常工作流，我们使用了与 multisig 章节（回忆第 \ref{sec:simplified-communication} 和 \ref{sec:n-1-of-n} 节）相比重新组织的交易构建流程。\footnote{此流程实际上与 Monero 当前组织 multisig 交易的方式非常相似。}
 \begin{enumerate}
-    \item {\em Address setup}
+    \item {\em 地址设置}
     \begin{enumerate}
-        \item All users must first learn the other participants' base keys, which they will use to construct shared secrets. They transmit the public keys of those shared secrets (e.g. $K^{sh} = \mathcal{H}_n(k^{base}_A*k^{base}_B G) G$) to the other users.
-        \item After learning all shared secret public keys, each user may {\tt premerge} and then {\tt merge} them into the address's public spend key. The aggregation private spend keys will be used for signing transactions. A hash of the primary signers' (the buyer and vendor) shared secret private key (e.g. $k^{sh} = \mathcal{H}_n(k^{base}_A*k^{base}_B G)$) will be used as the view key (e.g. $k^v = \mathcal{H}_n(k^{sh})$). We go into more detail on these keys later (Section \ref{subsec:escrowed-marketplace-escrow-user-experience}).
+        \item 所有用户必须首先了解其他参与者的 base key，用于构建共享秘密。他们将共享秘密的公钥（例如 $K^{sh} = \mathcal{H}_n(k^{base}_A*k^{base}_B G) G$）传输给其他用户。
+        \item 在得知所有共享秘密公钥后，每个用户可以进行 {\tt premerge} 然后 {\tt merge}，将其合并为地址的公 spend key。聚合后的私 spend key 将用于签名交易。主要签名方（买家和卖家）共享秘密私钥的 hash（例如 $k^{sh} = \mathcal{H}_n(k^{base}_A*k^{base}_B G)$）将用作 view key（例如 $k^v = \mathcal{H}_n(k^{sh}$）。我们稍后会对这些密钥进行更详细的说明（第 \ref{subsec:escrowed-marketplace-escrow-user-experience} 节）。
     \end{enumerate}{}
-    \item {\em Transaction building}: Assume the address owns at least one output already, and the key images are unknown. There are two signers, the initiator and the cosigner.
+    \item {\em 交易构建}：假设该地址已至少拥有一个 output，且 key image 未知。有两个签名方：发起者和协作方。
     \begin{enumerate}
-        \item {\em Initiate a transaction}: The initiator decides to start a transaction. She generates opening values (e.g. $\alpha G$) for all owned outputs (she isn't sure which ones will get used yet), and commits to them. She also creates partial key images for those owned outputs, and signs them with a proof of legitimacy (recall Section \ref{sec:recalculating-key-images-multisig}). She sends that information, along with her own personal address for receipt of funds (e.g. for change if appropriate, etc.), to the cosigner.
-        \item {\em Make a partial transaction}: The cosigner verifies that all information in the initiated transaction is valid. He decides the output recipients and amounts (they could be partially based on the initiator's recommendation), inputs to be used along with their respective ring member decoys, and the transaction fee. He generates a transaction private key (or keys if there are subaddresses involved), creates one-time addresses, output commitments, encoded amounts, pseudo output commitment masks, and opening values for the commitments to zero. To prove amounts are in range, he builds the Bulletproof range proof for all outputs. He also generates opening values for his signature (but does not commit to them), random scalars for the MLSAG signatures, partial key images for owned outputs, and proofs of legitimacy for those partial images. All of this is sent to the initiator.
-        \item {\em Initiator's partial signature}: The initiator verifies the partial transaction's information is valid, and conforms with her expectations (e.g. amounts and recipients are as they should be). She completes the MLSAG signatures and signs them with her private keys, then sends the partially signed transaction to the cosigner along with her revealed opening values.
-        \item {\em Finish the transaction}: The cosigner finishes signing the transaction, and submits it to the network.
+        \item {\em 发起交易}：发起者决定开始一笔交易。她为所有拥有的 output 生成承诺值（例如 $\alpha G$）（她还不确定哪些会被使用），并对它们进行承诺。她还为这些拥有的 output 创建部分 key image，并用合法性证明签名（回忆第 \ref{sec:recalculating-key-images-multisig} 节）。她将这些信息连同自己用于接收资金的个人地址（例如用于找零等）一起发送给协作方。
+        \item {\em 制作部分交易}：协作方验证发起交易中的所有信息是否有效。他确定 output 接收者和金额（可部分基于发起者的建议）、要使用的 input 及其各自环成员伪装以及交易费用。他生成交易私钥（如有子地址则生成多个私钥），创建一次性地址、output 承诺、编码金额、伪 output 承诺掩码以及零承诺的承诺值。为证明金额在范围内，他为所有 output 构建 Bulletproof 范围证明。他还为自己的签名生成承诺值（但不对其进行承诺），为 MLSAG 签名生成随机标量，为拥有的 output 生成部分 key image 以及这些部分 key image 的合法性证明。所有这些都发送给发起者。
+        \item {\em 发起者的部分签名}：发起者验证部分交易的信息是否有效，并符合她的预期（例如金额和接收者是否正确）。她用私钥完成 MLSAG 签名并签名，然后将部分签名的交易连同她已公开的承诺值一起发送给协作方。
+        \item {\em 完成交易}：协作方完成交易的签名，并将其提交到网络。
     \end{enumerate}{}
 \end{enumerate}{}
 
-\subsubsection*{Single-commitment signing}
+\subsubsection*{单承诺签名}
 
-Unlike what is recommended in our multisig chapter, only one commitment is provided per partial transaction (by the transaction initiator), and it is revealed after the cosigner sends out their opening value explicitly. The purpose of committing to opening values (e.g. $\alpha G$) is to prevent a malicious cosigner from using their own opening value to affect the challenge that gets produced, which could allow him to discover other cosigners' aggregation keys (recall Section \ref{sec:threshold-schnorr}). If even one partial opening value is unavailable when the malicious actor generates his own, then it is impossible (or at least negligibly probable) for him to control the challenge.\footnote{This is also why the initiator only reveals her opening values after all transaction information has been determined, so neither signer can alter the MLSAG message and influence the challenge.}\footnote{Single-commitment signing could be generalized as (M-1)-commitment signing, where only the partial transaction author does not commit-and-reveal and other co-signers only reveal after a transaction is fully determined. For example, suppose there is a 3-of-3 address with cosigners (A,B,C), who will attempt single-commitment signing. Signers B and C are in a malicious coalition against A, while C is the initiator and B is the partial transaction author. C initiates with a commitment, then A provides his opening value (without commitment). When B constructs the partial transaction, he can conspire with C to control the signature challenge in order to expose A's private key. Please also note that (M-1)-commitment signing is an original concept first presented here, and is not backed by any advanced research material or code implementation. It may end up being completely erroneous.}\footnote{One way of thinking about this is to consider the meaning and purpose of a `commitment' (recall Section \ref{sec:commitments}). Once Alice commits to value A she is stuck with it, and can't take advantage of new information from event B (caused by Bob) that happens later. Moreover, if A hasn't been revealed then B can't be influenced by it. Alice and Bob can be sure that A and B are independent. It is our contention that single-commitment signing as described meets that standard, and is equivalent to full-commitment signing. If the commitment $c$ is a one-way function of opening values $\alpha_A G$ and $\alpha_B G$ (e.g. $c = \mathcal{H}_n(\alpha_A G,\alpha_B G)$), then if $\alpha_A G$ is committed to initially, $\alpha_B G$ is revealed after $C(\alpha_A G)$ appears, and $\alpha_A G$ is revealed after $\alpha_B G$ appears, then $\alpha_B G$ and $\alpha_A G$ are independent, and $c$ will be random from both Alice's and Bob's perspectives (unless they collaborate, and except with negligible probability).}
+与我们 multisig 章节中的建议不同，每笔部分交易只提供一个承诺（由交易发起者提供），并在协作方明确发出其承诺值后才公开。对承诺值（例如 $\alpha G$）进行承诺的目的是防止恶意协作方利用自己的承诺值来影响所产生的挑战值，这可能使他发现其他协作方的聚合密钥（回忆第 \ref{sec:threshold-schnorr} 节）。如果恶意行为者在生成自己的承诺值时缺少哪怕一个部分承诺值，那么他就不可能（或概率可忽略不计地）控制挑战值。\footnote{这也是为什么发起者在所有交易信息确定后才公开她的承诺值，这样任何签名方都无法更改 MLSAG 消息并影响挑战值。}\footnote{单承诺签名可以推广为 (M-1)-承诺签名，即只有部分交易的作者不进行承诺-公开，其他协作签名方只在交易完全确定后才公开。例如，假设有一个 3-of-3 地址，协作方为 (A,B,C)，他们将尝试单承诺签名。签名方 B 和 C 组成针对 A 的恶意联盟，而 C 是发起者，B 是部分交易的作者。C 以承诺发起，然后 A 提供他的承诺值（不承诺）。当 B 构建部分交易时，他可以与 C 共谋控制签名挑战值，以暴露 A 的私钥。另请注意，(M-1)-承诺签名是本文首次提出的原创概念，没有高级研究资料或代码实现的支撑，最终可能完全是错误的。}\footnote{一种理解方式是考虑"承诺"的含义和目的（回忆第 \ref{sec:commitments} 节）。一旦 Alice 对值 A 进行承诺，她就无法再……}
 
-Simplifying in this way removes one communication round, which has important consequences for the buyer-vendor interaction experience.
+以这种方式简化可以减少一轮通信轮次，这对买家-卖家交互体验具有重要影响。
 
 
-\subsection{Escrowed user experience}
+\subsection{Escrow 用户体验}
 \label{subsec:escrowed-marketplace-escrow-user-experience}
 
-Here is our detailed walk-through of buyer-vendor-moderator interactions involving a 2-of-3 multisig-based online purchase using Monero.
+以下是涉及 Monero 2-of-3 multisig 在线购买中买家-卖家-调解人交互的详细演示。
 \begin{enumerate}
-    \item {\em Buyer makes a purchase}
+    \item {\em 买家进行购买}
     \begin{enumerate}
-        \item {\em Buyer's new shopping session}: A shopper enters an online marketplace, and her client generates a new subaddress to be used if she starts a new purchase order.\footnote{Using a new subaddress for each purchase order, or even a new subaddress for each separate vendor or vendor's product, makes it more difficult for vendors to track the behavior of their customers. It also helps make sure each purchase order is unique, in the case of someone buying the same thing twice.} In that marketplace she finds vendors, and each vendor is offering a selection of products and prices. Invisible to the shopper herself, but visible to her client (i.e. the software she is using to buy things), each product has a base key for use in multisig-based purchases. Alongside that base key is a list of preselected moderators, and each such moderator has a base key and precomputed vendor-moderator shared secret public key.\footnote{It would be straightforward for vendors to also include, invisible to shoppers, commitments to opening values for transactions. However, to handle multiple purchase orders for the same product, he would have to provide many commitments up front for each potential buyer. We can only imagine how messy that could become. This is part of the utility brought by our single-commitment signing simplification.}
-        \item {\em Buyer adds a product to cart}: Our shopper decides she wants something, selects the payment option (i.e. direct payment, 1-of-2 multisig, or 2-of-3 multisig), and if she selects 2-of-3 multisig she is presented with a list of available moderators that she can choose from. When she adds the product to her cart, her client, invisible to her (and assuming she selected 2-of-3 multisig), uses the product's base key, the moderator's base key, and the vendor-moderator shared secret public key, to, in combination with her own shopping-session subaddress's spend key (as her base key), construct a 2-of-3 buyer-vendor-moderator multisig address.\footnote{Exactly how a marketplace should be implemented is open to interpretation, since for example selecting the payment type for a product could be presented to the user at checkout instead of in the `add to cart' interface.}\\
+        \item {\em 买家的新购购物会话}：购物者进入一个在线市场，她的客户端生成一个新的子地址，用于在她开始新的购买订单时使用。\footnote{为每份购买订单使用新的子地址，甚至为每个不同的卖家或卖家产品使用新的子地址，使得卖家更难追踪客户的行为。这也有助于确保每份购买订单的唯一性，以防有人两次购买同一商品。} 在该市场中她找到卖家，每个卖家都提供一系列产品和价格。对购物者本人不可见，但对其客户端（即她用来购物的软件）可见的是，每个产品都有一个用于基于 multisig 购买的 base key。与该 base key 一起的是一份预选的调解人列表，每个调解人都有一个 base key 和预先计算的卖家-调解人共享秘密公钥。\footnote{卖家也可以轻易地（对购物者不可见地）包含交易的承诺值承诺。然而，为了处理同一产品的多份购买订单，他必须为每个潜在买家预先提供许多承诺。我们只能想象那会变得多么混乱。这正是我们单承诺签名简化所带来的效用的一部分。}
+        \item {\em 买家将产品加入购物车}：我们的购物者决定要某样东西，选择支付方式（即直接支付、1-of-2 multisig 或 2-of-3 multisig），如果她选择 2-of-3 multisig，就会看到一份可选的调解人列表。当她将产品加入购物车时，她的客户端在她不知情的情况下（假设她选择了 2-of-3 multisig），使用产品的 base key、调解人的 base key 和卖家-调解人共享秘密公钥，结合她自己购物会话子地址的 spend key（作为她的 base key），构建一个 2-of-3 买家-卖家-调解人 multisig 地址。\footnote{市场应该如何实现是开放性的问题，因为例如选择产品的支付类型可以在结账时而非"加入购物车"界面中呈现给用户。}\\
 
-        The view key is a hash of the buyer-vendor shared secret private key (not the aggregation private key, i.e. before {\tt premerge}), and the encryption key for communications between the buyer and vendor is a hash of the view key.\footnote{This same process would take place for 1-of-2 multisig, leaving out the moderator.}
-        \item {\em Buyer moves to checkout}: The shopper views her cart with all its products, and decides to proceed to checkout. This is where she makes funding available before finalizing the purchase order. Her client constructs a transaction (but does not sign it yet) that will either pay directly to the vendor, or fund a multisig address (with a little extra for future fees). If funding a 2-of-3 multisig address, the client also initiates two transactions sending money out of that address. One can be used to pay the vendor, and the other to refund the buyer. Their inputs' partial key images are based on the funding transaction that has not been signed yet.\\
+        view key 是买家-卖家共享秘密私钥的 hash（不是聚合私钥，即在 {\tt premerge} 之前），买家和卖家之间的通信加密 key 是 view key 的 hash。\footnote{1-of-2 multisig 也会进行同样的过程，只是不包含调解人。}
+        \item {\em 买家进入结账}：购物者查看她购物车中的所有产品，决定进入结账。这是她在最终确定购买订单之前准备资金的地方。她的客户端构建一笔交易（但尚未签名），要么直接付给卖家，要么为 multisig 地址注入资金（稍多一些以支付未来的费用）。如果为 2-of-3 multisig 地址注入资金，客户端还会发起两笔从该地址转出的交易。一笔用于付给卖家，另一笔用于退款给买家。它们 input 的部分 key image 基于尚未签名的注入资金交易。\\
 
-        In reality, she only needs committed opening values for the two transactions, and then separately one copy of the partial key images (with proof of legitimacy) and one copy of her shopping-session subaddress. That subaddress has a dual purpose; it is the buyer's address for refunds or change outputs, and its spend key is the buyer's multisig base key.\footnote{It is important to initiate separate transactions, since committed opening values can only be used once.}
-        \item {\em Buyer authorizes payment}: After looking over all the purchase order details, the shopper authorizes it.\footnote{If the buyer cancels the purchase order, her funding transaction and partial multisig transactions get deleted.} Her client finishes signing the funding transaction, and submits it to the network.\footnote{If her cart contained multiple vendors' products, then her client can create multiple purchase orders and handle them separately. The vendors can all be paid by the same funding transaction.} It sends the purchase order, along with the funding transaction's hash and initiated multisig transactions, and the buyer-moderator shared secret public key, to the vendor.\footnote{The buyer's client should keep track of payment order details like total price, to later verify the content of multisig transactions before signing them.}
+        实际上，她只需要这两笔交易的承诺值，然后分别是一份部分 key image（附合法性证明）和一份她的购物会话子地址。该子地址具有双重用途：它是买家接收退款或找零 output 的地址，其 spend key 是买家的 multisig base key。\footnote{发起独立的交易很重要，因为承诺值只能使用一次。}
+        \item {\em 买家授权付款}：在查看所有购买订单细节后，购物者授权付款。\footnote{如果买家取消购买订单，她的注入资金交易和部分 multisig 交易将被删除。} 她的客户端完成注入资金交易的签名，并将其提交到网络。\footnote{如果她的购物车包含多个卖家的产品，那么她的客户端可以创建多份购买订单并分别处理。所有卖家都可以由同一笔注入资金交易来支付。} 它将购买订单连同注入资金交易的 hash 和已发起的 multisig 交易以及买家-调解人共享秘密公钥发送给卖家。\footnote{买家的客户端应记录付款订单的细节，如总价格，以便稍后在签名前验证 multisig 交易的内容。}
     \end{enumerate}{}
-    \item {\em Vendor fulfills a purchase order}
+    \item {\em 卖家完成购买订单}
     \begin{enumerate}
-        \item {\em Vendor appraises purchase order}: The vendor examines our shopper's purchase order, then approves it for shipping. If he was paid directly then there is nothing else to consider, and if he was paid via 1-of-2 multisig then he can make a transaction paying himself out of that address. For 2-of-3 multisig his client generates a subaddress for receipt of money in the purchase order, and makes two partial transactions out of the buyer's initialized transactions. The payment transaction sends the product price to the vendor, and the rest to the buyer as change, while the refund transaction just empties the multisig address back to the buyer.\footnote{The partial transactions could plausibly share a lot of values since they involve the same inputs, and only one of them should ultimately get signed. For the sake of modularity and robust design we think it's best to handle them separately.} Note that he reconstructs the multisig address out of the buyer-vendor-moderator base keys in combination with the buyer-moderator shared secret public key.
-        \item {\em Vendor ships the product}: The vendor ships the product, and sends a fulfillment notification to the buyer. That notification includes a receipt for the purchase, as well as a request for the user to complete payment (everything from here on out refers to 2-of-3 multisig). Hidden to the user is the vendor's purchase order subaddress, which can be used in case of dispute resolution, and both partial transactions.
+        \item {\em 卖家评估购买订单}：卖家审查我们的购物者的购买订单，然后批准发货。如果是直接付款，就不需要再考虑什么；如果是通过 1-of-2 multisig 付款，他可以制作一笔从该地址付给自己的交易。对于 2-of-3 multisig，他的客户端为购买订单生成一个接收资金的子地址，并从买家发起的交易中制作两笔部分交易。付款交易将产品价格发送给卖家，余额作为找零退还给买家，而退款交易则将 multisig 地址中的全部资金退还给买家。\footnote{部分交易很可能共享很多值，因为它们涉及相同的 input，最终只应有一笔被签名。为了模块化和设计的健壮性，我们认为最好分别处理它们。} 注意，他通过买家-卖家-调解人 base key 结合买家-调解人共享秘密公钥来重建 multisig 地址。
+        \item {\em 卖家发货}：卖家发货，并向买家发送履约通知。该通知包含购买的收据，以及要求用户完成付款的请求（从这里开始都指 2-of-3 multisig）。对用户隐藏的是卖家的购买订单子地址（可用于争议解决）以及两笔部分交易。
     \end{enumerate}{}
-    \item {\em Buyer completes payment or requests a refund}: A buyer can do this as soon as they receive fulfillment notification, or wait until the product has been delivered.
+    \item {\em 买家完成付款或要求退款}：买家可以在收到履约通知后立即操作，也可以等到商品送达后再操作。
     \begin{enumerate}
-        \item {\em Buyer submits partially signed transaction}: The buyer decides whether to pay for her purchase, or request a refund. Her client creates a partial signature on the appropriate partial transaction, and sends it to the vendor. Any refund would presumably include an explanation justifying it.
-        \item {\em Vendor completes transaction}: The vendor receives a partially signed transaction, finishes signing it, and submits it to the network. If necessary he sends a refund notification, with proof, to the buyer.
+        \item {\em 买家提交部分签名的交易}：买家决定是为购买付款还是要求退款。她的客户端在相应的部分交易上创建部分签名，并将其发送给卖家。任何退款大概都会附上合理的说明。
+        \item {\em 卖家完成交易}：卖家收到部分签名的交易，完成签名，并将其提交到网络。如有必要，他会向买家发送退款通知及证明。
     \end{enumerate}{}
-    \item {\em Moderated dispute}: At any point after the buyer submits a purchase order and before the multisig address is emptied of funds, either the vendor or buyer can decide to get the moderator involved. Party\_A is whoever raised the dispute, while Party\_B is the defendant.\footnote{Our dispute resolution design assumes actors are in good faith. People who are uncooperative, and for example don't initiate or sign transactions that don't favor themselves, will no doubt make the process much more tedious for everyone.}
+    \item {\em 调解争议}：在买家提交购买订单之后、multisig 地址中的资金被清空之前的任何时候，卖家或买家都可以决定请调解人介入。Party\\_A 是提出争议的一方，而 Party\\_B 是被告方。\footnote{我们的争议解决方案假设参与者是善意的。不合作的人，例如拒绝发起或签名不利于自己的交易，无疑会让整个过程对每个人来说都更加繁琐。}
     \begin{enumerate}
-        \item {\em Party\_A contacts moderator}: Party\_A initiates two transactions, for payment or refund, this time geared toward Party\_A-moderator signing, and send them to the moderator along with necessary information for building the multisig address (the base keys, the Party\_A-Party\_B shared secret public key, and the private view key) and reading the multisig wallet's balance (the partial key images and their proofs).
-        \item {\em Moderator processes dispute}
+        \item {\em Party\\_A 联系调解人}：Party\\_A 发起两笔交易，分别用于付款和退款，这次面向 Party\\_A-调解人签名，连同构建 multisig 地址所需的信息（base key、Party\\_A-Party\\_B 共享秘密公钥和私 view key）以及读取 multisig 钱包余额的信息（部分 key image 及其证明）一起发送给调解人。
+        \item {\em 调解人处理争议}
         \begin{enumerate}
-            \item {\em Moderator acknowledges dispute}: The moderator acknowledges they are looking into the dispute, at the same time creating partial transactions out of the initiated transactions and sending them to Party\_A. They make sure to notify Party\_B about the dispute, and also initiate two more transactions with Party\_B to expedite failure of Party\_A to comply with the final verdict.
-            \item {\em Moderator pursues a verdict}: The moderator looks at the available evidence, and can interact with the parties to gather more information. They may try to mediate the argument, in hopes of both parties resolving it without the need to pass a verdict.
-            \item {\em Dispute reaches an end}: Either the buyer and vendor resolve it on their own in the end, or the moderator passes a verdict which they communicate to both parties.
+            \item {\em 调解人确认争议}：调解人确认他们正在调查争议，同时从发起的交易中制作部分交易并发送给 Party\\_A。他们确保通知 Party\\_B 关于争议的事宜，并与 Party\\_B 再发起两笔交易，以加快在 Party\\_A 不服从最终裁决时的处理。
+            \item {\em 调解人寻求裁决}：调解人查看可用的证据，可以与各方互动以获取更多信息。他们可能尝试调解争论，希望双方能够在不需要作出裁决的情况下自行解决。
+            \item {\em 争议结束}：要么买家和卖家最终自行解决，要么调解人作出裁决并通知双方。
         \end{enumerate}{}
         \begin{itemize}
-            \item Note: If the defendant party should receive funds per the verdict, but hasn't provided an address for whatever reason, the moderator can try to contact them and cooperate with them to receive those funds. Since it doesn't involve the disputer, that contact can be made (or pursued further) after the dispute has been resolved.
+            \item 注意：如果根据裁决被告方应收到资金，但因任何原因未提供地址，调解人可以尝试联系他们并与他们合作以接收这些资金。由于这不涉及争议方，该联系可以在争议解决后进行（或继续推进）。
         \end{itemize}{}
-        \item {\em Party\_A or B accepts the verdict}: If no Party\_A-Party\_B transactions were finalized, it implies the dispute was resolved by moderator's decision.
+        \item {\em Party\\_A 或 B 接受裁决}：如果 Party\\_A-Party\\_B 之间没有最终确定的交易，则意味着争议已由调解人的裁决解决。
         \begin{enumerate}
-            \item {\em Party\_A accepts}
+            \item {\em Party\\_A 接受}
             \begin{enumerate}
-                \item Party\_A completes their partial signature on the verdict transaction, and sends it to the moderator.
-                \item The moderator completes the signature, and submits the transaction.
+                \item Party\\_A 完成她对裁决交易的部分签名，并发送给调解人。
+                \item 调解人完成签名，并提交交易。
             \end{enumerate}{}
-            \item {\em Party\_B accepts}
+            \item {\em Party\\_B 接受}
             \begin{enumerate}
-                \item Party\_B creates a partial transaction for the moderator's initialized verdict transaction, and sends it to the moderator. This step can be performed before the verdict is finalized, in which case Party\_B would make partial transactions for both potential verdicts.
-                \item The moderator partially signs that partial transaction, and sends it to Party\_B.
-                \item Party\_B finishes signing the transaction, and submits it to the network. He sends the transaction hash to the moderator.
+                \item Party\\_B 为调解人发起的裁决交易创建部分交易，并发送给调解人。此步骤可以在裁决最终确定之前执行，在这种情况下 Party\\_B 会为两种可能的裁决都制作部分交易。
+                \item 调解人对该部分交易进行部分签名，并发送给 Party\\_B。
+                \item Party\\_B 完成交易的签名，并将其提交到网络。他将交易 hash 发送给调解人。
             \end{enumerate}{}
         \end{enumerate}{}
-        \item {\em Moderator closes out the dispute}: The moderator summarizes the dispute and its resolution, and sends their report to the buyer and vendor.
+        \item {\em 调解人结束争议}：调解人总结争议及其解决方案，并将报告发送给买家和卖家。
     \end{enumerate}{}
 \end{enumerate}{}
 
-There are four key design optimizations installed.
+这里安装了四个关键的设计优化。
 
-\subsubsection*{Preselected moderators}
+\subsubsection*{预选调解人}
 
-By choosing the moderators ahead of time, vendors can create a shared secret with each of them for each of their products and publish its public key with the product information.\footnote{Importantly, these multisig addresses are still resistant to key aggregation tests since the buyer's shared secrets are unknown to observers.} This way buyers can construct the complete merged multisig address in one step, as soon as they decide to purchase something, harmonizing with the requirement for `offline selling'. Preselecting multiple moderators allows buyers to choose the one they trust more.
+通过提前选择调解人，卖家可以与每个调解人针对每个产品创建一个共享秘密，并将其公钥与产品信息一起发布。\footnote{重要的是，这些 multisig 地址仍然能够抵抗密钥聚合测试，因为买家的共享秘密对观察者来说是未知的。} 这样，当买家决定购买某物时，就可以一步构建完整的合并 multisig 地址，与"离线销售"的要求保持一致。预选多个调解人可以让买家选择更信任的那一个。
 
-Buyers may also, if they don't trust a vendor's accepted moderators, cooperate with an online moderator of their choosing to make a multisig address with the vendor's product base key. After receiving a purchase order, the vendor may accept that new moderator or decline the sale.\footnote{For expediency, an escrow service could be `always online', and instead of using preselected moderators all 2-of-3 multisig addresses are actively constructed with that service when a purchase order is made. Another possibility is using nested multisig (Section \ref{sec:general-key-families}), where the preselected moderator is actually a 1-of-N multisig group. That way whenever a dispute arises any moderator from that group who happens to be available can step in. It would likely require substantial development effort to implement.}
+如果买家不信任卖家接受的调解人，也可以与他们自己选择的在线调解人合作，使用卖家的产品 base key 创建一个 multisig 地址。在收到购买订单后，卖家可以接受该新调解人或拒绝销售。\footnote{为方便起见，escrow 服务可以"始终在线"，当购买订单创建时，所有 2-of-3 multisig 地址都与该服务一起主动构建，而不是使用预选的调解人。另一种可能是使用嵌套 multisig（第 \ref{sec:general-key-families} 节），其中预选的调解人实际上是一个 1-of-N multisig 组。这样每当出现争议时，该组中任何恰好可用的调解人都可以介入。实现这一点可能需要大量的开发工作。}
 
-We expect the mutual desire of buyers and vendors for good moderators to, over time, create a hierarchy of moderators organized by the quality and fairness of the service they provide. Lower quality moderators or those with less of a reputation would likely earn less money or service fewer or less significant transactions.\footnote{It is not clear to us the best, or most likely, funding method for moderators. Perhaps they would get paid a flat or percentage fee of each moderated transaction or transaction where they are added as a moderator (and then if the fee wasn't provided in the original partial transactions, refuse to cooperate in a dispute), or users and/or vendors and/or marketplace platforms would contract with them.}
+我们期望买家和卖家双方对好的调解人的共同需求，能够随着时间的推移创造出一个按服务质量和公平性组织的调解人层级。质量较低或声誉较差的调解人可能会赚取更少的钱或服务更少或不太重要的交易。\footnote{我们尚不清楚调解人最佳或最可能的收费方式。也许他们会从每笔被调解的交易或添加他们为调解人的交易中收取固定或百分比费用（然后如果费用未在原始部分交易中提供，则拒绝在争议中合作），或者用户和/或卖家和/或市场平台会与他们签订合同。}
 
-\subsubsection*{Subaddresses and product IDs}
+\subsubsection*{子地址和产品 ID}
 
-Vendors create a new base key for each product line/ID, and those keys are used to construct 2-of-3 multisig addresses.\footnote{This base key is also used for 1-of-2 multisig purchasing. We feel it is important not to expose the private spend key in the communication channel, so using a buyer-vendor shared secret makes a lot of sense.} When vendors fulfill a purchase order they create a unique subaddress for receipt of funds, which can be used to match purchase orders with payments received.
+卖家为每个产品线/ID 创建一个新的 base key，这些 key 用于构建 2-of-3 multisig 地址。\footnote{此 base key 也用于 1-of-2 multisig 购买。我们认为不在通信渠道中暴露私 spend key 很重要，因此使用买家-卖家共享秘密是非常合理的。} 当卖家完成购买订单时，他们会创建一个唯一的子地址用于接收资金，可用于将购买订单与收到的付款进行匹配。
 
-The requirement for `purchase order-based payments' is met efficiently here, especially since funds directed to different subaddresses are trivially accessible from the same wallet (recall Section \ref{sec:subaddresses}).
+这里高效地满足了"基于购买订单的支付"的要求，特别是因为发送到不同子地址的资金可以从同一个钱包中轻松访问（回忆第 \ref{sec:subaddresses} 节）。
 
-\subsubsection*{Anticipatory partial transactions}
+\subsubsection*{预先部分交易}
 
-Multisig transactions take multiple rounds, so we begin making them as soon as possible. For user convenience, partial transactions that are only rarely used (e.g. refund transactions) get made early, so they are immediately available for signing if the need arises.
+multisig 交易需要多轮通信，因此我们尽早开始制作。为了用户便利，那些很少使用的部分交易（例如退款交易）会提前制作，以便在需要时立即可以签名。
 
-\subsubsection*{Conditional moderator access}
+\subsubsection*{条件性调解人访问}
 
-For the sake of both efficiency and privacy, moderators only need access to the details of a trade when settling disputes. To accomplish this, we make the multisig private view key a hash of the buyer-vendor shared secret private key $k^{v,grp}_{purchase-order} = \mathcal{H}_n(T_{mv},k^{sh,\textrm{2x3}}_{AB})$ where $T_{mv}$ is the marketplace view key domain separator and A and B correspond with vendor and buyer, and $k^{sh,\textrm{2x3}}_{AB} = \mathcal{H}_n(k^{base}_{A}*k^{base}_{B} G)$. We extend what it can `view' to the buyer-vendor communication transcript. In other words, the communication encryption key is $k^{ce}_{purchase-order} = \mathcal{H}_n(T_{me},k^{v,grp}_{purchase-order})$ ($T_{me}$ is the marketplace encryption key domain separator).\footnote{Separating the view key and encryption key allows handing out just view rights to the communication log without view rights to the multisig address's transaction history.}\footnote{This method is also used for 1-of-2 multisig addresses.}
+出于效率和隐私的考虑，调解人只需要在解决争议时才能访问交易的细节。为此，我们将 multisig 的私 view key 设为买家-卖家共享秘密私钥的 hash：$k^{v,grp}_{purchase-order} = \mathcal{H}_n(T_{mv},k^{sh,\textrm{2x3}}_{AB})$，其中 $T_{mv}$ 是市场 view key 域分隔符，A 和 B 分别对应卖家和买家，$k^{sh,\textrm{2x3}}_{AB} = \mathcal{H}_n(k^{base}_{A}*k^{base}_{B} G)$。我们将其可"查看"的范围扩展到买家-卖家的通信记录。换言之，通信加密 key 是 $k^{ce}_{purchase-order} = \mathcal{H}_n(T_{me},k^{v,grp}_{purchase-order})$（$T_{me}$ 是市场加密 key 域分隔符）。\footnote{将 view key 和加密 key 分离，允许仅赋予查看通信记录的权限，而不授予查看 multisig 地址交易历史的权限。}\footnote{1-of-2 multisig 地址也使用此方法。}
 
-Moderators gain access to the buyer-vendor communications, and the ability to authorize payments, only when one of the original parties releases the view key to them.\footnote{It is important for moderators to verify the communication log they receive hasn't been tampered with. One way might be for each cosigner to include a signed hash of the current message log whenever they send out a new message. Moderators can look at the back-and-forth, and series of hashed logs, to identify discrepancies. It would also help cosigners identify messages that failed to transmit, and alternatively create evidence that particular signers did in fact receive certain messages.}
+调解人只有在原始一方之一将 view key 释放给他们时，才能获得买家-卖家通信的访问权和授权付款的能力。\footnote{调解人验证他们收到的通信记录没有被篡改是很重要的。一种方法可能是让每个协作签名方在发送新消息时包含当前消息记录的签名 hash。调解人可以查看来回消息和 hash 记录的序列来识别差异。这也有助于协作签名方识别未能传输的消息，以及替代性地创建特定签名方确实收到了某些消息的证据。}
 
-Moreover, vendors can verify the marketplace host (who may also be the only moderator available, depending on how this concept is implemented) is not MITM (`man in the middle') of their conversations with customers (i.e. pretending to be the buyer or vendor) by checking that the base keys they publish for each product match what gets displayed. Since the buyer's base key, which gets used to create the multisig address, is also part of the encryption key, a malicious host would have a hard time orchestrating a MITM attack.
+此外，卖家可以通过检查他们为每个产品发布的 base key 是否与显示的一致，来验证市场主机（根据此概念的实现方式，可能也是唯一可用的调解人）没有对他们的客户对话进行 MITM（"中间人"攻击，即假装是买家或卖家）。由于用于创建 multisig 地址的买家 base key 也是加密 key 的一部分，恶意主机将很难策划 MITM 攻击。
