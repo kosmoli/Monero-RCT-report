@@ -13,7 +13,7 @@
 \usepackage{graphicx}
 
 % Chinese section names
-\renewcommand{\chaptername}{第~\thechapter~章}
+\renewcommand{\chaptername}{第}
 \renewcommand{\contentsname}{目录}
 \renewcommand{\bibname}{参考文献}
 \renewcommand{\appendixname}{附录}
@@ -99,6 +99,11 @@
 \ChNumVar{\Huge}
 \ChTitleVar{\LARGE}
 
+% Custom chapter mark for header: "第 X 章. Title"
+% Must come AFTER fancyhdr to avoid being overwritten
+\renewcommand{\chaptermark}[1]{%
+  \markboth{第~\thechapter~章.~#1}{}}
+
 % Modify appendix and add subappendices environments
 % -------------------------------------
 \usepackage{appendix}
@@ -168,7 +173,7 @@
 \bigskip
 {\par\centering \textsc{\LARGE 原版 Published April 4, 2020 (v2.0.0)}\par}
 \bigskip
-{\par\centering \textsc{\large 原著：koe, Kurt M. Alonso, Sarang Noether}\par}
+{\par\centering \textsc{\large 原著：koe\footnote{ukoe@protonmail.com}, Kurt M. Alonso\footnote{kurt@oktav.se}, Sarang Noether\footnote{sarang.noether@protonmail.com}}\par}
 {\par\centering \textsc{\large 中文翻译：Kosmo \& Kleo}\par}
 \vfill{}
 
