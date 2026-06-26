@@ -99,6 +99,12 @@
 \ChNumVar{\Huge}
 \ChTitleVar{\LARGE}
 
+% Patch fncychap to show "第 1 章" instead of "第 1"
+\makeatletter
+\renewcommand{\DOCH}{%
+  \CNV\FmN{\@chapapp}\,\CNoV\thechapter~章}
+\makeatother
+
 % Custom chapter mark for header: "第 X 章. Title"
 % Must come AFTER fancyhdr to avoid being overwritten
 \renewcommand{\chaptermark}[1]{%
