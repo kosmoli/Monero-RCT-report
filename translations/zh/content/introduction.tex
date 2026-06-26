@@ -4,11 +4,11 @@
 在数字领域，复制信息并对其进行任意修改通常都是轻而易举的事。一种货币要以数字化形式存在并被广泛接受，其使用者必须相信其供应量受到严格限制。货币接收者必须确信自己不会收到伪造的货币，或是已经被发送给其他人的货币。为了在不需要任何第三方（如中央机构）协作的情况下实现这一点，货币的供应量和完整的交易历史必须可以公开验证。
 
 我们可以利用密码学工具，使存储在易于访问的数据库——即 blockchain——中的数据实际上不可篡改和不可伪造，其合法性不容任何一方质疑。
-\\ \\newline
+\par
 加密货币将 transaction 存储在 blockchain 中，后者充当所有货币操作的公开账本\footnote{此处"账本"仅指所有货币创建和交换事件的记录。具体而言，即每次事件中转移了多少金额以及转移给了谁。}。大多数加密货币以明文形式存储 transaction，以便社区用户验证 transaction。
-\\ \\newline
+\par
 显然，公开的 blockchain 违背了对隐私或可替代性\footnote{``\textbf{可替代的} 指在使用或合同履行中可以相互替代的。……例如：……货币等。''\cite{mises-org-fungible} 在 Bitcoin 等公开 blockchain 中，Alice 持有的币可以与 Bob 持有的币通过这些币的"交易历史"加以区分。如果 Alice 的交易历史中包含与所谓恶意行为者相关的交易，那么她的币可能被"污染" \cite{bitcoin-big-bang-taint}，从而比 Bob 的币价值更低（即使他们拥有相同数量的币）。知名人士声称，新铸造的 Bitcoin 相比已使用的币有溢价，因为它们没有历史记录 \cite{new-bitcoin-premium}。}的基本认知，因为它实际上{\em 公开了}用户的完整交易历史。
-\\ \\newline
+\par
 为了解决隐私缺失的问题，Bitcoin 等加密货币的用户可以通过使用临时中间地址来混淆 transaction \cite{DBLP:journals/corr/NarayananM17}。然而，借助适当的工具，仍然可以分析资金流向，并在很大程度上将真正的发送者与接收者关联起来 \cite{DBLP:journals/corr/ShenTuY15b, DK-police-tracing-btc, Andrew-Cox-Sandia, chainalysis-2020-report}。
 
 相比之下，加密货币 Monero（Moe-neh-row）试图通过仅在 blockchain 中存储一次性接收地址来解决隐私问题，并通过环签名来验证每笔 transaction 中资金的分散。采用这些方法，目前没有已知的通用有效方法来关联接收者或追溯资金来源。\footnote{根据用户的行为，某些情况下 transaction 可能在一定程度上被分析。相关示例请参见这篇文章：\cite{monero-ring-heuristics-ryo}。}

@@ -17,8 +17,8 @@
 \renewcommand{\contentsname}{目录}
 \renewcommand{\bibname}{参考文献}
 \renewcommand{\appendixname}{附录}
-\renewcommand{\appendixpagename}{附录}
-\renewcommand{\appendixtocname}{附录}
+\providecommand{\appendixpagename}{}\renewcommand{\appendixpagename}{附录}
+\providecommand{\appendixtocname}{}\renewcommand{\appendixtocname}{附录}
 \renewcommand{\figurename}{图}
 \renewcommand{\tablename}{表}
 \renewcommand{\partname}{部分}
@@ -44,8 +44,6 @@
 % -------------------------------------
 % putting this between footmisc and hyperref seemed to fix broken footnote links
 \usepackage{setspace}
-\AtBeginDocument{\let~=\\nobreakspace}
-\spacing{1.1}
 
 % Advanced crossreferencing commands
 % -------------------------------------
@@ -124,6 +122,9 @@
 
 % Separate document into parts
 \usepackage{titlesec}
+
+% Apply line spacing after all packages are loaded
+\spacing{1.1}
 
 % ___________________________________________________________________________________________________________
 %
